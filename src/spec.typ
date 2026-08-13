@@ -5,9 +5,9 @@
 ///! emitting markup. Validation runs once on the folded spec rather than inside
 ///! each directive, which is what makes directive order free.
 
-#import "data.typ": column-names, normalise
+#import "data.typ": column-names, group-rows, normalise
 #import "parts/spanners.typ": validate-spanners
-#import "parts/stub.typ": build-groups, stub-column-names
+#import "parts/stub.typ": stub-column-names
 #import "utils/errors.typ": check, check-column, fail
 
 #let _empty = (
@@ -108,7 +108,7 @@
     }
   }
 
-  spec.groups = build-groups(spec.data, spec.stub.group)
+  spec.groups = group-rows(spec.data, spec.stub.group)
 
   validate-spanners(_validate(spec))
 }

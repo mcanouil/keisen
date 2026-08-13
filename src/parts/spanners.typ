@@ -4,7 +4,7 @@
 ///! final column order, so it is checked once on the folded spec: a
 ///! `columns-move` may legally be written after the spanner it rearranges.
 
-#import "../utils/errors.typ": check
+#import "../utils/errors.typ": check, check-column
 
 // `level` 1 sits directly above the column labels; higher levels stack above,
 // so a spanner can span other spanners.
@@ -15,28 +15,19 @@
   level: level,
 )
 
-// Positions of a spanner's columns in the final order, sorted, so adjacency can
-// be read as a contiguous run.
-#let _positions(spanner, columns) = {
-  spanner.columns.map(name => {
-    let position = columns.position(candidate => candidate == name)
-    check(
-      position != none,
-      "table-spanner",
-      "unknown column " + name,
-      hint: if columns.len() == 0 {
-        "The table has no visible columns."
-      } else {
-        "Visible columns: " + columns.join(", ") + "."
-      },
-    )
-    position
-  })
+// Column name to its position in the final order, built once so neither
+// validation nor rendering has to scan the column list per spanner column.
+#let _index-of(columns) = {
+  let index = (:)
+  for (position, name) in columns.enumerate() { index.insert(name, position) }
+  index
 }
 
 #let validate-spanners(spec) = {
+  let index = _index-of(spec.columns)
   for spanner in spec.spanners {
-    let positions = _positions(spanner, spec.columns).sorted()
+    for name in spanner.columns { check-column(spec.columns, "table-spanner", name) }
+    let positions = spanner.columns.map(name => index.at(name)).sorted()
     check(
       positions.last() - positions.first() == positions.len() - 1,
       "table-spanner",
@@ -53,14 +44,20 @@
   if spec.spanners.len() == 0 { return () }
 
   let levels = spec.spanners.map(spanner => spanner.level).dedup().sorted().rev()
+  let width = spec.columns.len()
 
   levels.map(level => {
-    let covering = spec.spanners.filter(spanner => spanner.level == level)
+    // One dictionary per level rather than a scan per column: a column covered
+    // by this level looks its spanner up directly.
+    let covering = (:)
+    for spanner in spec.spanners.filter(spanner => spanner.level == level) {
+      for name in spanner.columns { covering.insert(name, spanner) }
+    }
+
     let cells = ()
     let position = 0
-    while position < spec.columns.len() {
-      let name = spec.columns.at(position)
-      let spanner = covering.find(candidate => name in candidate.columns)
+    while position < width {
+      let spanner = covering.at(spec.columns.at(position), default: none)
       if spanner == none {
         cells.push((label: none, span: 1))
         position += 1

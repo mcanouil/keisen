@@ -5,6 +5,8 @@
 ///! came from, and whether it takes a stripe. Nothing downstream does row
 ///! arithmetic of its own.
 
+#import "../parts/spanners.typ": spanner-rows
+
 #let entry(part, level: none, source: none, stripe: false) = (
   part: part,
   level: level,
@@ -19,24 +21,28 @@
   if spec.header.title != none { plan.push(entry("title", level: 1)) }
   if spec.header.subtitle != none { plan.push(entry("subtitle", level: 1)) }
 
-  // Level 2: the column labels, which do.
+  // Level 2: the spanner rows, highest level first, then the column labels.
+  // They repeat together, and the plan enumerates them so nothing downstream
+  // has to recount the header.
+  for index in range(spanner-rows(spec).len()) {
+    plan.push(entry("spanner", level: 2, source: index))
+  }
   plan.push(entry("labels", level: 2))
 
   // Striping is computed from the body row position here rather than from a
   // show rule at render time, so its phase survives a page break. It counts
   // body rows alone, so a group label never takes a stripe or shifts the phase.
   // Ungrouped data is one nameless block, so both shapes take the same loop.
-  let blocks = if spec.groups.len() == 0 {
-    ((none, range(spec.data.len())),)
-  } else {
-    spec.groups.enumerate().map(((index, group)) => (index, group.rows))
+  let grouped = spec.groups.len() > 0
+  let blocks = if grouped { spec.groups.map(group => group.rows) } else {
+    (range(spec.data.len()),)
   }
 
   let stripe = 0
-  for (index, positions) in blocks {
+  for (index, positions) in blocks.enumerate() {
     // Level 3: the group label, which repeats until the next group retires it,
     // so a group spanning a page break reprints its name.
-    if index != none { plan.push(entry("group", level: 3, source: index)) }
+    if grouped { plan.push(entry("group", level: 3, source: index)) }
     for position in positions {
       plan.push(entry("body", source: position, stripe: calc.odd(stripe)))
       stripe += 1

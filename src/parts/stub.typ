@@ -19,21 +19,3 @@
 #let stub-column-names(stub) = {
   (stub.rowname, stub.group, stub.indent).filter(name => name != none)
 }
-
-// Groups in first-appearance order, each carrying the positions of its rows.
-// Order comes from the data rather than from sorting, because a table's group
-// order is an editorial decision that belongs upstream.
-#let build-groups(rows, name) = {
-  if name == none { return () }
-  let order = ()
-  let members = (:)
-  for (position, row) in rows.enumerate() {
-    let label = str(row.at(name, default: none))
-    if label not in members {
-      order.push(label)
-      members.insert(label, ())
-    }
-    members.insert(label, members.at(label) + (position,))
-  }
-  order.map(label => (label: label, rows: members.at(label)))
-}

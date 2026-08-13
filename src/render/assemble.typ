@@ -7,6 +7,7 @@
 ///! alignment, and strokes are decided.
 
 #import "../format/apply.typ": apply-formats
+#import "../data.typ": column
 #import "../parts/spanners.typ": spanner-rows
 #import "plan.typ": build-plan
 
@@ -36,23 +37,24 @@
   [#value]
 }
 
-// The stub cell of one body row: its row name, indented by its level.
-#let _stub-cell(spec, position) = {
-  let row = spec.data.at(position)
-  let name = if spec.stub.rowname == none { [] } else {
-    slots-to-content(row.at(spec.stub.rowname, default: none))
-  }
-  let depth = if spec.stub.indent == none { 0 } else { row.at(spec.stub.indent, default: 0) }
-  table.cell(align: start, h(1em * depth) + name)
-}
-
 #let assemble(spec) = {
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
   let plan = build-plan(spec)
+  let indices = range(names.len())
   let cells = names.map(name => apply-formats(spec.data, spec.formats, name))
   let alignments = names.map(name => infer-alignment(spec.data, name))
+  let levels = spanner-rows(spec)
+
+  // The stub goes through the same formatting pipeline as every other column,
+  // so a format directive naming the row-name column takes effect there too.
+  let stub-cells = if has-stub {
+    apply-formats(spec.data, spec.formats, spec.stub.rowname)
+  } else { () }
+  let indents = if spec.stub.indent == none { () } else {
+    column(spec.data, spec.stub.indent)
+  }
 
   let full(body) = table.cell(colspan: width, body)
 
@@ -61,11 +63,12 @@
   if spec.header.subtitle != none { head.push(full(spec.header.subtitle)) }
 
   // Spanner rows sit above the column labels inside the same repeating header,
-  // highest level first, with an empty cell over the stub column.
+  // highest level first, with an empty cell over the stub column. The plan says
+  // how many there are and in which order.
   let labels = ()
-  for row in spanner-rows(spec) {
+  for entry in plan.filter(entry => entry.part == "spanner") {
     if has-stub { labels.push(table.cell([])) }
-    for cell in row {
+    for cell in levels.at(entry.source) {
       labels.push(table.cell(
         colspan: cell.span,
         align: center,
@@ -92,10 +95,14 @@
   for entry in plan {
     if entry.part == "group" {
       let label = spec.groups.at(entry.source).label
-      rows.push(table.header(level: 3, repeat: true, full(strong([#label]))))
+      rows.push(table.header(level: entry.level, repeat: true, full(strong([#label]))))
     } else if entry.part == "body" {
-      if has-stub { rows.push(_stub-cell(spec, entry.source)) }
-      for (index, name) in names.enumerate() {
+      if has-stub {
+        let depth = if indents.len() == 0 { 0 } else { indents.at(entry.source) }
+        let name = slots-to-content(stub-cells.at(entry.source))
+        rows.push(table.cell(align: start, if depth == 0 { name } else { h(1em * depth) + name }))
+      }
+      for index in indices {
         rows.push(table.cell(
           align: alignments.at(index),
           slots-to-content(cells.at(index).at(entry.source)),
