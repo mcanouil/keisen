@@ -6,11 +6,13 @@
 ///! Every cell is emitted explicitly, which gives one place where fills,
 ///! alignment, and strokes are decided.
 
+#import "../format/align.typ": align-slots, column-metrics
 #import "../format/apply.typ": apply-formats, matches-column
 #import "../data.typ": column
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, marks-for
 #import "../parts/spanners.typ": spanner-rows
+#import "../parts/summaries.typ": summary-values
 #import "../style.typ": build-index, style-for
 #import "plan.typ": build-plan
 
@@ -58,7 +60,7 @@
   body + super(marks.join([,]))
 }
 
-#let assemble(spec) = {
+#let assemble(spec) = context {
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
@@ -71,6 +73,18 @@
     substitutions: spec.substitutions,
   ))
   let footnotes = assign-marks(spec)
+  let summaries = summary-values(spec)
+
+  // The stub goes through the same formatting pipeline as every other column,
+  // so a format directive naming the row-name column takes effect there too.
+  let stub-cells = if has-stub {
+    apply-formats(spec.data, spec.formats, spec.stub.rowname, substitutions: spec.substitutions)
+  } else { () }
+  let indents = if spec.stub.indent == none { () } else {
+    column(spec.data, spec.stub.indent)
+  }
+
+  let full(body) = table.cell(colspan: width, body)
 
   // Data-driven colour resolves per column and merges under explicit styling,
   // so table-style always wins over a gradient.
@@ -91,19 +105,45 @@
     }
     out
   })
-  let alignments = names.map(name => infer-alignment(spec.data, name))
+  let alignments = names.map(name => spec.align.at(name, default: infer-alignment(spec.data, name)))
+  // Measuring needs context, which the table body has; the metrics are computed
+  // once per column rather than once per cell.
+  let metrics = if spec.options.at("decimal-align", default: true) {
+    cells.map(column-metrics)
+  } else {
+    names.map(name => none)
+  }
   let levels = spanner-rows(spec)
 
-  // The stub goes through the same formatting pipeline as every other column,
-  // so a format directive naming the row-name column takes effect there too.
-  let stub-cells = if has-stub {
-    apply-formats(spec.data, spec.formats, spec.stub.rowname, substitutions: spec.substitutions)
-  } else { () }
-  let indents = if spec.stub.indent == none { () } else {
-    column(spec.data, spec.stub.indent)
+  // A summary cell formats through the same path as the body cells above it,
+  // either by its own format or by whichever directive covers the column.
+  let summarised(entry, name) = {
+    let value = entry.values.at(name, default: none)
+    if value == none { return [] }
+    if entry.format != none { return slots-to-content((entry.format.function)(value)) }
+    let covering = spec.formats.filter(directive => matches-column(directive.columns, name))
+    if covering.len() == 0 { return slots-to-content(value) }
+    slots-to-content((covering.last().function)(value))
   }
 
-  let full(body) = table.cell(colspan: width, body)
+  let summary-row(entry, part, row-key) = {
+    let cells = ()
+    if has-stub {
+      cells.push(_cell(
+        style-for(index, part, row-key, none),
+        strong([#entry.label]),
+        align: start,
+      ))
+    }
+    for (position, name) in names.enumerate() {
+      cells.push(_cell(
+        style-for(index, part, row-key, name),
+        summarised(entry, name),
+        align: alignments.at(position),
+      ))
+    }
+    cells
+  }
 
   let titled(name, body) = _cell(
     style-for(index, "title", none, name),
@@ -181,6 +221,11 @@
           colspan: width,
         ),
       ))
+    } else if entry.part == "summary" {
+      let group = summaries.groups.at(entry.source.group)
+      rows += summary-row(group.at(entry.source.row), "summary", entry.source)
+    } else if entry.part == "grand-summary" {
+      rows += summary-row(summaries.grand.at(entry.source), "grand-summary", entry.source)
     } else if entry.part == "body" {
       if has-stub {
         let depth = if indents.len() == 0 { 0 } else {
@@ -200,7 +245,7 @@
         rows.push(_cell(
           style-for(index, "body", entry.source, name),
           _marked(
-            slots-to-content(cells.at(position).at(entry.source)),
+            slots-to-content(align-slots(cells.at(position).at(entry.source), metrics.at(position))),
             marks-for(footnotes, "body", entry.source, name),
           ),
           align: alignments.at(position),
@@ -225,8 +270,12 @@
     notes.push(full(text(size: 0.8em, footnote.note)))
   }
 
+  // A named width wins; everything else sizes itself, including the stub.
+  let tracks = if has-stub { (spec.widths.at(spec.stub.rowname, default: auto),) } else { () }
+  for name in names { tracks.push(spec.widths.at(name, default: auto)) }
+
   table(
-    columns: width,
+    columns: tracks,
     stroke: none,
     ..if head.len() > 0 { (table.header(level: 1, repeat: false, ..head),) } else { () },
     ..if labels.len() > 0 { (table.header(level: 2, repeat: true, ..labels),) } else { () },

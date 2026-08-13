@@ -6,6 +6,7 @@
 ///! arithmetic of its own.
 
 #import "../parts/spanners.typ": spanner-rows
+#import "../parts/summaries.typ": summary-count
 
 #let entry(part, level: none, source: none, stripe: false) = (
   part: part,
@@ -47,6 +48,17 @@
       plan.push(entry("body", source: position, stripe: calc.odd(stripe)))
       stripe += 1
     }
+    // Group summaries close their group. They are not body rows, so they take
+    // no stripe and do not shift the phase of the rows below.
+    if grouped {
+      for row in range(summary-count(spec.summaries)) {
+        plan.push(entry("summary", source: (group: index, row: row)))
+      }
+    }
+  }
+
+  for row in range(summary-count(spec.grand-summaries)) {
+    plan.push(entry("grand-summary", source: row))
   }
 
   for (position, note) in spec.source-notes.enumerate() {
