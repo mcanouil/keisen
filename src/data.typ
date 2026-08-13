@@ -11,7 +11,8 @@
 #let _from-columns(data) = {
   let names = data.keys()
   if names.len() == 0 { return () }
-  let size = data.at(names.first()).len()
+  // Type before length: reading `.len()` off a non-array raises a Typst error
+  // rather than one of ours.
   for name in names {
     check(
       type(data.at(name)) == array,
@@ -20,6 +21,9 @@
       value: data.at(name),
       hint: "A column store maps each name to an array of values.",
     )
+  }
+  let size = data.at(names.first()).len()
+  for name in names {
     check(
       data.at(name).len() == size,
       "data",
@@ -55,10 +59,17 @@
     })
 }
 
-// Names of the data columns, in first-row order, excluding the reserved key.
+// Names of the data columns, excluding the reserved key. Every row is read, in
+// first-appearance order, so a sparse row store keeps the columns that only
+// later rows carry rather than silently dropping them.
 #let column-names(rows) = {
-  if rows.len() == 0 { return () }
-  rows.first().keys().filter(name => name != "_index")
+  let names = ()
+  for row in rows {
+    for name in row.keys() {
+      if name != "_index" and name not in names { names.push(name) }
+    }
+  }
+  names
 }
 
 // A column as an array, with `none` wherever a row lacks the key.

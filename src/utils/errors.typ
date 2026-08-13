@@ -9,14 +9,16 @@
 ///! helpers on the failing branch rather than attempting and recovering.
 
 // Build a message without raising it, which is what makes the grammar testable.
-#let message(scope, problem, value: none, hint: none) = {
+// Absence of a value is `auto`, not `none`: `none` is itself a value worth
+// reporting, and an empty cell is exactly the case that needs naming.
+#let message(scope, problem, value: auto, hint: none) = {
   let text = scope + ": " + problem
-  if value != none { text = text + "; got " + repr(value) }
+  if value != auto { text = text + "; got " + repr(value) }
   if hint != none { text = text + ". " + hint }
   text
 }
 
-#let fail(scope, problem, value: none, hint: none) = {
+#let fail(scope, problem, value: auto, hint: none) = {
   panic(message(scope, problem, value: value, hint: hint))
 }
 
@@ -32,6 +34,6 @@
   )
 }
 
-#let check(condition, scope, problem, value: none, hint: none) = {
+#let check(condition, scope, problem, value: auto, hint: none) = {
   if not condition { fail(scope, problem, value: value, hint: hint) }
 }

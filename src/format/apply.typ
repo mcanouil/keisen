@@ -5,6 +5,8 @@
 ///! people write. Row position travels on the reserved `_index` key instead of
 ///! a second parameter.
 
+#import "../utils/errors.typ": fail-type
+
 #let matches-column(selector, name) = {
   if selector == auto {
     true
@@ -15,7 +17,7 @@
   } else if type(selector) == function {
     selector(name)
   } else {
-    false
+    fail-type("columns", "selector", selector, "auto, a name, an array of names, or a predicate")
   }
 }
 
@@ -29,7 +31,7 @@
   } else if type(selector) == function {
     selector(row)
   } else {
-    false
+    fail-type("rows", "selector", selector, "auto, an index, an array of indices, or a predicate")
   }
 }
 

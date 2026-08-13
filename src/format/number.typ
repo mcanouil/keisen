@@ -6,13 +6,24 @@
 ///! shortest round-trip string, since `decimal(3.14)` is documented as
 ///! imprecise and warns.
 
-#import "../utils/errors.typ": fail
+#import "../utils/errors.typ": check, fail, fail-enum
 
-// Beyond this magnitude a decimal construction would overflow, and a decimal
-// overflow raises rather than saturating, so the check happens first.
+// A decimal holds 28 to 29 significant digits and raises rather than saturating
+// on overflow, so both ends of the range are checked before construction: too
+// large to represent, and too small to represent without more fractional digits
+// than it has. Typst has no try, so neither can be attempted and recovered.
 #let _limit = 7.9e28
 
 #let _numeric = regex("^[+-]?\d+(\.\d+)?$")
+
+// Digits a decimal literal would need, counting the fractional ones that a
+// leading run of zeroes pushes beyond the scale.
+#let _fits(text) = {
+  let parts = text.trim("-", at: start).trim("+", at: start).split(".")
+  let integer = parts.first().trim("0", at: start)
+  let fraction = if parts.len() > 1 { parts.at(1) } else { "" }
+  integer.len() + fraction.len() <= 28
+}
 
 #let to-decimal(value) = {
   let kind = type(value)
@@ -26,10 +37,12 @@
     let text = str(value)
     // Exponent forms are the scientific formatter's business, not this one's.
     if "e" in text or "E" in text { return none }
+    if not _fits(text) { return none }
     return decimal(text)
   }
   if kind == str {
     if value.match(_numeric) == none { return none }
+    if not _fits(value) { return none }
     return decimal(value)
   }
   none
@@ -38,10 +51,21 @@
 // `digits` may be negative, which rounds to tens, hundreds, and so on; that is
 // how significant-digit formatting reaches the integer part.
 #let round-decimal(value, digits, mode) = {
+  if mode not in ("half-up", "half-even") {
+    fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))
+  }
   if mode == "half-up" { return calc.round(value, digits: digits) }
 
   let scale = calc.pow(decimal(10), calc.abs(digits))
   let shifted = if digits < 0 { value / scale } else { value * scale }
+
+  // The tie test runs through calc.trunc, which returns an int, so a shifted
+  // value beyond the integer range takes plain rounding instead. Nothing that
+  // large can sit on a tie: it has no fractional part left to sit on.
+  if calc.abs(shifted) >= decimal("9223372036854775807") {
+    return calc.round(value, digits: digits)
+  }
+
   let truncated = calc.trunc(shifted)
   let remainder = shifted - decimal(truncated)
 
@@ -56,8 +80,10 @@
   if digits < 0 { decimal(rounded) * scale } else { decimal(rounded) / scale }
 }
 
+// A size of `none` or anything below one means no grouping; a size of zero
+// would otherwise never shorten the remainder and loop forever.
 #let group-digits(digits, size, separator) = {
-  if size == none or digits.len() <= size { return digits }
+  if size == none or size < 1 or digits.len() <= size { return digits }
   let blocks = ()
   let rest = digits
   while rest.len() > size {
@@ -85,7 +111,7 @@
       "format-number",
       "value is not a finite number",
       value: value,
-      hint: "Use substitute-missing for gaps, or format() for anything else.",
+      hint: "Only finite numbers are formatted here; use format() for anything else.",
     )
   }
 
@@ -179,9 +205,16 @@
   rows: rows,
 )
 
-#let format-integer(columns, rows: auto, ..options) = format-number(
-  columns,
-  rows: rows,
-  decimals: 0,
-  ..options,
-)
+// Forwarded options come after `decimals`, and a later named argument wins, so
+// a decimal count is refused rather than quietly turning integers into
+// fractions.
+#let format-integer(columns, rows: auto, ..options) = {
+  let named = options.named()
+  check(
+    "decimals" not in named and "significant" not in named,
+    "format-integer",
+    "decimals and significant do not apply to integers",
+    hint: "Use format-number when a fractional part is wanted.",
+  )
+  format-number(columns, rows: rows, decimals: 0, ..options)
+}

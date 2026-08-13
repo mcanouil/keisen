@@ -22,6 +22,18 @@
 
 #let _validate(spec) = {
   let known = spec.columns + spec.hidden
+
+  // A hidden column that does not exist is a typo, and leaving it unchecked
+  // would whitelist the same typo for every other directive.
+  for name in spec.hidden {
+    check(
+      name in known,
+      "columns-hide",
+      "unknown column " + name,
+      hint: "Hide a column the data actually has.",
+    )
+  }
+
   for name in spec.labels.keys() {
     check(
       name in known,
@@ -40,7 +52,13 @@
 #let build-spec(data, directives, theme) = {
   let spec = _empty
   spec.data = normalise(data)
-  spec.columns = column-names(spec.data)
+  // A column store names its columns even when it holds no rows, so filtered
+  // data still renders its header rather than losing every column.
+  spec.columns = if type(data) == dictionary and spec.data.len() == 0 {
+    data.keys()
+  } else {
+    column-names(spec.data)
+  }
   spec.options = theme
 
   for directive in directives {
