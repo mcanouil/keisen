@@ -23,9 +23,24 @@
   plan.push(entry("labels", level: 2))
 
   // Striping is computed from the body row position here rather than from a
-  // show rule at render time, so its phase survives a page break.
-  for (position, row) in spec.data.enumerate() {
-    plan.push(entry("body", source: position, stripe: calc.odd(position)))
+  // show rule at render time, so its phase survives a page break. It counts
+  // body rows alone, so a group label never takes a stripe or shifts the phase.
+  // Ungrouped data is one nameless block, so both shapes take the same loop.
+  let blocks = if spec.groups.len() == 0 {
+    ((none, range(spec.data.len())),)
+  } else {
+    spec.groups.enumerate().map(((index, group)) => (index, group.rows))
+  }
+
+  let stripe = 0
+  for (index, positions) in blocks {
+    // Level 3: the group label, which repeats until the next group retires it,
+    // so a group spanning a page break reprints its name.
+    if index != none { plan.push(entry("group", level: 3, source: index)) }
+    for position in positions {
+      plan.push(entry("body", source: position, stripe: calc.odd(stripe)))
+      stripe += 1
+    }
   }
 
   for (position, note) in spec.source-notes.enumerate() {

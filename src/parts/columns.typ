@@ -12,3 +12,12 @@
   kind: "hide",
   columns: columns.pos(),
 )
+
+// Reordering is resolved against the column list as it stands when the spec is
+// folded, so directives may be written in any order.
+#let columns-move(columns, before: none, after: none) = (
+  kind: "move",
+  columns: if type(columns) == array { columns } else { (columns,) },
+  before: before,
+  after: after,
+)

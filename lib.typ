@@ -7,7 +7,9 @@
 #import "src/render/assemble.typ": assemble
 #import "src/theme/presets.typ": theme-default
 #import "src/parts/header.typ": table-header
-#import "src/parts/columns.typ": columns-hide, columns-label
+#import "src/parts/stub.typ": table-stub
+#import "src/parts/columns.typ": columns-hide, columns-label, columns-move
+#import "src/parts/spanners.typ": table-spanner
 #import "src/parts/notes.typ": table-source-note
 #import "src/format/number.typ": format, format-integer, format-number
 #import "src/utils/errors.typ": check, fail-type

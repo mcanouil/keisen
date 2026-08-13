@@ -6,46 +6,42 @@
 ///! each directive, which is what makes directive order free.
 
 #import "data.typ": column-names, normalise
-#import "utils/errors.typ": check, fail
+#import "parts/spanners.typ": validate-spanners
+#import "parts/stub.typ": build-groups, stub-column-names
+#import "utils/errors.typ": check, check-column, fail
 
 #let _empty = (
   kind: "display-table",
   data: (),
+  // Every column the data carries, rendered or not, so validation can tell an
+  // unknown name from a hidden one.
+  data-columns: (),
   columns: (),
   hidden: (),
   labels: (:),
   header: (title: none, subtitle: none),
+  stub: (rowname: none, group: none, label: none, indent: none),
+  groups: (),
+  spanners: (),
   formats: (),
   source-notes: (),
   options: (:),
 )
 
 #let _validate(spec) = {
-  let known = spec.columns + spec.hidden
+  let stub-columns = stub-column-names(spec.stub)
+  let known = spec.columns + spec.hidden + stub-columns
+
+  // The stub names data columns, which exist whether or not they are rendered;
+  // everything else names columns the table knows about.
+  for name in stub-columns { check-column(spec.data-columns, "table-stub", name) }
 
   // A hidden column that does not exist is a typo, and leaving it unchecked
   // would whitelist the same typo for every other directive.
-  for name in spec.hidden {
-    check(
-      name in known,
-      "columns-hide",
-      "unknown column " + name,
-      hint: "Hide a column the data actually has.",
-    )
-  }
+  for name in spec.hidden { check-column(spec.data-columns, "columns-hide", name) }
 
-  for name in spec.labels.keys() {
-    check(
-      name in known,
-      "columns-label",
-      "unknown column " + name,
-      hint: if known.len() == 0 {
-        "The data has no columns."
-      } else {
-        "Known columns: " + known.join(", ") + "."
-      },
-    )
-  }
+  for name in spec.labels.keys() { check-column(known, "columns-label", name) }
+
   spec
 }
 
@@ -54,11 +50,12 @@
   spec.data = normalise(data)
   // A column store names its columns even when it holds no rows, so filtered
   // data still renders its header rather than losing every column.
-  spec.columns = if type(data) == dictionary and spec.data.len() == 0 {
+  spec.data-columns = if type(data) == dictionary and spec.data.len() == 0 {
     data.keys()
   } else {
     column-names(spec.data)
   }
+  spec.columns = spec.data-columns
   spec.options = theme
 
   for directive in directives {
@@ -72,11 +69,31 @@
 
     if directive.kind == "header" {
       spec.header = (title: directive.title, subtitle: directive.subtitle)
+    } else if directive.kind == "stub" {
+      spec.stub = directive
+      // The stub columns label the table rather than carry data, so they leave
+      // the column list while staying in the row store for predicates.
+      let promoted = stub-column-names(directive)
+      spec.columns = spec.columns.filter(name => name not in promoted)
     } else if directive.kind == "labels" {
       spec.labels = spec.labels + directive.labels
     } else if directive.kind == "hide" {
       spec.hidden = spec.hidden + directive.columns
       spec.columns = spec.columns.filter(name => name not in directive.columns)
+    } else if directive.kind == "spanner" {
+      spec.spanners.push(directive)
+    } else if directive.kind == "move" {
+      let rest = spec.columns.filter(name => name not in directive.columns)
+      let anchor = if directive.before != none { directive.before } else { directive.after }
+      let at = rest.position(name => name == anchor)
+      check(
+        at != none,
+        "columns-move",
+        "unknown column " + str(anchor),
+        hint: "Move relative to a visible column other than the ones being moved.",
+      )
+      let cut = if directive.before != none { at } else { at + 1 }
+      spec.columns = rest.slice(0, cut) + directive.columns + rest.slice(cut)
     } else if directive.kind == "format" {
       spec.formats.push(directive)
     } else if directive.kind == "source-note" {
@@ -86,10 +103,12 @@
         "display-table",
         "unknown directive",
         value: directive.kind,
-        hint: "This version handles header, labels, hide, format, and source-note.",
+        hint: "This version handles header, stub, labels, hide, move, spanner, format, and source-note.",
       )
     }
   }
 
-  _validate(spec)
+  spec.groups = build-groups(spec.data, spec.stub.group)
+
+  validate-spanners(_validate(spec))
 }
