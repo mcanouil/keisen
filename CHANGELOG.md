@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `cells-*` locations address cells by what the data says, and `table-style()` applies a style to them. (#3)
+- feat: `data-colour()` maps a column onto a palette, choosing readable text over each fill. (#3)
+- feat: `substitute-missing()` and `substitute-zero()` replace values before they reach a formatter. (#3)
+- feat: `table-footnote()` marks cells in reading order, with identical notes sharing one mark. (#3)
+- feat: `format-percent()` formats proportions, with prefix and suffix support in the alignment slots. (#3)
+
 - feat: `display-table()` builds a table from data and directives, or from a pre-built specification. (#1)
 - feat: `table-header()`, `columns-label()`, `columns-hide()`, and `table-source-note()` describe the table parts. (#1)
 - feat: `format()`, `format-number()`, and `format-integer()` format cell values in decimal arithmetic, with half-up and half-even rounding, significant digits, scaling, and digit grouping. (#1)

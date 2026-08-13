@@ -5,6 +5,7 @@
 ///! people write. Row position travels on the reserved `_index` key instead of
 ///! a second parameter.
 
+#import "../parts/substitutions.typ": is-missing, is-zero
 #import "../utils/errors.typ": fail-type
 
 #let matches-column(selector, name) = {
@@ -39,9 +40,26 @@
 // column, then override a few rows" read in the order it is written. Formatters
 // always see the raw value, never an already-formatted one, so replacing rather
 // than composing is safe.
-#let apply-formats(rows, formats, name) = {
+// Substitutions are tested before formatting, so a gap never reaches a
+// formatter that would refuse it, and a substituted cell is opaque content.
+#let _substitution(substitutions, name, row, value) = {
+  let chosen = none
+  for directive in substitutions {
+    if not matches-column(directive.columns, name) { continue }
+    if not matches-row(directive.rows, row) { continue }
+    let applies = if directive.test == "missing" { is-missing(value) } else { is-zero(value) }
+    if applies { chosen = directive }
+  }
+  chosen
+}
+
+#let apply-formats(rows, formats, name, substitutions: ()) = {
   rows.map(row => {
     let value = row.at(name, default: none)
+
+    let substitution = _substitution(substitutions, name, row, value)
+    if substitution != none { return substitution.replacement }
+
     let chosen = none
     for directive in formats {
       if matches-column(directive.columns, name) and matches-row(directive.rows, row) {

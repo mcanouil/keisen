@@ -10,8 +10,16 @@
 #import "src/parts/stub.typ": table-stub
 #import "src/parts/columns.typ": columns-hide, columns-label, columns-move
 #import "src/parts/spanners.typ": table-spanner
-#import "src/parts/notes.typ": table-source-note
+#import "src/parts/notes.typ": table-footnote, table-source-note
+#import "src/parts/substitutions.typ": substitute-missing, substitute-zero
+#import "src/parts/colour.typ": data-colour
+#import "src/style.typ": style, table-style
+#import "src/locations.typ": (
+  cells-body, cells-column-labels, cells-column-spanners, cells-row-groups, cells-source-notes,
+  cells-stub, cells-stubhead, cells-title,
+)
 #import "src/format/number.typ": format, format-integer, format-number
+#import "src/format/percent.typ": format-percent
 #import "src/utils/errors.typ": check, fail-type
 
 // Build a display table from data and any number of directives.

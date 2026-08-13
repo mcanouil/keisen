@@ -24,6 +24,10 @@
   groups: (),
   spanners: (),
   formats: (),
+  styles: (),
+  substitutions: (),
+  colours: (),
+  footnotes: (),
   source-notes: (),
   options: (:),
 )
@@ -131,6 +135,14 @@
       spec.columns = rest.slice(0, cut) + directive.columns + rest.slice(cut)
     } else if directive.kind == "format" {
       spec.formats.push(directive)
+    } else if directive.kind == "style" {
+      spec.styles.push(directive)
+    } else if directive.kind == "substitute" {
+      spec.substitutions.push(directive)
+    } else if directive.kind == "colour" {
+      spec.colours.push(directive)
+    } else if directive.kind == "footnote" {
+      spec.footnotes.push(directive)
     } else if directive.kind == "source-note" {
       spec.source-notes.push(directive.note)
     } else {
@@ -138,7 +150,7 @@
         "display-table",
         "unknown directive",
         value: directive.kind,
-        hint: "This version handles header, stub, labels, hide, move, spanner, format, and source-note.",
+        hint: "This version handles header, stub, labels, hide, move, spanner, format, style, substitute, colour, footnote, and source-note.",
       )
     }
   }

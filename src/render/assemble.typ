@@ -6,9 +6,12 @@
 ///! Every cell is emitted explicitly, which gives one place where fills,
 ///! alignment, and strokes are decided.
 
-#import "../format/apply.typ": apply-formats
+#import "../format/apply.typ": apply-formats, matches-column
 #import "../data.typ": column
+#import "../parts/colour.typ": colour-styles
+#import "../parts/marks.typ": assign-marks, marks-for
 #import "../parts/spanners.typ": spanner-rows
+#import "../style.typ": build-index, style-for
 #import "plan.typ": build-plan
 
 // Numeric columns sit against the end edge, everything else against the start
@@ -37,20 +40,57 @@
   [#value]
 }
 
+#let _cell(properties, body, align: none, colspan: 1) = {
+  table.cell(
+    colspan: colspan,
+    align: properties.at("align", default: align),
+    fill: properties.at("fill", default: none),
+    inset: properties.at("inset", default: auto),
+    stroke: properties.at("stroke", default: none),
+    if "text" in properties { text(..properties.text, body) } else { body },
+  )
+}
+
+// A mark rides above the value, after any substitution, so it survives whatever
+// the cell turned out to be.
+#let _marked(body, marks) = {
+  if marks.len() == 0 { return body }
+  body + super(marks.join([,]))
+}
+
 #let assemble(spec) = {
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
   let plan = build-plan(spec)
   let indices = range(names.len())
-  let cells = names.map(name => apply-formats(spec.data, spec.formats, name))
+  let cells = names.map(name => apply-formats(
+    spec.data,
+    spec.formats,
+    name,
+    substitutions: spec.substitutions,
+  ))
+  let footnotes = assign-marks(spec)
+
+  // Data-driven colour resolves per column and merges under explicit styling,
+  // so table-style always wins over a gradient.
+  let index = spec.colours.fold(build-index(spec), (index, directive) => {
+    let out = index
+    for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
+      for (position, properties) in colour-styles(directive, spec.data, name) {
+        let key = "body|" + position + "|" + repr(name)
+        out.insert(key, properties + out.at(key, default: (:)))
+      }
+    }
+    out
+  })
   let alignments = names.map(name => infer-alignment(spec.data, name))
   let levels = spanner-rows(spec)
 
   // The stub goes through the same formatting pipeline as every other column,
   // so a format directive naming the row-name column takes effect there too.
   let stub-cells = if has-stub {
-    apply-formats(spec.data, spec.formats, spec.stub.rowname)
+    apply-formats(spec.data, spec.formats, spec.stub.rowname, substitutions: spec.substitutions)
   } else { () }
   let indents = if spec.stub.indent == none { () } else {
     column(spec.data, spec.stub.indent)
@@ -58,9 +98,14 @@
 
   let full(body) = table.cell(colspan: width, body)
 
+  let titled(name, body) = full(_marked(
+    body,
+    marks-for(footnotes, "title", none, name),
+  ))
+
   let head = ()
-  if spec.header.title != none { head.push(full(strong(spec.header.title))) }
-  if spec.header.subtitle != none { head.push(full(spec.header.subtitle)) }
+  if spec.header.title != none { head.push(titled("title", strong(spec.header.title))) }
+  if spec.header.subtitle != none { head.push(titled("subtitle", spec.header.subtitle)) }
 
   // Spanner rows sit above the column labels inside the same repeating header,
   // highest level first, with an empty cell over the stub column. The plan says
@@ -69,11 +114,13 @@
   for entry in plan.filter(entry => entry.part == "spanner") {
     if has-stub { labels.push(table.cell([])) }
     for cell in levels.at(entry.source) {
-      labels.push(table.cell(
-        colspan: cell.span,
-        align: center,
-        if cell.label == none { [] } else { strong(cell.label) },
-      ))
+      let body = if cell.label == none { [] } else {
+        _marked(
+          strong(cell.label),
+          marks-for(footnotes, "column-spanners", entry.source + 1, cell.label),
+        )
+      }
+      labels.push(table.cell(colspan: cell.span, align: center, body))
     }
   }
 
@@ -87,12 +134,20 @@
       spec.labels.at(spec.stub.rowname, default: none)
     }
     let stubhead = if label == none { [] } else { strong(label) }
-    labels.push(table.cell(align: start, stubhead))
+    labels.push(_cell(
+      style-for(index, "stubhead", none, none),
+      _marked(stubhead, marks-for(footnotes, "stubhead", none, none)),
+      align: start,
+    ))
   }
-  for (index, name) in names.enumerate() {
-    labels.push(table.cell(
-      align: alignments.at(index),
-      strong(spec.labels.at(name, default: [#name])),
+  for (position, name) in names.enumerate() {
+    labels.push(_cell(
+      style-for(index, "column-labels", none, name),
+      _marked(
+        strong(spec.labels.at(name, default: [#name])),
+        marks-for(footnotes, "column-labels", none, name),
+      ),
+      align: alignments.at(position),
     ))
   }
 
@@ -102,7 +157,16 @@
   for entry in plan {
     if entry.part == "group" {
       let label = spec.groups.at(entry.source).label
-      rows.push(table.header(level: entry.level, repeat: true, full(strong([#label]))))
+      rows.push(table.header(
+        level: entry.level,
+        repeat: true,
+        _cell(
+          style-for(index, "row-groups", entry.source, none),
+          _marked(strong([#label]), marks-for(footnotes, "row-groups", entry.source, none)),
+          align: start,
+          colspan: width,
+        ),
+      ))
     } else if entry.part == "body" {
       if has-stub {
         let depth = if indents.len() == 0 { 0 } else {
@@ -110,18 +174,41 @@
           if level == none { 0 } else { level }
         }
         let name = slots-to-content(stub-cells.at(entry.source))
-        rows.push(table.cell(align: start, if depth == 0 { name } else { h(1em * depth) + name }))
+        let body = if depth == 0 { name } else { h(1em * depth) + name }
+        rows.push(_cell(
+          style-for(index, "stub", entry.source, none),
+          _marked(body, marks-for(footnotes, "stub", entry.source, none)),
+          align: start,
+        ))
       }
-      for index in indices {
-        rows.push(table.cell(
-          align: alignments.at(index),
-          slots-to-content(cells.at(index).at(entry.source)),
+      for position in indices {
+        let name = names.at(position)
+        rows.push(_cell(
+          style-for(index, "body", entry.source, name),
+          _marked(
+            slots-to-content(cells.at(position).at(entry.source)),
+            marks-for(footnotes, "body", entry.source, name),
+          ),
+          align: alignments.at(position),
         ))
       }
     }
   }
 
-  let notes = spec.source-notes.map(note => full(text(size: 0.8em, note)))
+  let notes = ()
+  for (position, note) in spec.source-notes.enumerate() {
+    notes.push(full(text(
+      size: 0.8em,
+      _marked(note, marks-for(footnotes, "source-notes", position, none)),
+    )))
+  }
+  // Marked notes print under the source notes, each behind its own mark.
+  for footnote in footnotes.filter(footnote => footnote.mark != none) {
+    notes.push(full(text(size: 0.8em, super(footnote.mark) + footnote.note)))
+  }
+  for footnote in footnotes.filter(footnote => footnote.mark == none) {
+    notes.push(full(text(size: 0.8em, footnote.note)))
+  }
 
   table(
     columns: width,
