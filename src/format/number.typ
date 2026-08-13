@@ -137,3 +137,51 @@
     suffix: none,
   )
 }
+
+// `columns` is a required positional argument throughout the format family:
+// Typst positional parameters cannot carry defaults, so "every column" is
+// written explicitly as `auto`.
+#let format(columns, function, rows: auto) = (
+  kind: "format",
+  columns: columns,
+  rows: rows,
+  function: function,
+)
+
+#let format-number(
+  columns,
+  rows: auto,
+  decimals: 2,
+  significant: none,
+  grouping: 3,
+  group-separator: sym.space.thin,
+  decimal-separator: ".",
+  scale: 1,
+  sign: false,
+  rounding: "half-up",
+  negative-zero: false,
+) = format(
+  columns,
+  value => format-value(
+    value,
+    (
+      decimals: decimals,
+      significant: significant,
+      grouping: grouping,
+      group-separator: group-separator,
+      decimal-separator: decimal-separator,
+      scale: scale,
+      sign: sign,
+      rounding: rounding,
+      negative-zero: negative-zero,
+    ),
+  ),
+  rows: rows,
+)
+
+#let format-integer(columns, rows: auto, ..options) = format-number(
+  columns,
+  rows: rows,
+  decimals: 0,
+  ..options,
+)
