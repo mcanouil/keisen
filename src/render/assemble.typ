@@ -12,6 +12,7 @@
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, marks-for
 #import "../parts/spanners.typ": spanner-rows
+#import "../parts/substitutions.typ": is-missing, is-zero
 #import "../parts/summaries.typ": summary-values
 #import "../style.typ": build-index, style-for
 #import "plan.typ": build-plan
@@ -108,8 +109,23 @@
   let alignments = names.map(name => spec.align.at(name, default: infer-alignment(spec.data, name)))
   // Measuring needs context, which the table body has; the metrics are computed
   // once per column rather than once per cell.
+  let summary-slots(name) = {
+    let covering = spec.formats.filter(directive => (
+      matches-column(directive.columns, name) and directive.rows == auto
+    ))
+    let format-one(entry) = {
+      let value = entry.values.at(name, default: none)
+      if value == none { return none }
+      if entry.format != none { return (entry.format.function)(value) }
+      if covering.len() == 0 { return value }
+      (covering.last().function)(value)
+    }
+    let entries = summaries.groups.flatten() + summaries.grand
+    entries.map(format-one).filter(slots => slots != none)
+  }
+
   let metrics = if spec.options.at("decimal-align", default: true) {
-    cells.map(column-metrics)
+    names.enumerate().map(((position, name)) => column-metrics(cells.at(position) + summary-slots(name)))
   } else {
     names.map(name => none)
   }
@@ -117,13 +133,31 @@
 
   // A summary cell formats through the same path as the body cells above it,
   // either by its own format or by whichever directive covers the column.
-  let summarised(entry, name) = {
+  let summarised(entry, name, metric) = {
     let value = entry.values.at(name, default: none)
+
+    // A substitution that covers the whole column covers its summary too.
+    let replacing = spec.substitutions.filter(directive => (
+      matches-column(directive.columns, name) and directive.rows == auto
+    ))
+    for directive in replacing {
+      let applies = if directive.test == "missing" { is-missing(value) } else { is-zero(value) }
+      if applies { return directive.replacement }
+    }
+
     if value == none { return [] }
-    if entry.format != none { return slots-to-content((entry.format.function)(value)) }
-    let covering = spec.formats.filter(directive => matches-column(directive.columns, name))
-    if covering.len() == 0 { return slots-to-content(value) }
-    slots-to-content((covering.last().function)(value))
+
+    let slots = if entry.format != none {
+      (entry.format.function)(value)
+    } else {
+      // Only directives covering the whole column apply: one aimed at a row has
+      // no summary row to aim at.
+      let covering = spec.formats.filter(directive => (
+        matches-column(directive.columns, name) and directive.rows == auto
+      ))
+      if covering.len() == 0 { value } else { (covering.last().function)(value) }
+    }
+    slots-to-content(align-slots(slots, metric))
   }
 
   let summary-row(entry, part, row-key) = {
@@ -138,7 +172,7 @@
     for (position, name) in names.enumerate() {
       cells.push(_cell(
         style-for(index, part, row-key, name),
-        summarised(entry, name),
+        summarised(entry, name, metrics.at(position)),
         align: alignments.at(position),
       ))
     }
@@ -225,7 +259,14 @@
       let group = summaries.groups.at(entry.source.group)
       rows += summary-row(group.at(entry.source.row), "summary", entry.source)
     } else if entry.part == "grand-summary" {
-      rows += summary-row(summaries.grand.at(entry.source), "grand-summary", entry.source)
+      // Wrapped in a non-repeating header of the same level as a group label, so
+      // the last group's label is retired: a repeated "South" above the grand
+      // total would say the total belongs to South.
+      rows.push(table.header(
+        level: 3,
+        repeat: false,
+        ..summary-row(summaries.grand.at(entry.source), "grand-summary", entry.source),
+      ))
     } else if entry.part == "body" {
       if has-stub {
         let depth = if indents.len() == 0 { 0 } else {
@@ -242,10 +283,14 @@
       }
       for position in indices {
         let name = names.at(position)
+        let properties = style-for(index, "body", entry.source, name)
+        // Padding measured in the surrounding text style would be wrong under a
+        // style that changes the text, and a too-narrow box wraps the number.
+        let metric = if "text" in properties { none } else { metrics.at(position) }
         rows.push(_cell(
-          style-for(index, "body", entry.source, name),
+          properties,
           _marked(
-            slots-to-content(align-slots(cells.at(position).at(entry.source), metrics.at(position))),
+            slots-to-content(align-slots(cells.at(position).at(entry.source), metric)),
             marks-for(footnotes, "body", entry.source, name),
           ),
           align: alignments.at(position),

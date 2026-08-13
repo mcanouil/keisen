@@ -7,15 +7,18 @@
 
 #import "../data.typ": column
 #import "../format/apply.typ": matches-column
+#import "../format/number.typ": to-decimal
 #import "../utils/errors.typ": check
+#import "substitutions.typ": is-missing
 
 // Gaps are skipped rather than poisoning the result: a column with one missing
-// reading still has a mean.
-#let _numbers(values) = {
-  values
-    .filter(value => type(value) in (int, float, decimal))
-    .map(value => if type(value) == decimal { float(value) } else { value })
-}
+// reading still has a mean. Values arrive through the same door the formatters
+// use, so a column of numeric strings aggregates as readily as it formats.
+#let _numbers(values) = values.map(to-decimal).filter(value => value != none)
+
+// Division and roots leave the decimal world, so the conversion happens at the
+// point of arithmetic rather than on the way in: sum, min, and max stay exact.
+#let _floats(values) = _numbers(values).map(float)
 
 #let aggregate-sum(values) = {
   let numbers = _numbers(values)
@@ -23,10 +26,11 @@
   numbers.sum()
 }
 
-#let aggregate-count(values) = _numbers(values).len()
+// Every value that is present, of whatever type: a column of names has a count.
+#let aggregate-count(values) = values.filter(value => not is-missing(value)).len()
 
 #let aggregate-mean(values) = {
-  let numbers = _numbers(values)
+  let numbers = _floats(values)
   if numbers.len() == 0 { return none }
   numbers.sum() / numbers.len()
 }
@@ -52,7 +56,7 @@
     "probability must lie between 0 and 1",
     value: probability,
   )
-  let numbers = _numbers(values).sorted()
+  let numbers = _floats(values).sorted()
   if numbers.len() == 0 { return none }
   if numbers.len() == 1 { return numbers.first() }
   let position = probability * (numbers.len() - 1)
@@ -66,7 +70,7 @@
 
 // The sample definition, with n - 1 in the denominator.
 #let aggregate-standard-deviation(values) = {
-  let numbers = _numbers(values)
+  let numbers = _floats(values)
   if numbers.len() < 2 { return none }
   let mean = numbers.sum() / numbers.len()
   calc.sqrt(numbers.map(value => calc.pow(value - mean, 2)).sum() / (numbers.len() - 1))
@@ -95,6 +99,18 @@
 // How many rows a set of summary directives produces: one per named function.
 #let summary-count(directives) = directives.map(directive => directive.functions.len()).sum(default: 0)
 
+// Directives that apply to one group, so a groups selector actually narrows the
+// rows it produces.
+#let directives-for(directives, label) = {
+  directives.filter(directive => {
+    let selector = directive.groups
+    if selector == auto { true }
+    else if type(selector) == array { label in selector }
+    else if type(selector) == function { selector(label) }
+    else { selector == label }
+  })
+}
+
 // One entry per summary row: its label and the aggregated value per column.
 #let _rows-for(directives, rows, columns) = {
   directives
@@ -117,7 +133,7 @@
 // Summaries per group, in group order, and then for the body as a whole.
 #let summary-values(spec) = {
   let groups = spec.groups.map(group => _rows-for(
-    spec.summaries,
+    directives-for(spec.summaries, group.label),
     group.rows.map(position => spec.data.at(position)),
     spec.columns,
   ))

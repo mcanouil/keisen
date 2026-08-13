@@ -6,7 +6,7 @@
 ///! arithmetic of its own.
 
 #import "../parts/spanners.typ": spanner-rows
-#import "../parts/summaries.typ": summary-count
+#import "../parts/summaries.typ": directives-for, summary-count
 
 #let entry(part, level: none, source: none, stripe: false) = (
   part: part,
@@ -51,7 +51,8 @@
     // Group summaries close their group. They are not body rows, so they take
     // no stripe and do not shift the phase of the rows below.
     if grouped {
-      for row in range(summary-count(spec.summaries)) {
+      let applicable = directives-for(spec.summaries, spec.groups.at(index).label)
+      for row in range(summary-count(applicable)) {
         plan.push(entry("summary", source: (group: index, row: row)))
       }
     }

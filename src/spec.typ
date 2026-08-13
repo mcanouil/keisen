@@ -71,6 +71,7 @@
 
   for name in spec.labels.keys() { check-column(known, "columns-label", name) }
   for name in spec.widths.keys() { check-column(known, "columns-width", name) }
+  for name in spec.align.keys() { check-column(known, "columns-align", name) }
 
   spec
 }
@@ -157,10 +158,22 @@
     } else if directive.kind == "footnote" {
       spec.footnotes.push(directive)
     } else if directive.kind == "width" {
+      check(
+        type(directive.widths) == dictionary,
+        "columns-width",
+        "widths must map column names to lengths",
+        value: directive.widths,
+      )
       spec.widths = spec.widths + directive.widths
     } else if directive.kind == "align" {
-      for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
-        spec.align.insert(name, directive.alignment)
+      // Named columns are recorded as given so an unknown name is reported;
+      // a selector matching nothing would otherwise be silent.
+      if type(directive.columns) == str {
+        spec.align.insert(directive.columns, directive.alignment)
+      } else {
+        for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
+          spec.align.insert(name, directive.alignment)
+        }
       }
     } else if directive.kind == "summary" {
       if directive.scope == "group" {
