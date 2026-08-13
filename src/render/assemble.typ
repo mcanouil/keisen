@@ -15,6 +15,7 @@
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../parts/summaries.typ": summary-values
 #import "../style.typ": build-index, style-for
+#import "../theme/options.typ": option
 #import "plan.typ": build-plan
 
 // Numeric columns sit against the end edge, everything else against the start
@@ -43,13 +44,15 @@
   [#value]
 }
 
-#let _cell(properties, body, align: auto, colspan: 1) = {
+// `fill` and `stroke` arrive from the theme and the row plan; an explicit style
+// overrides either, which is why the style dictionary is read last.
+#let _cell(properties, body, align: auto, colspan: 1, fill: none, stroke: none) = {
   table.cell(
     colspan: colspan,
     align: properties.at("align", default: align),
-    fill: properties.at("fill", default: none),
+    fill: properties.at("fill", default: fill),
     inset: properties.at("inset", default: auto),
-    stroke: properties.at("stroke", default: none),
+    stroke: properties.at("stroke", default: stroke),
     if "text" in properties { text(..properties.text, body) } else { body },
   )
 }
@@ -62,6 +65,7 @@
 }
 
 #let assemble(spec) = context {
+  let setting(name) = option(spec.options, name)
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
@@ -160,13 +164,29 @@
     slots-to-content(align-slots(slots, metric))
   }
 
+  let top-border(part) = {
+    if part == "group" { setting("row-group-border-top") }
+    else if part == "summary" { setting("summary-border-top") }
+    else if part == "grand-summary" { setting("grand-summary-border-top") }
+    else { none }
+  }
+
+  let stripe-fill(entry) = {
+    if entry.part != "body" { return none }
+    if not setting("row-striping") { return none }
+    if entry.stripe { setting("row-striping-fill") } else { none }
+  }
+
   let summary-row(entry, part, row-key) = {
     let cells = ()
+    let rule = (top: top-border(part))
     if has-stub {
       cells.push(_cell(
         style-for(index, part, row-key, none),
-        strong([#entry.label]),
+        text(weight: setting("summary-weight"), [#entry.label]),
         align: start,
+        fill: setting("summary-fill"),
+        stroke: rule,
       ))
     }
     for (position, name) in names.enumerate() {
@@ -174,6 +194,8 @@
         style-for(index, part, row-key, name),
         summarised(entry, name, metrics.at(position)),
         align: alignments.at(position),
+        fill: setting("summary-fill"),
+        stroke: rule,
       ))
     }
     cells
@@ -186,8 +208,15 @@
   )
 
   let head = ()
-  if spec.header.title != none { head.push(titled("title", strong(spec.header.title))) }
-  if spec.header.subtitle != none { head.push(titled("subtitle", spec.header.subtitle)) }
+  if spec.header.title != none {
+    head.push(titled(
+      "title",
+      text(size: setting("header-title-size"), weight: setting("header-title-weight"), spec.header.title),
+    ))
+  }
+  if spec.header.subtitle != none {
+    head.push(titled("subtitle", text(size: setting("header-subtitle-size"), spec.header.subtitle)))
+  }
 
   // Spanner rows sit above the column labels inside the same repeating header,
   // highest level first, with an empty cell over the stub column. The plan says
@@ -232,7 +261,7 @@
     labels.push(_cell(
       style-for(index, "column-labels", none, name),
       _marked(
-        strong(spec.labels.at(name, default: [#name])),
+        text(weight: setting("column-labels-weight"), size: setting("column-labels-size"), spec.labels.at(name, default: [#name])),
         marks-for(footnotes, "column-labels", none, name),
       ),
       align: alignments.at(position),
@@ -250,9 +279,14 @@
         repeat: true,
         _cell(
           style-for(index, "row-groups", entry.source, none),
-          _marked(strong([#label]), marks-for(footnotes, "row-groups", entry.source, none)),
+          _marked(
+            text(weight: setting("row-group-weight"), [#label]),
+            marks-for(footnotes, "row-groups", entry.source, none),
+          ),
           align: start,
           colspan: width,
+          fill: setting("row-group-fill"),
+          stroke: (top: top-border("group")),
         ),
       ))
     } else if entry.part == "summary" {
@@ -279,6 +313,7 @@
           style-for(index, "stub", entry.source, none),
           _marked(body, marks-for(footnotes, "stub", entry.source, none)),
           align: start,
+          fill: stripe-fill(entry),
         ))
       }
       for position in indices {
@@ -294,6 +329,7 @@
             marks-for(footnotes, "body", entry.source, name),
           ),
           align: alignments.at(position),
+          fill: stripe-fill(entry),
         ))
       }
     }
@@ -303,25 +339,35 @@
   for (position, note) in spec.source-notes.enumerate() {
     notes.push(_cell(
       style-for(index, "source-notes", position, none),
-      text(size: 0.8em, _marked(note, marks-for(footnotes, "source-notes", position, none))),
+      text(size: setting("source-note-size"), _marked(note, marks-for(footnotes, "source-notes", position, none))),
       colspan: width,
+      stroke: if position == 0 { (top: setting("footer-border-top")) } else { none },
     ))
   }
   // Marked notes print under the source notes, each behind its own mark.
   for footnote in footnotes.filter(footnote => footnote.mark != none) {
-    notes.push(full(text(size: 0.8em, super(footnote.mark) + footnote.note)))
+    notes.push(full(text(size: setting("footnote-size"), super(footnote.mark) + footnote.note)))
   }
   for footnote in footnotes.filter(footnote => footnote.mark == none) {
-    notes.push(full(text(size: 0.8em, footnote.note)))
+    notes.push(full(text(size: setting("footnote-size"), footnote.note)))
   }
 
   // A named width wins; everything else sizes itself, including the stub.
   let tracks = if has-stub { (spec.widths.at(spec.stub.rowname, default: auto),) } else { () }
   for name in names { tracks.push(spec.widths.at(name, default: auto)) }
 
+  // Part borders are read off the row plan: the plan already knows which row
+  // opens the body, closes a group, or begins the footer.
+
   table(
     columns: tracks,
-    stroke: none,
+    inset: setting("cell-inset"),
+    // The table's own rules sit outside the parts, so they are set here rather
+    // than on the first and last cells, which move as parts come and go.
+    stroke: (x, y) => (
+      top: if y == 0 { setting("table-border-top") } else { none },
+      bottom: if y == plan.len() - 1 { setting("table-border-bottom") } else { none },
+    ),
     ..if head.len() > 0 { (table.header(level: 1, repeat: false, ..head),) } else { () },
     ..if labels.len() > 0 { (table.header(level: 2, repeat: true, ..labels),) } else { () },
     ..rows,

@@ -157,6 +157,8 @@
       spec.colours.push(directive)
     } else if directive.kind == "footnote" {
       spec.footnotes.push(directive)
+    } else if directive.kind == "options" {
+      spec.options = spec.options + directive.options
     } else if directive.kind == "width" {
       check(
         type(directive.widths) == dictionary,

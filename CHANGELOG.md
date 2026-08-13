@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `table-options()` and the `theme-default`, `theme-booktabs`, `theme-compact`, and `theme-minimal` presets set borders, fills, striping, insets, and sizes. (#5)
+- feat: `format-nanoplot()` draws in-cell plots through any renderer, sharing one domain down the column so cells can be compared. (#5)
+- feat: `src/integrations/gribouille.typ` provides `nanoplot-line`, `nanoplot-bar`, and `nanoplot-points`, and is the only file importing a third-party package. (#5)
+
 - feat: `summary-rows()` and `grand-summary-rows()` aggregate raw values into rows at the end of each group and of the body. (#4)
 - feat: `aggregate-sum`, `-mean`, `-median`, `-min`, `-max`, `-count`, `-standard-deviation`, and `-quantile` cover the common aggregations, and any `values => value` closure works in their place. (#4)
 - feat: numeric columns align on their decimal separator, measured per column rather than per cell. (#4)

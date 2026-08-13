@@ -5,7 +5,8 @@
 
 #import "src/spec.typ": build-spec
 #import "src/render/assemble.typ": assemble
-#import "src/theme/presets.typ": theme-default
+#import "src/theme/presets.typ": theme-booktabs, theme-compact, theme-default, theme-minimal
+#import "src/theme/options.typ": table-options
 #import "src/parts/header.typ": table-header
 #import "src/parts/stub.typ": table-stub
 #import "src/parts/summaries.typ": (
@@ -24,6 +25,7 @@
 )
 #import "src/format/number.typ": format, format-integer, format-number
 #import "src/format/percent.typ": format-percent
+#import "src/format/nanoplot.typ": format-nanoplot
 #import "src/utils/errors.typ": check, fail-type
 
 // Build a display table from data and any number of directives.
