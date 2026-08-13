@@ -19,16 +19,25 @@
   target: "fill",
   missing: none,
   reverse: false,
-) = (
+) = {
+  let stops = if type(palette) == array { palette.map(_colour) } else { (_colour(palette),) }
+  check(
+    stops.len() > 0,
+    "data-colour",
+    "the palette is empty",
+    hint: "Give at least one colour, or two for a gradient.",
+  )
+  (
   kind: "colour",
-  palette: if type(palette) == array { palette.map(_colour) } else { (_colour(palette),) },
+  palette: stops,
   columns: columns,
   rows: rows,
   domain: domain,
   target: target,
   missing: missing,
   reverse: reverse,
-)
+  )
+}
 
 // The domain spans every matching row in the column, not each group separately:
 // per-group scaling is one data-colour per group with a rows predicate, which
@@ -63,7 +72,14 @@
     let value = row.at(name, default: none)
     if type(value) not in (int, float, decimal) {
       if directive.missing != none {
-        styles.insert(str(row._index), (fill: directive.missing))
+        styles.insert(
+          str(row._index),
+          if directive.target == "fill" {
+            (fill: directive.missing, text: (fill: readable-on(directive.missing)))
+          } else {
+            (text: (fill: directive.missing))
+          },
+        )
       }
       continue
     }

@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - feat: `substitute-missing()` and `substitute-zero()` replace values before they reach a formatter. (#3)
 - feat: `table-footnote()` marks cells in reading order, with identical notes sharing one mark. (#3)
 - feat: `format-percent()` formats proportions, with prefix and suffix support in the alignment slots. (#3)
+- fix: footnote marks follow the order a reader meets the cells, so grouping no longer numbers them out of sequence, and two marks on one row read left to right. (#3)
+- fix: a footnote on a spanner above level one takes its mark. (#3)
+- fix: an explicit style no longer drops the text colour `data-colour()` chose for contrast. (#3)
+- fix: styles on the title, spanners, and source notes are applied rather than resolved and discarded. (#3)
+- fix: an empty palette, a `table-style()` with no locations, and a `data-colour()` missing colour that ignored its target are all handled. (#3)
 
 - feat: `display-table()` builds a table from data and directives, or from a pre-built specification. (#1)
 - feat: `table-header()`, `columns-label()`, `columns-hide()`, and `table-source-note()` describe the table parts. (#1)

@@ -20,7 +20,6 @@
 // Black or white, whichever the eye reads more easily on `background`, using
 // the relative luminance the WCAG contrast ratio is built on.
 #let readable-on(background) = {
-  let parts = background.to-hex().clusters()
   let channel(text) = {
     let value = int(text, base: 16) / 255
     if value <= 0.03928 { value / 12.92 } else { calc.pow((value + 0.055) / 1.055, 2.4) }

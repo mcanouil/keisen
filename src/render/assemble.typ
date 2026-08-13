@@ -40,7 +40,7 @@
   [#value]
 }
 
-#let _cell(properties, body, align: none, colspan: 1) = {
+#let _cell(properties, body, align: auto, colspan: 1) = {
   table.cell(
     colspan: colspan,
     align: properties.at("align", default: align),
@@ -79,7 +79,14 @@
     for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
       for (position, properties) in colour-styles(directive, spec.data, name) {
         let key = "body|" + position + "|" + repr(name)
-        out.insert(key, properties + out.at(key, default: (:)))
+        let explicit = out.at(key, default: (:))
+        // Deep-merge the text dictionary: a shallow merge would replace it
+        // wholesale and take the contrast fill with it, leaving black on black.
+        let merged = properties + explicit
+        if "text" in properties and "text" in explicit {
+          merged.insert("text", properties.text + explicit.text)
+        }
+        out.insert(key, merged)
       }
     }
     out
@@ -98,10 +105,11 @@
 
   let full(body) = table.cell(colspan: width, body)
 
-  let titled(name, body) = full(_marked(
-    body,
-    marks-for(footnotes, "title", none, name),
-  ))
+  let titled(name, body) = _cell(
+    style-for(index, "title", none, name),
+    _marked(body, marks-for(footnotes, "title", none, name)),
+    colspan: width,
+  )
 
   let head = ()
   if spec.header.title != none { head.push(titled("title", strong(spec.header.title))) }
@@ -113,14 +121,20 @@
   let labels = ()
   for entry in plan.filter(entry => entry.part == "spanner") {
     if has-stub { labels.push(table.cell([])) }
-    for cell in levels.at(entry.source) {
+    let row = levels.at(entry.source)
+    for cell in row.cells {
       let body = if cell.label == none { [] } else {
         _marked(
           strong(cell.label),
-          marks-for(footnotes, "column-spanners", entry.source + 1, cell.label),
+          marks-for(footnotes, "column-spanners", row.level, cell.label),
         )
       }
-      labels.push(table.cell(colspan: cell.span, align: center, body))
+      labels.push(_cell(
+        style-for(index, "column-spanners", row.level, cell.label),
+        body,
+        align: center,
+        colspan: cell.span,
+      ))
     }
   }
 
@@ -197,10 +211,11 @@
 
   let notes = ()
   for (position, note) in spec.source-notes.enumerate() {
-    notes.push(full(text(
-      size: 0.8em,
-      _marked(note, marks-for(footnotes, "source-notes", position, none)),
-    )))
+    notes.push(_cell(
+      style-for(index, "source-notes", position, none),
+      text(size: 0.8em, _marked(note, marks-for(footnotes, "source-notes", position, none))),
+      colspan: width,
+    ))
   }
   // Marked notes print under the source notes, each behind its own mark.
   for footnote in footnotes.filter(footnote => footnote.mark != none) {

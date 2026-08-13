@@ -67,9 +67,13 @@
   if selector == auto {
     true
   } else if type(selector) == array {
-    label in selector
+    selector.any(candidate => _matches-label(candidate, label))
   } else if type(selector) == function {
     selector(label)
+  } else if type(label) == str and type(selector) in (int, float) {
+    // Group labels are strings even when the column held numbers, so a numeric
+    // selector matches the label it obviously means.
+    str(selector) == label
   } else {
     selector == label
   }
@@ -108,7 +112,7 @@
   } else if part == "source-notes" {
     spec.source-notes
       .enumerate()
-      .filter(((index, note)) => location.notes == auto or index == location.notes)
+      .filter(((index, note)) => matches-row(location.notes, (_index: index)))
       .map(((index, note)) => _address("source-notes", row: index))
   } else {
     fail("locations", "unknown location part", value: part)

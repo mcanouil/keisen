@@ -5,7 +5,7 @@
 ///! directives times cells on a table where both grow.
 
 #import "locations.typ": expand
-#import "utils/errors.typ": fail-type
+#import "utils/errors.typ": fail, fail-type
 
 // Only the properties actually set appear, so merging a later style over an
 // earlier one leaves untouched properties alone.
@@ -37,6 +37,15 @@
 #let build-index(spec) = {
   let index = (:)
   for directive in spec.styles {
+    // A style with nowhere to go is a mistake worth naming: silently styling
+    // nothing would look like the style itself failing.
+    if directive.locations == none {
+      fail(
+        "table-style",
+        "no locations given",
+        hint: "Name cells with cells-body(), cells-column-labels(), and the rest.",
+      )
+    }
     for address in expand(directive.locations, spec) {
       let key = _key(address.part, address.row, address.column)
       // Later directives win property by property, which makes "style the

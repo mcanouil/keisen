@@ -76,7 +76,7 @@
   let levels = spec.spanners.map(spanner => spanner.level).dedup().sorted().rev()
   let width = spec.columns.len()
 
-  levels.map(level => {
+  levels.map(level => (level: level, cells: {
     // One dictionary per level rather than a scan per column: a column covered
     // by this level looks its spanner up directly.
     let covering = (:)
@@ -97,5 +97,5 @@
       }
     }
     cells
-  })
+  }))
 }

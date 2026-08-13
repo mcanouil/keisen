@@ -77,6 +77,14 @@
 #assert.eq(expand(cells-title(parts: "title"), spec).map(cell => cell.column), ("title",))
 
 #assert.eq(expand(cells-source-notes(), spec), ((part: "source-notes", row: 0, column: none),))
+#assert.eq(expand(cells-source-notes(notes: (0,)), spec).len(), 1)
+#assert.eq(expand(cells-source-notes(notes: 1), spec), ())
+
+// A group column of numbers is labelled by strings, so a numeric selector
+// matches the group it plainly means.
+#let numeric = build-spec((year: (2025, 2024), units: (1, 2)), (table-stub(group: "year"),), (:))
+#assert.eq(expand(cells-row-groups(groups: 2025), numeric).map(cell => cell.row), (0,))
+#assert.eq(expand(cells-row-groups(groups: ("2025", 2024)), numeric).len(), 2)
 
 // --- several locations at once ---
 
