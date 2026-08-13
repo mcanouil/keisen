@@ -1,0 +1,28 @@
+[package]
+name = "keisen"
+version = "0.1.0"
+compiler = "0.15.0"
+entrypoint = "lib.typ"
+authors = ["Mickaël Canouil <https://mickael.canouil.fr>"]
+license = "MIT"
+description = "Create elegant display tables in Typst."
+repository = "https://github.com/mcanouil/keisen"
+homepage = "https://m.canouil.dev/keisen"
+keywords = ["table", "display-table", "formatting", "reporting"]
+categories = ["report"]
+exclude = [
+  ".claude",
+  ".github",
+  ".gitignore",
+  ".kata.toml",
+  "AGENTS.md",
+  "docs",
+  "examples",
+  "tests",
+  "tools",
+  "ARCHITECTURE.md",
+  "CHANGELOG.md",
+  "CITATION.cff",
+  "CONTRIBUTING.md",
+  "GLOSSARY.md",
+]

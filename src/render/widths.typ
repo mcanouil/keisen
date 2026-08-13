@@ -1,0 +1,1 @@
+///! Column width resolution.
