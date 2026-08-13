@@ -40,6 +40,19 @@
   // would whitelist the same typo for every other directive.
   for name in spec.hidden { check-column(spec.data-columns, "columns-hide", name) }
 
+  if spec.stub.indent != none {
+    for row in spec.data {
+      let depth = row.at(spec.stub.indent, default: 0)
+      check(
+        type(depth) == int and depth >= 0,
+        "table-stub",
+        "indent level in row " + str(row._index) + " is not a whole number of steps",
+        value: depth,
+        hint: "An indent column holds non-negative integers.",
+      )
+    }
+  }
+
   for name in spec.labels.keys() { check-column(known, "columns-label", name) }
 
   spec
@@ -70,6 +83,18 @@
     if directive.kind == "header" {
       spec.header = (title: directive.title, subtitle: directive.subtitle)
     } else if directive.kind == "stub" {
+      check(
+        spec.stub.rowname == none and spec.stub.group == none,
+        "table-stub",
+        "the stub is already defined",
+        hint: "One table-stub per table; put every stub column in that one call.",
+      )
+      check(
+        directive.rowname != none or directive.label == none,
+        "table-stub",
+        "label needs a rowname",
+        hint: "A stubhead labels the row-name column, so name one with rowname.",
+      )
       spec.stub = directive
       // The stub columns label the table rather than carry data, so they leave
       // the column list while staying in the row store for predicates.
@@ -83,13 +108,23 @@
     } else if directive.kind == "spanner" {
       spec.spanners.push(directive)
     } else if directive.kind == "move" {
-      let rest = spec.columns.filter(name => name not in directive.columns)
       let anchor = if directive.before != none { directive.before } else { directive.after }
+      check(
+        anchor != none,
+        "columns-move",
+        "no anchor given",
+        hint: "Pass before: or after: naming the column to move relative to.",
+      )
+      for name in directive.columns {
+        check-column(spec.columns, "columns-move", name)
+      }
+
+      let rest = spec.columns.filter(name => name not in directive.columns)
       let at = rest.position(name => name == anchor)
       check(
         at != none,
         "columns-move",
-        "unknown column " + str(anchor),
+        "unknown anchor column " + anchor,
         hint: "Move relative to a visible column other than the ones being moved.",
       )
       let cut = if directive.before != none { at } else { at + 1 }
@@ -108,7 +143,9 @@
     }
   }
 
-  spec.groups = group-rows(spec.data, spec.stub.group)
-
-  validate-spanners(_validate(spec))
+  // Validation first: grouping on an unknown column would otherwise die inside
+  // the data layer rather than naming the offending directive.
+  let validated = validate-spanners(_validate(spec))
+  validated.groups = group-rows(validated.data, validated.stub.group)
+  validated
 }

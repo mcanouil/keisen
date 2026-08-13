@@ -92,6 +92,16 @@
 // carries the group labels. `none` means the table is one nameless block.
 #let group-rows(rows, name) = {
   if name == none { return () }
+  for row in rows {
+    let value = row.at(name, default: none)
+    check(
+      type(value) in (str, int, float, decimal),
+      "table-stub",
+      "group value in row " + str(row._index) + " cannot be a label",
+      value: value,
+      hint: "A group column holds strings or numbers.",
+    )
+  }
   group-by(rows, row => row.at(name, default: none))
     .pairs()
     .map(((label, members)) => (label: label, rows: members.map(row => row._index)))

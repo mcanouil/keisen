@@ -17,3 +17,7 @@ All notable changes to this project will be documented in this file.
 - feat: row groups render as repeating subheaders, so a group spanning a page break reprints its label. (#2)
 - feat: `table-spanner()` labels a run of adjacent columns, and spanners stack in levels. (#2)
 - feat: `columns-move()` reorders columns relative to another column. (#2)
+- fix: `columns-move()` rejects unknown columns and a missing anchor instead of inventing a phantom column. (#2)
+- fix: overlapping spanners on one level, a spanner covering no columns, and a spanner naming a hidden column are all reported. (#2)
+- fix: a group column that cannot label, an indent column that is not whole steps, and a repeated `table-stub()` are reported instead of failing inside Typst. (#2)
+- fix: `columns-label()` naming the row-name column labels the stubhead rather than being silently dropped. (#2)

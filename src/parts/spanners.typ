@@ -25,8 +25,38 @@
 
 #let validate-spanners(spec) = {
   let index = _index-of(spec.columns)
+  // One entry per level, naming the spanner that already claimed each column.
+  let claimed = (:)
+
   for spanner in spec.spanners {
-    for name in spanner.columns { check-column(spec.columns, "table-spanner", name) }
+    check(
+      spanner.columns.len() > 0,
+      "table-spanner",
+      "spanner covers no columns",
+      hint: "Name at least one column for the spanner to span.",
+    )
+
+    for name in spanner.columns {
+      // A hidden column exists; saying "unknown" would send the reader hunting
+      // for a typo that is not there.
+      check(
+        name not in spec.hidden,
+        "table-spanner",
+        "column " + name + " is hidden",
+        hint: "Show it with columns-show, or drop it from the spanner.",
+      )
+      check-column(spec.columns, "table-spanner", name)
+
+      let key = str(spanner.level) + ":" + name
+      check(
+        key not in claimed,
+        "table-spanner",
+        "column " + name + " is already covered at level " + str(spanner.level),
+        hint: "Spanners on one level cannot overlap; raise the level to nest them.",
+      )
+      claimed.insert(key, spanner.label)
+    }
+
     let positions = spanner.columns.map(name => index.at(name)).sorted()
     check(
       positions.last() - positions.first() == positions.len() - 1,

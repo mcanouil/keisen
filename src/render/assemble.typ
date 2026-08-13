@@ -79,7 +79,14 @@
 
   // The stubhead labels the stub column, and is empty unless the stub names it.
   if has-stub {
-    let stubhead = if spec.stub.label == none { [] } else { strong(spec.stub.label) }
+    // Either spelling labels the stub: the stub's own label, or a columns-label
+    // naming the row-name column.
+    let label = if spec.stub.label != none {
+      spec.stub.label
+    } else {
+      spec.labels.at(spec.stub.rowname, default: none)
+    }
+    let stubhead = if label == none { [] } else { strong(label) }
     labels.push(table.cell(align: start, stubhead))
   }
   for (index, name) in names.enumerate() {
@@ -98,7 +105,10 @@
       rows.push(table.header(level: entry.level, repeat: true, full(strong([#label]))))
     } else if entry.part == "body" {
       if has-stub {
-        let depth = if indents.len() == 0 { 0 } else { indents.at(entry.source) }
+        let depth = if indents.len() == 0 { 0 } else {
+          let level = indents.at(entry.source)
+          if level == none { 0 } else { level }
+        }
         let name = slots-to-content(stub-cells.at(entry.source))
         rows.push(table.cell(align: start, if depth == 0 { name } else { h(1em * depth) + name }))
       }
