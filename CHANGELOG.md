@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `summary-rows()` and `grand-summary-rows()` aggregate raw values into rows at the end of each group and of the body. (#4)
+- feat: `aggregate-sum`, `-mean`, `-median`, `-min`, `-max`, `-count`, `-standard-deviation`, and `-quantile` cover the common aggregations, and any `values => value` closure works in their place. (#4)
+- feat: numeric columns align on their decimal separator, measured per column rather than per cell. (#4)
+- feat: `columns-width()` and `columns-align()` set column tracks and alignment explicitly. (#4)
+
 - feat: `cells-*` locations address cells by what the data says, and `table-style()` applies a style to them. (#3)
 - feat: `data-colour()` maps a column onto a palette, choosing readable text over each fill. (#3)
 - feat: `substitute-missing()` and `substitute-zero()` replace values before they reach a formatter. (#3)
