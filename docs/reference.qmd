@@ -1,0 +1,23 @@
+---
+title: "Reference"
+subtitle: "Every function Keisen exposes, written from the source as it lands."
+description: "The complete Keisen API reference, filled in milestone by milestone as each part of the library is implemented."
+---
+
+Keisen has no release yet, and this page documents only what exists in the source.
+
+Nothing is listed below because no public function has shipped.
+A page that describes an API before it exists is worse than an empty one: it reads as a promise, and the first reader to try it finds a compile error.
+
+## What lands first
+
+The first milestone adds the entry point and the numeric formatters:
+
+- `display-table`, which folds directives into a table.
+- `table-header` and `table-source-note`.
+- `columns-label` and `columns-hide`.
+- `format`, `format-number`, and `format-integer`.
+
+Each one is documented here, with its arguments and defaults, in the same change that implements it.
+
+Until then, the [issue tracker](https://github.com/{{< var repository.slug >}}/issues) carries the milestone breakdown, and [`ARCHITECTURE.md`](https://github.com/{{< var repository.slug >}}/blob/main/ARCHITECTURE.md) describes how the pipeline fits together.

@@ -1,0 +1,73 @@
+meta:
+  name:
+    full: Keisen
+    short: Keisen
+  link:
+    home: https://m.canouil.dev/keisen/
+
+color:
+  palette:
+    paper-light: "#FBFBF8"
+    paper-dark: "#14181B"
+    surface-light: "#FFFFFF"
+    surface-dark: "#1D2529"
+    ink-light: "#1A1D20"
+    ink-dark: "#ECEBE5"
+    muted-light: "#585C60"
+    muted-dark: "#A6AAAE"
+    rule-blue: "#2C5F82"
+    rule-blue-dk: "#7FB2CE"
+    vermilion: "#C8442F"
+    vermilion-dk: "#EE7C66"
+    ochre: "#C08A2E"
+    ochre-dk: "#E4BC6B"
+    sage: "#4C8C6A"
+    sage-dk: "#87C4A2"
+    blue: rule-blue
+    red: vermilion
+    orange: ochre
+    green: sage
+  foreground:
+    light: ink-light
+    dark: ink-dark
+  background:
+    light: paper-light
+    dark: paper-dark
+  primary:
+    light: rule-blue
+    dark: rule-blue-dk
+  secondary:
+    light: muted-light
+    dark: muted-dark
+  tertiary:
+    light: ochre
+    dark: ochre-dk
+  success:
+    light: sage
+    dark: sage-dk
+  info:
+    light: rule-blue
+    dark: rule-blue-dk
+  warning:
+    light: ochre
+    dark: ochre-dk
+  danger:
+    light: vermilion
+    dark: vermilion-dk
+  light: paper-light
+  dark: ink-light
+
+typography:
+  base:
+    size: 1rem
+    line-height: 1.6
+    weight: 400
+  headings:
+    weight: 600
+    line-height: 1.2
+  monospace:
+    size: 0.9em
+  link:
+    decoration: underline
+    color: primary
+    weight: 500

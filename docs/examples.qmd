@@ -1,0 +1,21 @@
+---
+title: "Examples"
+subtitle: "Keisen at work, one worked table per task."
+description: "Worked Keisen tables, each with its source and the output it produces, added as the features they use are implemented."
+---
+
+Keisen has no release yet, so there is nothing to show working.
+
+Every example on this page will be a table this site compiles itself, from the source printed beside it, so the page cannot drift from what the library does.
+Pasted output of an idealised run is not worth reading.
+
+## Planned examples
+
+The examples arrive with the features they need:
+
+- A grouped table with subtotals, footnote marks, and a source note.
+- A long table that breaks across pages, reprinting both the column labels and the current group label.
+- A table with in-cell nanoplots sharing one domain down the column.
+- A table built from a specification produced outside Typst, proving the generator path.
+
+Progress is tracked in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues).

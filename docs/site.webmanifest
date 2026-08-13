@@ -1,0 +1,21 @@
+{
+  "name": "Keisen",
+  "description": "Create elegant display tables in Typst.",
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/keisen/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/keisen/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#191C1F",
+  "background_color": "#191C1F",
+  "display": "standalone",
+  "start_url": "/keisen/"
+}
