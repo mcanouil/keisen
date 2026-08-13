@@ -75,12 +75,34 @@
 // A column as an array, with `none` wherever a row lacks the key.
 #let column(rows, name) = rows.map(row => row.at(name, default: none))
 
-// Rows bucketed by `key(row)`, preserving input order inside each bucket.
+// Rows bucketed by `key(row)`, preserving input order inside each bucket and
+// first-appearance order between them. The push goes through the access chain
+// rather than rebuilding the bucket, which would cost a copy per row.
 #let group-by(rows, key) = {
   let buckets = (:)
   for row in rows {
     let label = str(key(row))
-    buckets.insert(label, buckets.at(label, default: ()) + (row,))
+    if label not in buckets { buckets.insert(label, ()) }
+    buckets.at(label).push(row)
   }
   buckets
+}
+
+// Groups of row positions, in first-appearance order, for the column that
+// carries the group labels. `none` means the table is one nameless block.
+#let group-rows(rows, name) = {
+  if name == none { return () }
+  for row in rows {
+    let value = row.at(name, default: none)
+    check(
+      type(value) in (str, int, float, decimal),
+      "table-stub",
+      "group value in row " + str(row._index) + " cannot be a label",
+      value: value,
+      hint: "A group column holds strings or numbers.",
+    )
+  }
+  group-by(rows, row => row.at(name, default: none))
+    .pairs()
+    .map(((label, members)) => (label: label, rows: members.map(row => row._index)))
 }

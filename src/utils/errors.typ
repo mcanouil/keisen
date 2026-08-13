@@ -37,3 +37,19 @@
 #let check(condition, scope, problem, value: auto, hint: none) = {
   if not condition { fail(scope, problem, value: value, hint: hint) }
 }
+
+// Every directive that names a column reports an unknown one the same way. The
+// hint is built inside the failing branch, so listing the known columns costs
+// nothing on the path where the name is fine.
+#let check-column(known, scope, name) = {
+  if name in known { return }
+  fail(
+    scope,
+    "unknown column " + name,
+    hint: if known.len() == 0 {
+      "The table has no columns."
+    } else {
+      "Known columns: " + known.join(", ") + "."
+    },
+  )
+}
