@@ -144,9 +144,39 @@ An unknown key is an error rather than a silent no-op, and `tests/unit/test-opti
 
 : Theme options {.striped .hover tbl-colwidths="[25,75]"}
 
+## Specifications built elsewhere
+
+`display-table(spec: ..)` renders a specification instead of data and directives, which is how a generator in another language reaches this pipeline without emitting table markup.
+A specification that arrives as data, from `json()` or from a tool, cannot carry closures, so it names what it wants:
+
+```json
+{
+  "kind": "display-table",
+  "data": [{"product": "Bolt", "region": "North", "units": 1250, "margin": 0.182}],
+  "header": {"title": "Regional sales"},
+  "stub": {"rowname": "product", "group": "region"},
+  "formats": [{"name": "format-integer", "columns": "units"}],
+  "summaries": [{"name": "aggregate-sum", "label": "Subtotal", "columns": ["units"]}],
+  "styles": [
+    {
+      "style": {"text": {"weight": "bold"}},
+      "part": "body",
+      "columns": "margin",
+      "rows": {"column": "margin", "op": "<", "value": 0.05}
+    }
+  ]
+}
+```
+
+Formatters and aggregations are named from the built-ins, and row predicates are comparisons with `op` in `<`, `<=`, `>`, `>=`, `==`, `!=`, composed with `and`, `or`, and `not`.
+That is the whole subset: no arithmetic, no function calls, no set tests.
+Anything more expressive belongs in a Typst specification, which keeps the schema from drifting into an expression language.
+
+A serialised specification is turned back into ordinary directives and folded through the same path as a hand-written table, so the two cannot diverge: one pipeline, entered two ways.
+`examples/serialised.typ` renders `examples/table-spec.json` and compiles with the test suite.
+
 ## Limitations
 
 - Summary rows require groups, from `table-stub(group: ..)`; use `grand-summary-rows` for a table without them.
 - A combined column is not yet available; `columns-combine` is planned.
 - The `gribouille` nanoplot renderers need about `3em` of height, because gribouille refuses a canvas below half a centimetre. `format-nanoplot` accepts any renderer, so a smaller one drawn with native primitives is possible.
-- Serialised specifications cannot yet carry formatters by name.

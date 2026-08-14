@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `display-table(spec: ..)` accepts a specification that arrived as data, naming its formatters and aggregations and writing row predicates as comparisons, so a generator in another language needs no closures. (#9)
+
 - fix: `columns-move()` reports a hidden or stub column as such rather than as unknown, and resolves once the table knows its columns, so hiding or promoting the anchor no longer changes whether the move succeeds depending on which line was written first. (#8)
 
 - docs: the reference documents every exported function, read from the source and held to it by `tests/unit/test-exports.typ`. (#7)
