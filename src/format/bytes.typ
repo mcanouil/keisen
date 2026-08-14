@@ -63,7 +63,7 @@
   rounding: "half-up",
 ) = {
   if base not in (1000, 1024) {
-    fail-enum("format-bytes", "base", base, ("1000", "1024"))
+    fail-enum("format-bytes", "base", base, (1000, 1024))
   }
 
   format(
