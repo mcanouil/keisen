@@ -17,14 +17,39 @@ You describe the parts and the formatting, and it builds the table.
 
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
+## Quick look
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  sales,
+  table-header(title: [Regional sales]),
+  table-stub(rowname: "product", group: "region", label: [Product]),
+  columns-label(units: [Units], revenue: [Revenue]),
+  format-integer("units"),
+  format-number("revenue", decimals: 2),
+  summary-rows(functions: (Subtotal: aggregate-sum)),
+  table-style(
+    style(text: (fill: red)),
+    locations: cells-body(columns: "revenue", rows: row => row.revenue < 15000),
+  ),
+  table-source-note([Source: internal ledger.]),
+)
+```
+
+![A sales table grouped by region with subtotals, a grand total, and one revenue figure in red.](assets/examples/grouped.png)
+
+The [Examples](examples.qmd) page shows this and four more, each beside the source that produced it.
+
 ## Status
 
-Keisen is in early development and has no release yet.
-The API is being built milestone by milestone, and nothing on this site describes behaviour that does not exist: the [Reference](reference.qmd) and the [Examples](examples.qmd) fill in as each milestone lands.
+Keisen is in early development and has no release yet, so it is used from a clone rather than from Typst Universe.
+The API is settling milestone by milestone, and nothing on this site describes behaviour that does not exist: the [Reference](reference.qmd) is read from the source and held to it by a test.
 
 Follow along in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
-## What it will do
+## What it does
 
 Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it:
 
@@ -32,13 +57,16 @@ Parts
 : A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order.
 
 Formatters
-: A family covering numbers, integers, percentages, currency, scientific notation, dates, byte sizes, and markup, all computed in Typst's `decimal` type rather than in floats.
+: Numbers, integers, and percentages so far, computed in Typst's `decimal` type rather than in floats, plus `format()` for anything else. Currency, dates, scientific notation, byte sizes, and markup are still to come.
 
 Locations
 : Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is the fourth cell of the ninth row.
 
 Nanoplots
 : Sparklines and bars inside cells, sharing one domain down a column so they can be compared.
+
+Themes
+: Four presets that are option dictionaries, so a theme and an option call are the same kind of thing and compose by merging.
 
 ## Design
 

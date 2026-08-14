@@ -1,23 +1,151 @@
 ---
 title: "Reference"
-subtitle: "Every function Keisen exposes, written from the source as it lands."
-description: "The complete Keisen API reference, filled in milestone by milestone as each part of the library is implemented."
+subtitle: "Every function Keisen exports, with its arguments and defaults."
+description: "The complete Keisen API: the entry point, the table parts, the formatters, the locations, the aggregations, and the theme options."
 ---
 
-Keisen has no release yet, and this page documents only what exists in the source.
+Everything below is read from the source, and `tests/unit/test-exports.typ` holds the package to exactly this list.
 
-Nothing is listed below because no public function has shipped.
-A page that describes an API before it exists is worse than an empty one: it reads as a promise, and the first reader to try it finds a compile error.
+Keisen has no release yet, so import it from a clone rather than from Typst Universe.
 
-## What lands first
+## Entry point
 
-The first milestone adds the entry point and the numeric formatters:
+```typst
+display-table(
+  data,                    // first positional: rows or columns
+  ..directives,            // any number of directives, applied in order
+  theme: theme-default(),  // option dictionary
+  spec: none,              // a built specification, rendered instead
+)
+```
 
-- `display-table`, which folds directives into a table.
-- `table-header` and `table-source-note`.
-- `columns-label` and `columns-hide`.
-- `format`, `format-number`, and `format-integer`.
+`data` is either an array of dictionaries, one per row, or a dictionary of equal-length arrays, one per column.
+Every row gains a reserved `_index` key holding its position in the input, which is what row predicates read.
 
-Each one is documented here, with its arguments and defaults, in the same change that implements it.
+Directives are plain dictionaries applied in the order written.
+For a given cell and property the last matching directive wins, so "format the column, then override a few rows" reads the way it is written.
 
-Until then, the [issue tracker](https://github.com/{{< var repository.slug >}}/issues) carries the milestone breakdown, and [`ARCHITECTURE.md`](https://github.com/{{< var repository.slug >}}/blob/main/ARCHITECTURE.md) describes how the pipeline fits together.
+## Selectors
+
+Three arguments recur throughout, and all three accept the same shapes.
+
+| Argument | Accepts |
+| --- | --- |
+| `columns` | `auto`, a name, an array of names, or a predicate `name => bool`. |
+| `rows` | `auto`, an index, an array of indices, or a predicate `row => bool`. |
+| `groups` | `auto`, a label, an array of labels, or a predicate `label => bool`. |
+
+: Selector shapes {.striped .hover tbl-colwidths="[20,80]"}
+
+Every predicate takes exactly one argument.
+Typst closures fail on arity mismatch, and `row => row.margin < 0.05` is what people write, so row position travels on `row._index` rather than as a second parameter.
+
+## Table parts
+
+| Function | Effect |
+| --- | --- |
+| `table-header(title: none, subtitle: none)` | The title block above the column labels. |
+| `table-stub(rowname: none, group: none, label: none, indent: none)` | Promotes a column to row names, optionally another to group labels, and a column of integers to indentation levels. |
+| `table-spanner(label, columns, level: 1)` | Labels a run of adjacent columns. Higher levels stack above lower ones. |
+| `table-source-note(note)` | An unmarked note in the footer. |
+| `table-footnote(note, locations: none, mark: auto)` | A marked note. Without locations it is an unmarked footer note. |
+| `table-style(properties, locations: none)` | Applies a style to the cells a location names. |
+| `table-options(..keys)` | Merges option keys into the theme. |
+
+: Table parts {.striped .hover tbl-colwidths="[45,55]"}
+
+Row groups render as level-3 native subheaders, so a group spanning a page break reprints its label under the column labels.
+
+## Columns
+
+| Function | Effect |
+| --- | --- |
+| `columns-label(..pairs)` | Named arguments map a column name to its label. Labelling the row-name column labels the stubhead. |
+| `columns-align(alignment, columns: auto)` | Sets alignment, direction-relative (`start`, `end`) or absolute. |
+| `columns-width(widths)` | A dictionary of column name to length, fraction, or `auto`. |
+| `columns-hide(..columns)` | Removes columns from the table; they stay readable by predicates and formatters. |
+| `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. |
+
+: Column directives {.striped .hover tbl-colwidths="[45,55]"}
+
+## Formatters
+
+Each takes `columns` as a required first positional argument and `rows` as a named one.
+`columns` is required rather than defaulted because a Typst positional parameter cannot carry a default, so "every column" is written explicitly as `auto`.
+
+| Function | Notable arguments |
+| --- | --- |
+| `format(columns, function, rows: auto)` | Any `value => content`. The escape hatch the others are built on. |
+| `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator`, `decimal-separator: "."`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `prefix`, `suffix`. |
+| `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
+| `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
+| `format-nanoplot(columns, ..)` | `plot`, `values`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
+| `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
+| `substitute-zero(columns, ..)` | `replacement: [--]`. Applies after scaling. |
+
+: Value formatting {.striped .hover tbl-colwidths="[35,65]"}
+
+All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
+`rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.
+Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
+
+## Locations
+
+`table-style` and `table-footnote` take one location or an array of them.
+
+`cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-source-notes(notes: auto)`.
+
+A location expands against the table into `(part, row, column)` addresses.
+This is the part Typst show rules cannot express: they select by element type in document order and never see the row behind a cell.
+
+`style(text: none, fill: none, stroke: none, align: none, inset: none)` builds the properties.
+Only what is set appears, so a later style overrides property by property.
+
+`data-colour(palette, columns: auto, rows: auto, domain: auto, target: "fill", missing: none, reverse: false)` maps a column onto a palette.
+The domain spans the whole column, and with `target: "fill"` the text colour is chosen per cell from its background's relative luminance, so a dark fill never carries unreadable text.
+
+## Aggregations
+
+`summary-rows(functions: (:), columns: auto, groups: auto, format: none)` closes each group; `grand-summary-rows(functions: (:), columns: auto, format: none)` closes the body.
+`functions` maps a label to an aggregation, and an aggregation is any `values => value`.
+
+| Function | Definition |
+| --- | --- |
+| `aggregate-sum`, `aggregate-min`, `aggregate-max` | Stay in decimal arithmetic, so a total is exact. |
+| `aggregate-mean`, `aggregate-median` | Convert to float, since division must. |
+| `aggregate-count` | Counts values that are present, of any type. |
+| `aggregate-standard-deviation` | The sample definition, with `n - 1` in the denominator. |
+| `aggregate-quantile(probability)` | Linear interpolation between order statistics, matching R's type 7 default. |
+
+: Built-in aggregations {.striped .hover tbl-colwidths="[40,60]"}
+
+Aggregations run on raw values before formatting, so a summary cell formats through whichever directive covers its column, or through its own `format:`.
+
+## Themes and options
+
+`theme-default()`, `theme-booktabs()`, `theme-compact()`, and `theme-minimal()` each return an option dictionary, so a preset and a `table-options()` call are the same kind of thing and compose by merging.
+Striping is `row-striping: true` on any of them, and the academic three-line style is `theme-booktabs()` plus options; a theme that differs by one boolean is not a theme.
+
+Option names are Typst identifiers, so they are written unquoted: `table-options(row-striping: true)`.
+An unknown key is an error rather than a silent no-op.
+
+| Group | Keys |
+| --- | --- |
+| Table | `table-font`, `table-font-size`, `table-align`, `table-border-top`, `table-border-bottom`, `breakable`, `infer-alignment`, `decimal-align`, `accessibility-extras` |
+| Header | `header-title-size`, `header-title-weight`, `header-subtitle-size`, `header-align`, `header-border-bottom` |
+| Column labels | `column-labels-weight`, `column-labels-size`, `column-labels-border-top`, `column-labels-border-bottom`, `spanner-border-bottom` |
+| Stub and groups | `stub-weight`, `stub-indent-step`, `row-group-weight`, `row-group-fill`, `row-group-border-top`, `row-group-repeat` |
+| Body | `row-striping`, `row-striping-fill`, `cell-inset` |
+| Summaries | `summary-weight`, `summary-fill`, `summary-border-top`, `grand-summary-border-top` |
+| Footer | `footnote-marks`, `footnote-size`, `source-note-size`, `footer-border-top` |
+| Numbers | `number-decimal-separator`, `number-group-separator` |
+
+: Theme options {.striped .hover tbl-colwidths="[25,75]"}
+
+## Limitations
+
+- Summary rows require groups, from `table-stub(group: ..)`; use `grand-summary-rows` for a table without them.
+- A combined column is not yet available; `columns-combine` is planned.
+- The `gribouille` nanoplot renderers need about `3em` of height, because gribouille refuses a canvas below half a centimetre. `format-nanoplot` accepts any renderer, so a smaller one drawn with native primitives is possible.
+- `columns-move` currently resolves while directives fold, which makes it order-dependent; every other directive is validated once at the end.
+- Serialised specifications cannot yet carry formatters by name.
