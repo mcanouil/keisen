@@ -149,5 +149,4 @@ An unknown key is an error rather than a silent no-op, and `tests/unit/test-opti
 - Summary rows require groups, from `table-stub(group: ..)`; use `grand-summary-rows` for a table without them.
 - A combined column is not yet available; `columns-combine` is planned.
 - The `gribouille` nanoplot renderers need about `3em` of height, because gribouille refuses a canvas below half a centimetre. `format-nanoplot` accepts any renderer, so a smaller one drawn with native primitives is possible.
-- `columns-move` currently resolves while directives fold, which makes it order-dependent; every other directive is validated once at the end.
 - Serialised specifications cannot yet carry formatters by name.
