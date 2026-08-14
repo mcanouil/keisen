@@ -109,6 +109,8 @@ An argument written on the directive wins over the theme, as everywhere else.
 
 Only finite numbers are formatted, and an infinite value is an error unless `infinity:` says what to write for one.
 What it writes is opaque content, so it takes no part in the decimal alignment of the column around it.
+A column holding an infinity cannot be summarised either: aggregations work in `decimal`, which has no infinity, so a total would silently be the total of the other rows.
+`columns: auto` leaves such a column out, as it does a nanoplot column, and naming it in `summary-rows` is an error.
 
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.

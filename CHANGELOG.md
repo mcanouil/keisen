@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - feat: `group-separator` and `decimal-separator` default to `auto` and are answered by the theme's `number-group-separator` and `number-decimal-separator`, so a French or German table sets its convention once rather than on every directive. (#31)
 - feat: `infinity:` writes an infinite value as content instead of refusing it, opaque to the decimal alignment of the column around it. (#31)
+- fix: a column holding an infinity is left out of a summary over every column and refused when named, rather than totalled as though the infinity were not there. (#31)
 - fix: a number directive is resolved against the theme wherever it formats a cell, so a summary row reads the same separators as the rows it totals. (#31)
 
 - feat: `format-cell()` formats a cell from the row it sits in, so a cell that depends on its neighbours can reach them; hidden columns and the reserved `_index` key included. (#30)

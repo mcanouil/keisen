@@ -123,6 +123,19 @@
 }
 
 // One entry per summary row: its label and the aggregated value per column.
+// Columns holding a value no aggregation can carry, with the first row that
+// does. Every aggregation works in `decimal`, which has no infinity, so an
+// infinite reading is dropped on the way in: the total printed under it would
+// be the total of the other rows, claiming to be the total of the column.
+#let infinite-columns(rows, columns) = {
+  columns
+    .map(name => (
+      name: name,
+      row: rows.position(row => row.at(name, default: none) in (float.inf, -float.inf)),
+    ))
+    .filter(entry => entry.row != none)
+}
+
 #let _rows-for(directives, rows, columns) = {
   directives
     .map(directive => directive.functions
@@ -145,10 +158,16 @@
 //
 // Nanoplot and combined columns are left out of every summary: a series of
 // readings has no total, and a combined column holds content built from columns
-// that are no longer shown. Naming either explicitly is refused when the spec is
-// validated; this is what makes `columns: auto` skip them quietly.
+// that are no longer shown. A column holding an infinity is left out for the
+// same reason, since no aggregation can carry one. Naming any of them explicitly
+// is refused when the spec is validated; this is what makes `columns: auto` skip
+// them quietly.
 #let summary-values(spec) = {
-  let skip = nanoplot-columns(spec.formats, spec.columns) + spec.combines.map(directive => directive.into)
+  let skip = (
+    nanoplot-columns(spec.formats, spec.columns)
+      + spec.combines.map(directive => directive.into)
+      + infinite-columns(spec.data, spec.columns).map(entry => entry.name)
+  )
   let columns = spec.columns.filter(name => name not in skip)
   let groups = spec.groups.map(group => _rows-for(
     directives-for(spec.summaries, group.label),
