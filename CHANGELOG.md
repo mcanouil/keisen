@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- test: every test page grows to fit what it holds, so a rendered image is the table rather than the table and a field of white; `tools/check.sh` holds them to it. (#24)
+
 - feat: `columns-combine()` builds one column from several, the pattern reading the formatted content of its sources so each keeps the formatting its own directive gave it. (#23)
 - feat: a serialised specification carries a combine as a template, `"{1} ({2})"`, numbering its sources from one, since JSON cannot hold a closure. (#23)
 - fix: where a combined column sits is resolved once every directive has landed, so hiding a source before or after the combine reads the same, as it already did for `columns-move()`. (#23)

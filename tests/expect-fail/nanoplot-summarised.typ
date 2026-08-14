@@ -5,7 +5,7 @@
 
 #import "../../lib.typ": *
 
-#set page(width: 12cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 
 #display-table(
   (
