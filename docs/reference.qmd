@@ -81,6 +81,9 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator`, `decimal-separator: "."`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `prefix`, `suffix`. |
 | `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
 | `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
+| `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `symbol: auto`, `position: start`, `space: auto`. |
+| `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`. |
+| `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`. |
 | `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
 | `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
 | `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
@@ -90,6 +93,16 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.
 Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
+
+`format-currency` knows EUR, GBP, USD, JPY, and CHF, and writes any other currency as its code, since there are more currencies than anyone should hard-code.
+`decimals: auto` follows the currency, so a yen figure carries none.
+`symbol: auto` and `space: auto` follow it too: the symbol leads against its number, or trails behind a non-breaking space, as each convention writes it.
+
+`format-scientific` counts the exponent off the digits and cuts the mantissa from them rather than computing either, so it keeps the digits the value had and works on magnitudes `decimal` cannot hold, which is what the notation is for.
+Rounding that carries into the next power moves the exponent with it, so nothing renders as `10.0 × 10³`.
+
+`format-bytes` counts in 1024s by default and says so with the binary prefixes; `base: 1000` gives the decimal ones.
+Bytes themselves are whole, so the smallest unit carries no fractional part.
 
 ### Nanoplots
 

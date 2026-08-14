@@ -17,6 +17,7 @@
   rows: rows,
   decimals: decimals,
   scale: scale,
+  scope: "format-percent",
   suffix: if space { sym.space.nobreak + symbol } else { symbol },
   ..options,
 )

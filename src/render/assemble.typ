@@ -36,10 +36,19 @@
   if value == none { return [] }
   if type(value) == content { return value }
   if type(value) == dictionary and value.at("kind", default: none) == "number" {
-    let text = value.sign + value.integer + value.separator + value.fraction
-    if value.prefix != none { text = value.prefix + text }
-    if value.suffix != none { text = text + value.suffix }
-    return [#text]
+    let digits = value.integer + value.separator + value.fraction
+    // Only the slots that carry something are joined, so a plain number stays
+    // one piece of content rather than becoming a sequence padded with empties.
+    // Slot order matches align-slots, which puts the sign ahead of the symbol:
+    // -€5 is a debt and €-5 is a typo.
+    let pieces = if value.prefix == none {
+      ([#(value.sign + digits)],)
+    } else {
+      ([#(value.sign)], [#(value.prefix)], [#digits])
+    }
+    if value.exponent != none { pieces.push([#(value.exponent)]) }
+    if value.suffix != none { pieces.push([#(value.suffix)]) }
+    return pieces.join()
   }
   [#value]
 }
