@@ -36,12 +36,25 @@
   let columns = spec.columns
 
   for directive in spec.moves {
+    check(
+      directive.before == none or directive.after == none,
+      "columns-move",
+      "before and after cannot both be given",
+      hint: "A column goes on one side of the anchor or the other.",
+    )
     let anchor = if directive.before != none { directive.before } else { directive.after }
     check(
       anchor != none,
       "columns-move",
       "no anchor given",
       hint: "Pass before: or after: naming the column to move relative to.",
+    )
+    check(
+      directive.columns.dedup().len() == directive.columns.len(),
+      "columns-move",
+      "the same column is moved twice",
+      value: directive.columns,
+      hint: "A column appears once in a table.",
     )
 
     for name in directive.columns { _check-visible(spec, name) }
@@ -222,6 +235,37 @@
 // Text arrives as strings, since JSON has no content type.
 #let _content(value) = if type(value) == str { [#value] } else { value }
 
+// Colours arrive as strings too, since JSON has no way to spell rgb(). A
+// string that is not a colour is reported here rather than inside the renderer.
+#let _colour(value, key) = {
+  if type(value) != str { return value }
+  if value.match(regex("^#[0-9A-Fa-f]{3,8}$")) == none {
+    fail(
+      "style",
+      key + " is not a colour",
+      value: value,
+      hint: "Write it as a hex string, for example \"#08519c\".",
+    )
+  }
+  rgb(value)
+}
+
+// The style properties a cell understands, with the colours resolved.
+#let _properties(given) = {
+  let out = (:)
+  for (key, value) in given {
+    out.insert(
+      key,
+      if key == "fill" { _colour(value, "fill") } else if key == "text" and type(value) == dictionary {
+        let inner = value
+        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
+        inner
+      } else { value },
+    )
+  }
+  out
+}
+
 #let _selector(value) = if value == none { auto } else { value }
 
 #let FORMAT-OPTIONS = (
@@ -268,7 +312,7 @@
   )
   (
   kind: "style",
-  style: descriptor.at("style", default: (:)),
+  style: _properties(descriptor.at("style", default: (:))),
   locations: (
     kind: "location",
     part: descriptor.at("part", default: "body"),
@@ -338,6 +382,7 @@
   let directives = ()
 
   let header = serialised.at("header", default: (:))
+  _keys(header, ("title", "subtitle"), "header")
   if header.at("title", default: none) != none or header.at("subtitle", default: none) != none {
     directives.push((
       kind: "header",
@@ -347,6 +392,7 @@
   }
 
   let stub = serialised.at("stub", default: (:))
+  _keys(stub, ("rowname", "group", "label", "indent"), "stub")
   if stub.len() > 0 and stub.values().any(value => value != none) {
     directives.push((
       kind: "stub",
@@ -386,6 +432,7 @@
   for descriptor in serialised.at("formats", default: ()) { directives.push(_format(descriptor)) }
 
   for descriptor in serialised.at("substitutions", default: ()) {
+    _keys(descriptor, ("test", "columns", "rows", "replacement"), "substitution")
     let test = descriptor.at("test", default: "missing")
     if test not in ("missing", "zero") {
       fail-enum("substitution", "test", test, ("missing", "zero"))

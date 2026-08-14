@@ -43,7 +43,7 @@
         name not in spec.hidden,
         "table-spanner",
         "column " + name + " is hidden",
-        hint: "Show it with columns-show, or drop it from the spanner.",
+        hint: "Drop the columns-hide, or drop the column from the spanner.",
       )
       check-column(spec.columns, "table-spanner", name)
 
