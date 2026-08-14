@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- feat: `display-table(spec: ..)` accepts a specification that arrived as data, naming its formatters and aggregations and writing row predicates as comparisons, so a generator in another language needs no closures. (#9)
+- test: `tests/expect-fail/` asserts failures, since Typst has no `try`: each file must fail to compile with the message its `// expect:` comment names. (#8)
+
+- feat: `display-table(spec: ..)` accepts a specification that arrived as data, naming its formatters and aggregations and writing row predicates as comparisons, so a generator in another language needs no closures. (#10)
 
 - fix: `columns-move()` reports a hidden or stub column as such rather than as unknown, and resolves once the table knows its columns, so hiding or promoting the anchor no longer changes whether the move succeeds depending on which line was written first. (#8)
 

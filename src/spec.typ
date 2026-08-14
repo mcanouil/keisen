@@ -15,6 +15,9 @@
 
 #let _empty = (
   kind: "display-table",
+  // Set by build-spec alone, so the entry point can tell a resolved
+  // specification from one that arrived as data and named its formatters.
+  built: true,
   data: (),
   // Every column the data carries, rendered or not, so validation can tell an
   // unknown name from a hidden one.

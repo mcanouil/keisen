@@ -61,7 +61,11 @@
     )
     // A specification that reached Typst as data names its formatters instead
     // of carrying them, and is resolved back into directives before rendering.
-    if "columns" in spec { spec } else { _resolve-serialised(spec, _build-spec) }
+    if spec.at("built", default: false) {
+      spec
+    } else {
+      _resolve-serialised(spec, _build-spec, theme: theme)
+    }
   } else {
     let positional = arguments.pos()
     _check(

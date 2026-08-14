@@ -107,10 +107,13 @@
   }
 }
 
+#let OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
+
 // A comparison, or and/or/not over comparisons, as a one-argument predicate.
+// Anything that is already a selector in its own right passes straight through,
+// so an index or an array of indices means what it means everywhere else.
 #let resolve-predicate(descriptor) = {
-  if type(descriptor) == function { return descriptor }
-  if descriptor == auto { return auto }
+  if type(descriptor) != dictionary { return descriptor }
 
   if "and" in descriptor {
     let parts = descriptor.at("and").map(resolve-predicate)
@@ -136,16 +139,45 @@
     }
   }
 
+  // Reported while resolving, not on the first row: a location matching no rows
+  // would otherwise never reach the comparison and never complain.
+  if descriptor.op not in OPERATORS {
+    fail-enum("predicate", "op", descriptor.op, OPERATORS)
+  }
+
   row => {
     let value = row.at(descriptor.column, default: none)
     // A value that is not there satisfies nothing, rather than comparing types
     // and failing inside Typst.
-    if value == none { false } else { _compare(descriptor.op, value, descriptor.value) }
+    if value == none { return false }
+
+    let numeric = (int, float, decimal)
+    let comparable = type(value) == type(descriptor.value) or (
+      type(value) in numeric and type(descriptor.value) in numeric
+    )
+    if not comparable {
+      fail(
+        "predicate",
+        "cannot compare " + descriptor.column + " with the given value",
+        value: (value, descriptor.value),
+        hint: "The column and the value must be the same kind of thing.",
+      )
+    }
+
+    _compare(descriptor.op, value, descriptor.value)
   }
 }
 
 #let _named(table, descriptor, scope) = {
-  let name = descriptor.at("name", default: none)
+  if "name" not in descriptor {
+    fail(
+      scope,
+      "no name given",
+      value: descriptor,
+      hint: "Name the built-in: (name: \"" + table.keys().first() + "\", ..).",
+    )
+  }
+  let name = descriptor.name
   if name not in table {
     fail(
       scope,
@@ -198,10 +230,37 @@
   format: none,
 )
 
+#let SERIALISED-KEYS = (
+  "kind",
+  "data",
+  "header",
+  "stub",
+  "labels",
+  "hidden",
+  "spanners",
+  "formats",
+  "substitutions",
+  "summaries",
+  "grand-summaries",
+  "styles",
+  "source-notes",
+  "options",
+)
+
 // A serialised specification is turned back into ordinary directives and folded
 // through the same path as a hand-written table, so the two cannot drift: there
 // is one pipeline, entered two ways.
-#let resolve-serialised(serialised, build) = {
+#let resolve-serialised(serialised, build, theme: (:)) = {
+  for key in serialised.keys() {
+    if key not in SERIALISED-KEYS {
+      fail(
+        "display-table",
+        "unknown key " + key + " in the specification",
+        hint: "Known keys: " + SERIALISED-KEYS.join(", ") + ".",
+      )
+    }
+  }
+
   let directives = ()
 
   let header = serialised.at("header", default: (:))
@@ -214,7 +273,7 @@
   }
 
   let stub = serialised.at("stub", default: (:))
-  if stub.at("rowname", default: none) != none or stub.at("group", default: none) != none {
+  if stub.len() > 0 and stub.values().any(value => value != none) {
     directives.push((
       kind: "stub",
       rowname: stub.at("rowname", default: none),
@@ -232,6 +291,7 @@
   }
 
   let hidden = serialised.at("hidden", default: ())
+  let hidden = if type(hidden) == str { (hidden,) } else { hidden }
   if hidden.len() > 0 { directives.push((kind: "hide", columns: hidden)) }
 
   for spanner in serialised.at("spanners", default: ()) {
@@ -246,9 +306,13 @@
   for descriptor in serialised.at("formats", default: ()) { directives.push(_format(descriptor)) }
 
   for descriptor in serialised.at("substitutions", default: ()) {
+    let test = descriptor.at("test", default: "missing")
+    if test not in ("missing", "zero") {
+      fail-enum("substitution", "test", test, ("missing", "zero"))
+    }
     directives.push((
       kind: "substitute",
-      test: descriptor.at("test", default: "missing"),
+      test: test,
       columns: _selector(descriptor.at("columns", default: auto)),
       rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
       replacement: _content(descriptor.at("replacement", default: [--])),
@@ -268,9 +332,12 @@
     directives.push((kind: "source-note", note: _content(note)))
   }
 
+  // The third argument is the theme, not the option set: passing options there
+  // silently replaced the theme, so a serialised table drew none of its rules.
+  // Options belong on top of whatever theme the caller asked for.
   build(
     serialised.at("data", default: ()),
     directives,
-    serialised.at("options", default: (:)),
+    theme + serialised.at("options", default: (:)),
   )
 }

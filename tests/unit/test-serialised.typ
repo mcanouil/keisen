@@ -100,3 +100,39 @@
 // No resolve-serialised call: display-table recognises data where a built
 // specification would have a resolved column list.
 #assert.eq(type(display-table(spec: serialised)), content)
+
+// --- options sit on top of the theme, rather than replacing it ---
+
+#import "../../src/theme/options.typ": option
+#import "../../src/theme/presets.typ": theme-booktabs, theme-default
+
+// The third argument to build-spec is the theme; passing the option set there
+// silently dropped every rule the theme carries.
+#let themed = resolve-serialised(
+  (kind: "display-table", data: ((units: 1),), options: (row-striping: true)),
+  build-spec,
+  theme: theme-default(),
+)
+#assert.eq(option(themed.options, "row-striping"), true)
+#assert.eq(option(themed.options, "table-border-top"), option(theme-default(), "table-border-top"))
+
+// A caller's theme reaches the serialised path too.
+#let booktabs = resolve-serialised(
+  (kind: "display-table", data: ((units: 1),)),
+  build-spec,
+  theme: theme-booktabs(),
+)
+#assert.eq(option(booktabs.options, "cell-inset"), option(theme-booktabs(), "cell-inset"))
+
+// --- a built specification is marked as such ---
+
+// The entry point used to guess from a "columns" key, which a generator might
+// reasonably send.
+#assert.eq(spec.built, true)
+#assert.eq(serialised.at("built", default: false), false)
+
+// --- serialised row selectors accept what every other selector accepts ---
+
+#assert.eq(resolve-predicate(auto), auto)
+#assert.eq(resolve-predicate(1), 1)
+#assert.eq(resolve-predicate((0, 2)), (0, 2))
