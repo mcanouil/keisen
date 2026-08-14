@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- fix: `columns-move()` resolves once the table knows its columns, so hiding or promoting the anchor no longer changes whether the move succeeds depending on which line was written first. (#8)
+- fix: `columns-move()` reports a hidden or stub column as such rather than as unknown, and resolves once the table knows its columns, so hiding or promoting the anchor no longer changes whether the move succeeds depending on which line was written first. (#8)
 
 - docs: the reference documents every exported function, read from the source and held to it by `tests/unit/test-exports.typ`. (#7)
 - docs: the examples page shows five tables, each beside the source that produced it, rendered from the visual tests. (#7)

@@ -31,6 +31,10 @@ A failing `#assert` is a compile failure, which is exactly how the tests report.
 Write the test first.
 Unit tests live in `tests/unit/` as `.typ` files of `#assert.eq` calls, and visual tests live in `tests/visual/` as documents to inspect.
 
+Failure paths go in `tests/expect-fail/`.
+Typst has no `try`, so a panic cannot be asserted from inside a document: each file there is expected to fail compiling, and a `// expect: <text>` comment on its own line names the message it must produce.
+A file in that directory which compiles is a test failure.
+
 ## House rules
 
 - The core imports no third-party package.

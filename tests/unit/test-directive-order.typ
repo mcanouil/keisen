@@ -23,13 +23,12 @@
 #assert.eq(hide-first.columns, ("price", "city", "highway"))
 #assert.eq(move-first.columns, hide-first.columns)
 
-// A move whose anchor is hidden, or promoted into the stub, is an error
-// whichever order the two directives are written in. That symmetry cannot be
-// asserted here: Typst has no try, so a panic cannot be caught, and both orders
-// panic by design. What is asserted below is the other half of the guarantee,
-// that every order which succeeds produces the same table.
+// The other half of the guarantee, that a move anchored on a hidden or promoted
+// column fails the same way whichever order it is written in, lives in
+// tests/expect-fail/: Typst has no try, so a panic is asserted by compiling a
+// document that must not compile.
 
-// --- a move relative to a stub column is rejected either way round ---
+// --- a move is unaffected by where the stub directive sits ---
 
 #let stub-first = build-spec(
   data,

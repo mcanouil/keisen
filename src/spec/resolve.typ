@@ -10,7 +10,26 @@
 ///! Ordering now happens here, once, after every directive has been recorded,
 ///! so a move sees the columns the table actually has.
 
+#import "../parts/stub.typ": stub-column-names
 #import "../utils/errors.typ": check, check-column
+
+// A column that exists but is not in the table is not an unknown column, and
+// saying so would send the reader hunting for a typo that is not there.
+#let _check-visible(spec, name) = {
+  check(
+    name not in spec.hidden,
+    "columns-move",
+    "column " + name + " is hidden",
+    hint: "Move a visible column, or drop the columns-hide.",
+  )
+  check(
+    name not in stub-column-names(spec.stub),
+    "columns-move",
+    "column " + name + " is in the stub",
+    hint: "The stub sits on the leading edge; its columns are not reordered.",
+  )
+  check-column(spec.columns, "columns-move", name)
+}
 
 #let apply-moves(spec) = {
   let columns = spec.columns
@@ -24,8 +43,8 @@
       hint: "Pass before: or after: naming the column to move relative to.",
     )
 
-    for name in directive.columns { check-column(columns, "columns-move", name) }
-    check-column(columns, "columns-move", anchor)
+    for name in directive.columns { _check-visible(spec, name) }
+    _check-visible(spec, anchor)
     check(
       anchor not in directive.columns,
       "columns-move",
