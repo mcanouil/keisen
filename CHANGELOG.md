@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `table-row-group(label, rows)` declares a group over data that carries no column to group by, later groups winning on overlap. (#34)
+- fix: rows no group claims lead the body as a nameless block instead of disappearing, so a grouping that covers part of the data loses nothing. (#34)
+- feat: summary rows accept declared groups as well as a group column, and say so when there are neither. (#34)
+
 - feat: `cells-footnotes()` addresses the footnote rows, numbered by where they land in the footer, so a marked note can be styled as a source note already could. (#33)
 - fix: footnote rows are emitted with a style lookup instead of an empty dictionary, so a style aimed at one is no longer dropped in silence. (#33)
 - fix: the footer prints marked notes in mark order, so a note marking a later row no longer appears above the note whose mark precedes it. (#33)
