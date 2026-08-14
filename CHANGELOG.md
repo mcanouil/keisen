@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- docs: a "Figures and Quarto" section says that a figure does not break across pages until `#show figure: set block(breakable: true)` is in force, that `table-header` and a caption are alternatives rather than partners, and how to emit the table inside a Quarto cross-referenced div. (#28)
+- docs: the README no longer describes the API as a target rather than working code. (#28)
+- docs: the inline-nanoplot listing imports the package and defines the series it plots, so it runs as written and the rehearsal compiles it like the others. (#28)
+
 - fix: a formatted number is pinned left to right, so a table under `#set text(dir: rtl)` renders `1 256.750` rather than laying its integer, separator and fraction out backwards. (#27)
 - test: the same table is rendered in both directions, and the alignment contract is asserted where it is decided, so the choice of `start` and `end` over `left` and `right` is verified rather than assumed. (#27)
 - docs: the examples page shows a right-to-left table and says which parts mirror and which do not. (#27)

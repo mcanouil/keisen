@@ -11,7 +11,8 @@ Documentation: <https://m.canouil.dev/keisen>.
 
 > [!WARNING]
 > _Keisen_ is in early development.
-> There is no release yet, and the API below is the target rather than working code.
+> The import below is how it will read once the package is released; until then it is used from a clone.
+> The API works and is tested; it is not yet frozen.
 
 ## Quick look
 
