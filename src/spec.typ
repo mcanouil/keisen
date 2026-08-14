@@ -93,6 +93,20 @@
   // would whitelist the same typo for every other directive.
   for name in spec.hidden { check-column(spec.data-columns, "columns-hide", name) }
 
+  // A summary row is an aggregate of a column with no row behind it. The
+  // column-wide path already leaves cell formatters out, through covering() in
+  // src/render/layout.typ; a format named on the summary itself bypasses that
+  // and would reach the closure with the aggregate, failing as a Typst type
+  // error that names neither the directive nor the reason.
+  for directive in spec.summaries + spec.grand-summaries {
+    check(
+      directive.format == none or not directive.format.at("cell", default: false),
+      if directive.scope == "group" { "summary-rows" } else { "grand-summary-rows" },
+      "format cannot be a cell formatter",
+      hint: "A summary row has no row to read; use format() or one of the format-* directives.",
+    )
+  }
+
   check(
     spec.summaries.len() == 0 or spec.stub.group != none,
     "summary-rows",

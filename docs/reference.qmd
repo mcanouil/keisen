@@ -109,7 +109,7 @@ All rounding and scaling happen in Typst's `decimal` type, which is fixed-point,
 Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
 
 `format-cell` is the only formatter that reads the row rather than the value, and it is worth reaching for last: `columns-combine` covers the common case of building one cell from named neighbours, and reads better where it fits.
-A summary row is an aggregate of a column with no row behind it, so a cell formatter never applies to one; the summary falls back to whichever plain directive covers the column.
+A summary row is an aggregate of a column with no row behind it, so a cell formatter never applies to one; the summary falls back to whichever plain directive covers the column, and naming one as a summary's own `format:` is an error.
 A serialised specification cannot name it either, since its argument is a closure.
 
 `format-currency` knows EUR, GBP, USD, JPY, and CHF, and writes any other currency as its code, since there are more currencies than anyone should hard-code.
