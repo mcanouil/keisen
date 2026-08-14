@@ -82,6 +82,12 @@ otherwise look arbitrary.
   import has to come out of `lib.typ`. An optional module reachable only from a
   clone is not optional; it is unreachable. That is why the nanoplot renderers
   are native and exported rather than sitting behind a third-party integration.
+- **Inline boxes are laid out along the writing direction.**
+  A cell aligns with `start` and `end` so that a right-to-left table mirrors
+  with the text, but the boxes a formatted number is padded with are absolute:
+  the integer hugs the separator from the left in every script. The number run
+  is therefore pinned to `ltr`, since without it right-to-left text lays those
+  boxes out in reverse and `1256.75` renders as `75.256 1`.
 - **Named arguments are identifiers.**
   Option names are written unquoted, `table-options(row-striping: true)`.
 - **`measure` assumes infinite space and ignores column tracks** (typst/typst#3943).
