@@ -51,7 +51,7 @@ The [Examples](examples.qmd) page shows this and four more, each beside the sour
 ## Status
 
 Keisen is in early development and has no release yet, so it is used from a clone rather than from Typst Universe.
-The API is settling milestone by milestone, and nothing on this site describes behaviour that does not exist: the [Reference](reference.qmd) is read from the source and held to it by a test.
+The API is settling milestone by milestone, and the [Reference](reference.qmd) is written from the source rather than from memory, though nothing yet checks the page against the code automatically.
 
 Follow along in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
