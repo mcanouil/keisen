@@ -161,7 +161,11 @@ A renderer is any `(numbers, domain: none, width: .., height: ..) => content`, s
 
 `table-style` and `table-footnote` take one location or an array of them.
 
-`cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-summary(groups: auto, columns: auto, rows: auto)`, `cells-grand-summary(columns: auto, rows: auto)`, `cells-source-notes(notes: auto)`.
+`cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-summary(groups: auto, columns: auto, rows: auto)`, `cells-grand-summary(columns: auto, rows: auto)`, `cells-source-notes(notes: auto)`, `cells-footnotes(notes: auto)`.
+
+A footnote row is numbered by where it lands in the footer, so `notes: 0` is the first note printed under the table.
+The footer prints the marked notes before the unmarked ones, each group in the order it was written, which is not necessarily the order the `table-footnote` calls appear in.
+A footnote cannot mark a footnote row: which row a note lands on is decided by numbering the marks, so a mark there would have to be numbered before the numbering it takes part in, and it is refused rather than silently ignored.
 
 A summary row answers to the label that names it and to its position within the group, so `rows: "Subtotal"` and `rows: 0` reach the same row.
 `columns: none` is the cell carrying the row's own label, which is how a note goes on the row once rather than on every cell of it.

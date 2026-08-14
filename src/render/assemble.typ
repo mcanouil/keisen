@@ -82,7 +82,12 @@
     out
   })
 
-  let index = colours.pairs().fold(build-index(spec), (styles, pair) => {
+  // How many rows the footer prints is what cells-footnotes addresses, and it is
+  // known only once the marks are assigned, so the styles are indexed against a
+  // spec that carries the answer.
+  let addressable = spec + (footnote-rows: footnotes.len())
+
+  let index = colours.pairs().fold(build-index(addressable), (styles, pair) => {
     let (key, properties) = pair
     let explicit = styles.at(key, default: (:))
     // Deep-merge the text dictionary: a shallow merge would replace it wholesale
@@ -321,22 +326,24 @@
   }
 
   // Marked notes print under the source notes, each behind its own mark, then
-  // the unmarked ones, which explain the table rather than a cell.
-  for footnote in footnotes.filter(footnote => footnote.mark != none) {
+  // the unmarked ones, which explain the table rather than a cell. Their
+  // position in that sequence is what cells-footnotes addresses, so the two
+  // passes count through one running position rather than each from zero.
+  let footnote-row = 0
+  for footnote in (
+    footnotes.filter(footnote => footnote.mark != none)
+      + footnotes.filter(footnote => footnote.mark == none)
+  ) {
+    let body = if footnote.mark == none { footnote.note } else {
+      super(footnote.mark) + footnote.note
+    }
     notes.push(_cell(
-      (:),
-      text(size: setting("footnote-size"), super(footnote.mark) + footnote.note),
+      style-for(index, PARTS.footnotes, footnote-row, none),
+      text(size: setting("footnote-size"), body),
       colspan: width,
       stroke: (top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
     ))
-  }
-  for footnote in footnotes.filter(footnote => footnote.mark == none) {
-    notes.push(_cell(
-      (:),
-      text(size: setting("footnote-size"), footnote.note),
-      colspan: width,
-      stroke: (top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
-    ))
+    footnote-row += 1
   }
 
 

@@ -10,9 +10,9 @@
 #let public = (
   "aggregate-count", "aggregate-max", "aggregate-mean", "aggregate-median", "aggregate-min",
   "aggregate-quantile", "aggregate-standard-deviation", "aggregate-sum",
-  "cells-body", "cells-column-labels", "cells-column-spanners", "cells-grand-summary",
-  "cells-row-groups", "cells-source-notes", "cells-stub", "cells-stubhead", "cells-summary",
-  "cells-title",
+  "cells-body", "cells-column-labels", "cells-column-spanners", "cells-footnotes",
+  "cells-grand-summary", "cells-row-groups", "cells-source-notes", "cells-stub", "cells-stubhead",
+  "cells-summary", "cells-title",
   "columns-align", "columns-combine", "columns-hide", "columns-label", "columns-move", "columns-width",
   "data-colour", "display-table",
   "format", "format-bytes", "format-cell", "format-currency", "format-date", "format-integer",
