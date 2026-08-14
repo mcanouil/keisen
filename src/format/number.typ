@@ -104,6 +104,15 @@
   leading + count
 }
 
+// An infinity written as whatever the caller said to write, or `none` when they
+// said nothing. Alignment sees opaque content: an infinity has no digits to pad
+// a column against.
+#let unbounded(value, options) = {
+  let written = options.at("infinity", default: none)
+  if written == none or value not in (float.inf, -float.inf) { return none }
+  if value == -float.inf { [-] + written } else { written }
+}
+
 #let format-value(value, options) = {
   // Every formatter in the family lands here, so the scope travels with the
   // options: a currency column that holds a word should say so as
@@ -111,6 +120,8 @@
   let scope = options.at("scope", default: "format-number")
   let number = to-decimal(value)
   if number == none {
+    let written = unbounded(value, options)
+    if written != none { return written }
     fail(
       scope,
       "value is not a finite number",
@@ -179,6 +190,25 @@
   cell: false,
 )
 
+// A directive whose separators may be `auto`, meaning the theme decides.
+//
+// The theme is not resolved until render time, so such a directive carries how
+// to build its formatter rather than the formatter itself: `build` takes the
+// theme's separators and returns the `value => slots` closure. This is the same
+// shape a nanoplot uses to reach the column it is drawn against.
+//
+// `function` is none deliberately. Every path that formats a cell resolves the
+// directive through `formatter-for` in src/format/apply.typ, and one that
+// forgot would rather fail than quietly pick a separator nobody asked for.
+#let format-family(columns, build, rows: auto) = (
+  kind: "format",
+  columns: columns,
+  rows: rows,
+  function: none,
+  family: build,
+  cell: false,
+)
+
 // The one formatter that reads the row rather than the value, for a cell whose
 // content depends on its neighbours. The row it receives is the input row, so
 // hidden columns and the reserved `_index` key are both reachable.
@@ -202,8 +232,10 @@
   decimals: 2,
   significant: none,
   grouping: 3,
-  group-separator: sym.space.thin,
-  decimal-separator: ".",
+  // `auto` means the theme decides, through number-group-separator and
+  // number-decimal-separator, so a convention is set once for the table.
+  group-separator: auto,
+  decimal-separator: auto,
   scale: 1,
   sign: false,
   rounding: "half-up",
@@ -211,23 +243,25 @@
   prefix: none,
   suffix: none,
   exponent: none,
+  infinity: none,
   // Named by whichever formatter in the family called, so a failure reports the
   // function the caller actually wrote.
   scope: "format-number",
-) = format(
+) = format-family(
   columns,
-  value => format-value(
+  separators => value => format-value(
     value,
     (
       scope: scope,
       prefix: prefix,
       suffix: suffix,
       exponent: exponent,
+      infinity: infinity,
       decimals: decimals,
       significant: significant,
       grouping: grouping,
-      group-separator: group-separator,
-      decimal-separator: decimal-separator,
+      group-separator: if group-separator == auto { separators.group } else { group-separator },
+      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
       scale: scale,
       sign: sign,
       rounding: rounding,

@@ -6,6 +6,7 @@
 ///! a second parameter.
 
 #import "../parts/substitutions.typ": is-missing, is-zero
+#import "../theme/options.typ": option
 #import "../utils/errors.typ": fail-type
 #import "nanoplot.typ": nanoplot-cell, shared-domain
 
@@ -65,17 +66,32 @@
 // A nanoplot is the one formatter whose output depends on the rest of the
 // column, so its cell function is built here, where the column is: the domain
 // spans the values below rather than arriving as an argument nobody can check.
-#let _formatter(directive, values) = {
-  if "nanoplot" not in directive { return directive.function }
+// The formatter a directive stands for, given the theme it is rendered under.
+//
+// A number directive carries how to build its formatter rather than the
+// formatter itself, since `group-separator: auto` and `decimal-separator: auto`
+// are answered by "number-group-separator" and "number-decimal-separator" on the
+// theme, which does not exist when the directive is written. Body cells and
+// summary cells both come through here, so both read the same conventions.
+#let formatter-for(directive, options) = {
+  if "family" not in directive { return directive.function }
+  (directive.family)((
+    group: option(options, "number-group-separator"),
+    decimal: option(options, "number-decimal-separator"),
+  ))
+}
+
+#let _formatter(directive, values, options) = {
+  if "nanoplot" not in directive { return formatter-for(directive, options) }
   nanoplot-cell(directive.nanoplot, shared-domain(values, given: directive.nanoplot.domain))
 }
 
-#let apply-formats(rows, formats, name, substitutions: ()) = {
+#let apply-formats(rows, formats, name, substitutions: (), options: (:)) = {
   let values = rows.map(row => row.at(name, default: none))
   // Which directives name this column does not vary by row, and a nanoplot's
   // domain does not vary by cell, so both are settled once for the column.
   let applicable = formats.filter(directive => matches-column(directive.columns, name))
-  let formatters = applicable.map(directive => _formatter(directive, values))
+  let formatters = applicable.map(directive => _formatter(directive, values, options))
 
   rows.map(row => {
     let value = row.at(name, default: none)

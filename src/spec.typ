@@ -7,6 +7,7 @@
 
 #import "data.typ": column-names, group-rows, normalise
 #import "parts/spanners.typ": validate-spanners
+#import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column, nanoplot-columns
 #import "spec/resolve.typ": apply-combines, apply-moves
@@ -142,6 +143,11 @@
         name: directive.into,
         why: "is combined from other columns",
         hint: "Summarise its sources instead; a combined column holds content, not quantities.",
+      ))
+      + infinite-columns(spec.data, spec.columns).map(entry => (
+        name: entry.name,
+        why: "holds an infinite value in row " + str(entry.row),
+        hint: "Aggregations work in decimal, which has no infinity; name the other columns.",
       ))
   )
   for directive in spec.summaries + spec.grand-summaries {

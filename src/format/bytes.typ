@@ -5,7 +5,7 @@
 ///! table that does not say which it means is telling the reader nothing.
 
 #import "../utils/errors.typ": fail-enum
-#import "number.typ": format, format-value, to-decimal
+#import "number.typ": format-family, format-value, to-decimal
 
 #let _UNITS = (
   "1024": ([B], [KiB], [MiB], [GiB], [TiB], [PiB]),
@@ -57,29 +57,31 @@
   base: 1024,
   decimals: 1,
   grouping: 3,
-  group-separator: sym.space.thin,
-  decimal-separator: ".",
+  group-separator: auto,
+  decimal-separator: auto,
   sign: false,
   rounding: "half-up",
+  infinity: none,
 ) = {
   if base not in (1000, 1024) {
     fail-enum("format-bytes", "base", base, (1000, 1024))
   }
 
-  format(
+  format-family(
     columns,
     rows: rows,
-    value => _slots(value, (
+    separators => value => _slots(value, (
       scope: "format-bytes",
       base: base,
       prefix: none,
       suffix: none,
       exponent: none,
+      infinity: infinity,
       decimals: decimals,
       significant: none,
       grouping: grouping,
-      group-separator: group-separator,
-      decimal-separator: decimal-separator,
+      group-separator: if group-separator == auto { separators.group } else { group-separator },
+      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
       scale: 1,
       sign: sign,
       rounding: rounding,

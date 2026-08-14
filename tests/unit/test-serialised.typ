@@ -2,6 +2,7 @@
 // than passed, and predicates written as comparisons rather than closures.
 
 #import "../../lib.typ": display-table
+#import "../../src/format/apply.typ": formatter-for
 #import "../../src/spec.typ": build-spec
 #import "../../src/render/layout.typ": column-cells
 #import "../../src/spec/resolve.typ": resolve-predicate, resolve-serialised
@@ -88,10 +89,13 @@
 #assert.eq(spec.styles.len(), 1)
 #assert.eq(spec.groups.map(group => group.label), ("North",))
 
-// The formatter came back as a function, and formats as its named version does.
-// The default group separator is a thin space, which is what the built-in
-// formatter uses whether it was named or called directly.
-#assert.eq((spec.formats.first().function)(1250).integer, "1" + sym.space.thin + "250")
+// The formatter came back as a directive that formats as its named version
+// does, resolved against the theme like any other: a named formatter reads
+// number-group-separator, which defaults to a thin space.
+#assert.eq(
+  (formatter-for(spec.formats.first(), spec.options))(1250).integer,
+  "1" + sym.space.thin + "250",
+)
 
 // And the whole thing renders through the same pipeline as a hand-built table.
 #assert.eq(type(display-table(spec: spec)), content)

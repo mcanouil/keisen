@@ -45,6 +45,13 @@
   "summary-fill": none,
   "summary-border-top": none,
   "grand-summary-border-top": none,
+  // Formatter defaults
+  //
+  // What a formatter uses where its own argument is `auto`, so a French or
+  // German table sets its convention once rather than on every directive.
+  "number-group-separator": sym.space.thin,
+  "number-decimal-separator": ".",
+
   // Footer
   "footnote-marks": "numbers",
   "footnote-size": 0.8em,
