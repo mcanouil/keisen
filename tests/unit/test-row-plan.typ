@@ -11,7 +11,7 @@
   (table-header(title: [Masses]), table-source-note([Source: scale.])),
   (:),
 )
-#let plan = build-plan(spec)
+#let plan = build-plan(spec).rows
 
 #assert.eq(
   plan.map(entry => entry.part),
@@ -40,10 +40,10 @@
   (table-header(title: [Masses], subtitle: [In grams]),),
   (:),
 ))
-#assert.eq(with-subtitle.map(entry => entry.part), ("title", "subtitle", "labels", "body"))
+#assert.eq(with-subtitle.rows.map(entry => entry.part), ("title", "subtitle", "labels", "body"))
 
-#let bare = build-plan(build-spec((mass: (1,)), (), (:)))
+#let bare = build-plan(build-spec((mass: (1,)), (), (:))).rows
 #assert.eq(bare.map(entry => entry.part), ("labels", "body"))
 
 // An empty table still plans its labels.
-#assert.eq(build-plan(build-spec((:), (), (:))).map(entry => entry.part), ("labels",))
+#assert.eq(build-plan(build-spec((:), (), (:))).rows.map(entry => entry.part), ("labels",))

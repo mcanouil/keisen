@@ -39,7 +39,7 @@
 
 // The plan agrees, so South gets no summary row at all.
 #assert.eq(
-  build-plan(spec).map(entry => entry.part),
+  build-plan(spec).rows.map(entry => entry.part),
   ("labels", "group", "body", "summary", "group", "body"),
 )
 

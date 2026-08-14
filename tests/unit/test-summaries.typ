@@ -57,7 +57,7 @@
 #assert.eq(spec.summaries.len(), 1)
 #assert.eq(spec.grand-summaries.len(), 1)
 
-#let plan = build-plan(spec)
+#let plan = build-plan(spec).rows
 #assert.eq(
   plan.map(entry => entry.part),
   ("labels", "group", "body", "body", "summary", "group", "body", "summary", "grand-summary"),

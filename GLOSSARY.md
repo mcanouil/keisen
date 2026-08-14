@@ -28,6 +28,10 @@ Doc-only: this file documents names already in the code, it does not change any.
 | slots | alignment dictionary | `(sign, prefix, integer, separator, fraction, exponent, suffix)` returned by built-in formatters. |
 | selector | column, row, or group filter | `auto`, a name, an array, or a one-argument predicate. |
 | `_index` | reserved row key | Position in the input data, not the display position. |
+| `PARTS` | the addressable vocabulary | In `src/locations.typ`. Names a part for both the location DSL and the renderer, so a style can never be looked up for a part nothing can address. |
+
+Two vocabularies name parts, and they are not the same list.
+`PARTS` names what a location can address; the row plan names what a row *is*, which is a finer distinction: one `row-groups` address covers the `group` rows of the plan, and `source-notes` covers its `source-note` rows.
 
 ## Conventions
 

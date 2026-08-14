@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- fix: the row plan carries the spanner rows it counted, so the header the renderer emits and the header the plan described cannot come from separate calls. (#21)
+- fix: `decimal-align` and `footnote-marks` are read through the option accessor, so changing a default changes what they do. (#21)
+
 - feat: `format-date()` takes a `datetime` or an ISO-8601 string, which is how a date arrives from a file, and refuses one that names no day rather than panicking inside `datetime`. (#19)
 - feat: `format-markup()` evaluates a cell holding Typst markup as text, which is how a generator carries emphasis it cannot express as content. (#19)
 

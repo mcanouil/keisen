@@ -6,52 +6,17 @@
 ///! Every cell is emitted explicitly, which gives one place where fills,
 ///! alignment, and strokes are decided.
 
-#import "../format/align.typ": align-slots, column-metrics
+#import "../format/align.typ": align-slots
 #import "../format/apply.typ": apply-formats, matches-column
 #import "../data.typ": column
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, marks-for
-#import "../parts/spanners.typ": spanner-rows
-#import "../parts/substitutions.typ": is-missing, is-zero
 #import "../parts/summaries.typ": summary-values
+#import "../locations.typ": PARTS
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
+#import "layout.typ": alignments, infer-alignment, metrics, slots-to-content, summarised
 #import "plan.typ": build-plan
-
-// Numeric columns sit against the end edge, everything else against the start
-// edge. Direction-relative, because Typst lays cells out along the writing
-// direction and reverses column order in right-to-left text.
-#let infer-alignment(rows, name) = {
-  let values = rows.map(row => row.at(name, default: none)).filter(value => value != none)
-  if values.len() == 0 { return start }
-  if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
-}
-
-// Built-in formatters return the alignment dictionary rather than content, so
-// a later milestone can pad the slots to line columns up on their separator.
-// Until then the slots are concatenated in reading order.
-// Always returns content: a cell holds content, and an unformatted column still
-// carries whatever the data had in it.
-#let slots-to-content(value) = {
-  if value == none { return [] }
-  if type(value) == content { return value }
-  if type(value) == dictionary and value.at("kind", default: none) == "number" {
-    let digits = value.integer + value.separator + value.fraction
-    // Only the slots that carry something are joined, so a plain number stays
-    // one piece of content rather than becoming a sequence padded with empties.
-    // Slot order matches align-slots, which puts the sign ahead of the symbol:
-    // -€5 is a debt and €-5 is a typo.
-    let pieces = if value.prefix == none {
-      ([#(value.sign + digits)],)
-    } else {
-      ([#(value.sign)], [#(value.prefix)], [#digits])
-    }
-    if value.exponent != none { pieces.push([#(value.exponent)]) }
-    if value.suffix != none { pieces.push([#(value.suffix)]) }
-    return pieces.join()
-  }
-  [#value]
-}
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
 // overrides either, which is why the style dictionary is read last.
@@ -78,7 +43,9 @@
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
-  let plan = build-plan(spec)
+  // The plan carries the spanner rows it counted, so the header the renderer
+  // emits and the header the plan described cannot come from different calls.
+  let (rows: plan, spanners: levels) = build-plan(spec)
   let indices = range(names.len())
   let cells = names.map(name => apply-formats(
     spec.data,
@@ -126,62 +93,8 @@
     styles.insert(key, merged)
     styles
   })
-  let alignments = names.map(name => spec.align.at(
-    name,
-    default: if setting("infer-alignment") { infer-alignment(spec.data, name) } else { start },
-  ))
-  // Measuring needs context, which the table body has; the metrics are computed
-  // once per column rather than once per cell.
-  let summary-slots(name) = {
-    let covering = spec.formats.filter(directive => (
-      matches-column(directive.columns, name) and directive.rows == auto
-    ))
-    let format-one(entry) = {
-      let value = entry.values.at(name, default: none)
-      if value == none { return none }
-      if entry.format != none { return (entry.format.function)(value) }
-      if covering.len() == 0 { return value }
-      (covering.last().function)(value)
-    }
-    let entries = summaries.groups.flatten() + summaries.grand
-    entries.map(format-one).filter(slots => slots != none)
-  }
-
-  let metrics = if spec.options.at("decimal-align", default: true) {
-    names.enumerate().map(((position, name)) => column-metrics(cells.at(position) + summary-slots(name)))
-  } else {
-    names.map(name => none)
-  }
-  let levels = spanner-rows(spec)
-
-  // A summary cell formats through the same path as the body cells above it,
-  // either by its own format or by whichever directive covers the column.
-  let summarised(entry, name, metric) = {
-    let value = entry.values.at(name, default: none)
-
-    // A substitution that covers the whole column covers its summary too.
-    let replacing = spec.substitutions.filter(directive => (
-      matches-column(directive.columns, name) and directive.rows == auto
-    ))
-    for directive in replacing {
-      let applies = if directive.test == "missing" { is-missing(value) } else { is-zero(value) }
-      if applies { return directive.replacement }
-    }
-
-    if value == none { return [] }
-
-    let slots = if entry.format != none {
-      (entry.format.function)(value)
-    } else {
-      // Only directives covering the whole column apply: one aimed at a row has
-      // no summary row to aim at.
-      let covering = spec.formats.filter(directive => (
-        matches-column(directive.columns, name) and directive.rows == auto
-      ))
-      if covering.len() == 0 { value } else { (covering.last().function)(value) }
-    }
-    slots-to-content(align-slots(slots, metric))
-  }
+  let alignments = alignments(spec)
+  let metrics = metrics(spec, cells, summaries)
 
   let top-border(part) = {
     if part == "group" { setting("row-group-border-top") }
@@ -233,7 +146,7 @@
       let metric = if "text" in properties { none } else { metrics.at(position) }
       cells.push(_cell(
         properties,
-        marked(summarised(entry, name, metric), name),
+        marked(summarised(spec, entry, name, metric), name),
         align: alignments.at(position),
         fill: setting("summary-fill"),
         stroke: rule,
@@ -243,8 +156,8 @@
   }
 
   let titled(name, body, align: auto, stroke: (:)) = _cell(
-    style-for(index, "title", none, name),
-    _marked(body, marks-for(footnotes, "title", none, name)),
+    style-for(index, PARTS.title, none, name),
+    _marked(body, marks-for(footnotes, PARTS.title, none, name)),
     align: align,
     colspan: width,
     stroke: stroke,
@@ -278,11 +191,11 @@
       let body = if cell.label == none { [] } else {
         _marked(
           strong(cell.label),
-          marks-for(footnotes, "column-spanners", row.level, cell.label),
+          marks-for(footnotes, PARTS.column-spanners, row.level, cell.label),
         )
       }
       labels.push(_cell(
-        style-for(index, "column-spanners", row.level, cell.label),
+        style-for(index, PARTS.column-spanners, row.level, cell.label),
         body,
         align: center,
         colspan: cell.span,
@@ -310,18 +223,18 @@
     }
     let stubhead = if label == none { [] } else { strong(label) }
     labels.push(_cell(
-      style-for(index, "stubhead", none, none),
-      _marked(stubhead, marks-for(footnotes, "stubhead", none, none)),
+      style-for(index, PARTS.stubhead, none, none),
+      _marked(stubhead, marks-for(footnotes, PARTS.stubhead, none, none)),
       align: start,
       stroke: label-rules,
     ))
   }
   for (position, name) in names.enumerate() {
     labels.push(_cell(
-      style-for(index, "column-labels", none, name),
+      style-for(index, PARTS.column-labels, none, name),
       _marked(
         text(weight: setting("column-labels-weight"), size: setting("column-labels-size"), spec.labels.at(name, default: [#name])),
-        marks-for(footnotes, "column-labels", none, name),
+        marks-for(footnotes, PARTS.column-labels, none, name),
       ),
       align: alignments.at(position),
       stroke: label-rules,
@@ -338,10 +251,10 @@
         level: entry.level,
         repeat: setting("row-group-repeat"),
         _cell(
-          style-for(index, "row-groups", entry.source, none),
+          style-for(index, PARTS.row-groups, entry.source, none),
           _marked(
             text(weight: setting("row-group-weight"), [#label]),
-            marks-for(footnotes, "row-groups", entry.source, none),
+            marks-for(footnotes, PARTS.row-groups, entry.source, none),
           ),
           align: start,
           colspan: width,
@@ -351,7 +264,7 @@
       ))
     } else if entry.part == "summary" {
       let group = summaries.groups.at(entry.source.group)
-      rows += summary-row(group.at(entry.source.row), "summary", entry.source)
+      rows += summary-row(group.at(entry.source.row), PARTS.summary, entry.source)
     } else if entry.part == "grand-summary" {
       // Wrapped in a non-repeating header of the same level as a group label, so
       // the last group's label is retired: a repeated "South" above the grand
@@ -359,7 +272,7 @@
       rows.push(table.header(
         level: 3,
         repeat: false,
-        ..summary-row(summaries.grand.at(entry.source), "grand-summary", entry.source),
+        ..summary-row(summaries.grand.at(entry.source), PARTS.grand-summary, entry.source),
       ))
     } else if entry.part == "body" {
       if has-stub {
@@ -371,15 +284,15 @@
         let named = text(weight: setting("stub-weight"), name)
         let body = if depth == 0 { named } else { h(setting("stub-indent-step") * depth) + named }
         rows.push(_cell(
-          style-for(index, "stub", entry.source, none),
-          _marked(body, marks-for(footnotes, "stub", entry.source, none)),
+          style-for(index, PARTS.stub, entry.source, none),
+          _marked(body, marks-for(footnotes, PARTS.stub, entry.source, none)),
           align: start,
           fill: stripe-fill(entry),
         ))
       }
       for position in indices {
         let name = names.at(position)
-        let properties = style-for(index, "body", entry.source, name)
+        let properties = style-for(index, PARTS.body, entry.source, name)
         // Padding measured in the surrounding text style would be wrong under a
         // style that changes the text, and a too-narrow box wraps the number.
         let metric = if "text" in properties { none } else { metrics.at(position) }
@@ -387,7 +300,7 @@
           properties,
           _marked(
             slots-to-content(align-slots(cells.at(position).at(entry.source), metric)),
-            marks-for(footnotes, "body", entry.source, name),
+            marks-for(footnotes, PARTS.body, entry.source, name),
           ),
           align: alignments.at(position),
           fill: stripe-fill(entry),
@@ -399,8 +312,8 @@
   let notes = ()
   for (position, note) in spec.source-notes.enumerate() {
     notes.push(_cell(
-      style-for(index, "source-notes", position, none),
-      text(size: setting("source-note-size"), _marked(note, marks-for(footnotes, "source-notes", position, none))),
+      style-for(index, PARTS.source-notes, position, none),
+      text(size: setting("source-note-size"), _marked(note, marks-for(footnotes, PARTS.source-notes, position, none))),
       colspan: width,
       stroke: (top: if position == 0 { setting("footer-border-top") } else { none }),
     ))

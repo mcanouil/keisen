@@ -15,8 +15,12 @@
   stripe: stripe,
 )
 
+// The plan and the spanner rows it counted, returned together: the renderer
+// needs both, and computing the rows twice left the count and the list free to
+// disagree with nothing to notice.
 #let build-plan(spec) = {
   let plan = ()
+  let spanners = spanner-rows(spec)
 
   // Level 1: the title block, which does not repeat across page breaks.
   if spec.header.title != none { plan.push(entry("title", level: 1)) }
@@ -25,7 +29,7 @@
   // Level 2: the spanner rows, highest level first, then the column labels.
   // They repeat together, and the plan enumerates them so nothing downstream
   // has to recount the header.
-  for index in range(spanner-rows(spec).len()) {
+  for index in range(spanners.len()) {
     plan.push(entry("spanner", level: 2, source: index))
   }
   plan.push(entry("labels", level: 2))
@@ -66,5 +70,5 @@
     plan.push(entry("source-note", source: position))
   }
 
-  plan
+  (rows: plan, spanners: spanners)
 }

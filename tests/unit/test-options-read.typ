@@ -8,6 +8,7 @@
 // list is explicit; a new consumer is added here.
 #let sources = (
   read("../../src/render/assemble.typ"),
+  read("../../src/render/layout.typ"),
   read("../../src/render/plan.typ"),
   read("../../src/format/align.typ"),
   read("../../src/parts/marks.typ"),

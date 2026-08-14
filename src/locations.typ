@@ -13,49 +13,67 @@
 #import "parts/summaries.typ": directives-for, summary-labels
 #import "utils/errors.typ": fail
 
+// The vocabulary of addressable parts, named once so the renderer and the
+// location DSL cannot drift apart. They were spelled independently as bare
+// strings, which is how the renderer came to look up styles for summary rows
+// that no location could produce: every lookup missed, and nothing said so.
+// Named from here, a part the vocabulary does not have is a compile error.
+#let PARTS = (
+  title: "title",
+  column-spanners: "column-spanners",
+  column-labels: "column-labels",
+  stubhead: "stubhead",
+  row-groups: "row-groups",
+  stub: "stub",
+  body: "body",
+  summary: "summary",
+  grand-summary: "grand-summary",
+  source-notes: "source-notes",
+)
+
 #let cells-body(columns: auto, rows: auto) = (
   kind: "location",
-  part: "body",
+  part: PARTS.body,
   columns: columns,
   rows: rows,
 )
 
 #let cells-stub(rows: auto) = (
   kind: "location",
-  part: "stub",
+  part: PARTS.stub,
   rows: rows,
 )
 
-#let cells-stubhead() = (kind: "location", part: "stubhead")
+#let cells-stubhead() = (kind: "location", part: PARTS.stubhead)
 
 #let cells-row-groups(groups: auto) = (
   kind: "location",
-  part: "row-groups",
+  part: PARTS.row-groups,
   groups: groups,
 )
 
 #let cells-column-labels(columns: auto) = (
   kind: "location",
-  part: "column-labels",
+  part: PARTS.column-labels,
   columns: columns,
 )
 
 #let cells-column-spanners(spanners: auto) = (
   kind: "location",
-  part: "column-spanners",
+  part: PARTS.column-spanners,
   spanners: spanners,
 )
 
 // The title block holds two rows, addressed by name rather than by position.
 #let cells-title(parts: ("title", "subtitle")) = (
   kind: "location",
-  part: "title",
+  part: PARTS.title,
   parts: if type(parts) == array { parts } else { (parts,) },
 )
 
 #let cells-summary(groups: auto, columns: auto, rows: auto) = (
   kind: "location",
-  part: "summary",
+  part: PARTS.summary,
   groups: groups,
   columns: columns,
   rows: rows,
@@ -63,14 +81,14 @@
 
 #let cells-grand-summary(columns: auto, rows: auto) = (
   kind: "location",
-  part: "grand-summary",
+  part: PARTS.grand-summary,
   columns: columns,
   rows: rows,
 )
 
 #let cells-source-notes(notes: auto) = (
   kind: "location",
-  part: "source-notes",
+  part: PARTS.source-notes,
   notes: notes,
 )
 
@@ -142,32 +160,32 @@
 #let _expand-one(location, spec) = {
   let part = location.part
 
-  if part == "body" {
+  if part == PARTS.body {
     let rows = spec.data.filter(row => matches-row(location.rows, row))
     let columns = spec.columns.filter(name => matches-column(location.columns, name))
-    rows.map(row => columns.map(name => _address("body", row: row._index, column: name))).flatten()
-  } else if part == "stub" {
+    rows.map(row => columns.map(name => _address(PARTS.body, row: row._index, column: name))).flatten()
+  } else if part == PARTS.stub {
     spec.data
       .filter(row => matches-row(location.rows, row))
-      .map(row => _address("stub", row: row._index))
-  } else if part == "stubhead" {
-    (_address("stubhead"),)
-  } else if part == "row-groups" {
+      .map(row => _address(PARTS.stub, row: row._index))
+  } else if part == PARTS.stubhead {
+    (_address(PARTS.stubhead),)
+  } else if part == PARTS.row-groups {
     spec
       .groups
       .enumerate()
       .filter(((index, group)) => _matches-label(location.groups, group.label))
-      .map(((index, group)) => _address("row-groups", row: index))
-  } else if part == "column-labels" {
+      .map(((index, group)) => _address(PARTS.row-groups, row: index))
+  } else if part == PARTS.column-labels {
     spec.columns
       .filter(name => matches-column(location.columns, name))
-      .map(name => _address("column-labels", column: name))
-  } else if part == "column-spanners" {
+      .map(name => _address(PARTS.column-labels, column: name))
+  } else if part == PARTS.column-spanners {
     // A spanner has no column of its own, so it is addressed by its label.
     spec.spanners
       .filter(spanner => _matches-label(location.spanners, spanner.label))
-      .map(spanner => _address("column-spanners", row: spanner.level, column: spanner.label))
-  } else if part == "summary" {
+      .map(spanner => _address(PARTS.column-spanners, row: spanner.level, column: spanner.label))
+  } else if part == PARTS.summary {
     spec
       .groups
       .enumerate()
@@ -178,23 +196,23 @@
         .map(((position, label)) => _summary-cells(
           location,
           spec,
-          "summary",
+          PARTS.summary,
           (group: index, row: position),
         )))
       .flatten()
-  } else if part == "grand-summary" {
+  } else if part == PARTS.grand-summary {
     summary-labels(spec.grand-summaries)
       .enumerate()
       .filter(((position, label)) => _matches-summary(location.rows, position, label))
-      .map(((position, label)) => _summary-cells(location, spec, "grand-summary", position))
+      .map(((position, label)) => _summary-cells(location, spec, PARTS.grand-summary, position))
       .flatten()
-  } else if part == "title" {
-    location.parts.map(name => _address("title", column: name))
-  } else if part == "source-notes" {
+  } else if part == PARTS.title {
+    location.parts.map(name => _address(PARTS.title, column: name))
+  } else if part == PARTS.source-notes {
     spec.source-notes
       .enumerate()
       .filter(((index, note)) => matches-row(location.notes, (_index: index)))
-      .map(((index, note)) => _address("source-notes", row: index))
+      .map(((index, note)) => _address(PARTS.source-notes, row: index))
   } else {
     fail("locations", "unknown location part", value: part)
   }

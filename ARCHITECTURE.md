@@ -30,11 +30,14 @@ Entry points trace the same path:
 
 | Directory | Purpose |
 | --- | --- |
-| `src/parts/` | One file per table part: header, stub, columns, spanners, body, summaries, notes. Each exports its directive constructors. |
+| `src/parts/` | The table parts: header, stub, columns, spanners, summaries, notes, marks, substitutions, colour. Each exports the directive constructors that build it. |
 | `src/format/` | Value formatters, the selector matching they share, decimal alignment, and the nanoplot renderers. |
-| `src/render/` | Row plan, layout, widths, assembly, accessibility metadata. |
-| `src/theme/` | Option dictionary, presets, shared element builders. |
-| `src/utils/` | Leaf helpers: types, errors, numbers, colour. No rendering here. |
+| `src/render/` | The row plan, the layout decisions taken before any cell exists, and the assembly of those into one native table. |
+| `src/theme/` | The option dictionary and the presets built from it. |
+| `src/utils/` | Leaf helpers: errors and colour. No rendering here. |
+
+Every file under `src/` holds code.
+A module carrying only its header comment describes structure the package does not have, so `tools/check.sh` fails on one.
 
 ## Design tenets
 
