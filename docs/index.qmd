@@ -17,14 +17,45 @@ You describe the parts and the formatting, and it builds the table.
 
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
+## Quick look
+
+This is `tests/visual/grouped.typ`, and the image below is its output.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    product: ("Bolt", "Nut", "Beam", "Plate"),
+    region: ("North", "North", "South", "South"),
+    units: (1250, 860, 430, 2100),
+    revenue: (18750.5, 12900.25, 21500, 31500.75),
+  ),
+  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
+  table-stub(rowname: "product", group: "region", label: [Product]),
+  columns-label(units: [Units], revenue: [Revenue]),
+  table-spanner([Performance], ("units", "revenue")),
+  format-integer("units"),
+  format-number("revenue", decimals: 2),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
+  table-source-note([Source: internal ledger.]),
+  table-options(row-striping: true),
+)
+```
+
+![A sales table titled Regional sales, its Units and Revenue columns under a Performance spanner, rows grouped by region with a bold Subtotal closing each group, a bold Total closing the table, alternate rows shaded, and a source note in the footer.](assets/examples/grouped.png)
+
+The [Examples](examples.qmd) page shows this and four more, each beside the source that produced it.
+
 ## Status
 
-Keisen is in early development and has no release yet.
-The API is being built milestone by milestone, and nothing on this site describes behaviour that does not exist: the [Reference](reference.qmd) and the [Examples](examples.qmd) fill in as each milestone lands.
+Keisen is in early development and has no release yet, so it is used from a clone rather than from Typst Universe.
+The API is settling milestone by milestone, and the [Reference](reference.qmd) is written from the source rather than from memory, though nothing yet checks the page against the code automatically.
 
 Follow along in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
-## What it will do
+## What it does
 
 Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it:
 
@@ -32,13 +63,16 @@ Parts
 : A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order.
 
 Formatters
-: A family covering numbers, integers, percentages, currency, scientific notation, dates, byte sizes, and markup, all computed in Typst's `decimal` type rather than in floats.
+: Numbers, integers, and percentages so far, computed in Typst's `decimal` type rather than in floats, plus `format()` for anything else. Currency, dates, scientific notation, byte sizes, and markup are still to come.
 
 Locations
 : Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is the fourth cell of the ninth row.
 
 Nanoplots
 : Sparklines and bars inside cells, sharing one domain down a column so they can be compared.
+
+Themes
+: Four presets that are option dictionaries, so a theme and an option call are the same kind of thing and compose by merging.
 
 ## Design
 

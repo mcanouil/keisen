@@ -204,9 +204,10 @@
     cells
   }
 
-  let titled(name, body, stroke: none) = _cell(
+  let titled(name, body, align: auto, stroke: none) = _cell(
     style-for(index, "title", none, name),
     _marked(body, marks-for(footnotes, "title", none, name)),
+    align: align,
     colspan: width,
     stroke: stroke,
   )
@@ -219,6 +220,7 @@
     head.push(titled(
       "title",
       text(size: setting("header-title-size"), weight: setting("header-title-weight"), spec.header.title),
+      align: setting("header-align"),
       stroke: (top: outer-top),
     ))
   }
@@ -226,6 +228,7 @@
     head.push(titled(
       "subtitle",
       text(size: setting("header-subtitle-size"), spec.header.subtitle),
+      align: setting("header-align"),
       stroke: (
         top: if spec.header.title == none { outer-top } else { none },
         bottom: setting("header-border-bottom"),
@@ -260,6 +263,18 @@
     }
   }
 
+  // The label row carries the rules above and below the column labels. With no
+  // title block and no spanners above it, it also carries the table's own top
+  // rule, which belongs to whichever row happens to come first.
+  let label-rules = (
+    bottom: setting("column-labels-border-bottom"),
+    top: if head.len() == 0 and levels.len() == 0 {
+      setting("table-border-top")
+    } else {
+      setting("column-labels-border-top")
+    },
+  )
+
   // The stubhead labels the stub column, and is empty unless the stub names it.
   if has-stub {
     // Either spelling labels the stub: the stub's own label, or a columns-label
@@ -274,6 +289,7 @@
       style-for(index, "stubhead", none, none),
       _marked(stubhead, marks-for(footnotes, "stubhead", none, none)),
       align: start,
+      stroke: label-rules,
     ))
   }
   for (position, name) in names.enumerate() {
@@ -284,6 +300,7 @@
         marks-for(footnotes, "column-labels", none, name),
       ),
       align: alignments.at(position),
+      stroke: label-rules,
     ))
   }
 
@@ -295,7 +312,7 @@
       let label = spec.groups.at(entry.source).label
       rows.push(table.header(
         level: entry.level,
-        repeat: true,
+        repeat: setting("row-group-repeat"),
         _cell(
           style-for(index, "row-groups", entry.source, none),
           _marked(
@@ -327,7 +344,8 @@
           if level == none { 0 } else { level }
         }
         let name = slots-to-content(stub-cells.at(entry.source))
-        let body = if depth == 0 { name } else { h(setting("stub-indent-step") * depth) + name }
+        let named = text(weight: setting("stub-weight"), name)
+        let body = if depth == 0 { named } else { h(setting("stub-indent-step") * depth) + named }
         rows.push(_cell(
           style-for(index, "stub", entry.source, none),
           _marked(body, marks-for(footnotes, "stub", entry.source, none)),
