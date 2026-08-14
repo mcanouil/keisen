@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - docs: `ARCHITECTURE.md` records the Typst constraints that shaped the package, each of which explains a decision that reads as arbitrary without it. (#13)
-- docs: the original design is tracked at `.claude/keisen-design.md`, marked as history where it disagrees with the code. (#13)
 
 - fix: the header, stub, and substitution descriptors of a serialised specification validate their keys, like every other descriptor. (#12)
 - fix: a serialised style takes colours as hex strings, since JSON cannot spell `rgb()`, and reports one that is not a colour. (#12)
