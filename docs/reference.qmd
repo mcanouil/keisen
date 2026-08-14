@@ -169,6 +169,8 @@ A specification that arrives as data, from `json()` or from a tool, cannot carry
 ```
 
 Formatters and aggregations are named from the built-ins, and row predicates are comparisons with `op` in `<`, `<=`, `>`, `>=`, `==`, `!=`, composed with `and`, `or`, and `not`.
+Comparing against `null` asks whether the cell is empty, which is the only way JSON has to spell absence.
+Every key is checked, inside a descriptor as well as at the top level, so a misspelled `columns` fails rather than quietly widening what it applies to.
 That is the whole subset: no arithmetic, no function calls, no set tests.
 Anything more expressive belongs in a Typst specification, which keeps the schema from drifting into an expression language.
 

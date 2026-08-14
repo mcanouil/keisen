@@ -136,3 +136,51 @@
 #assert.eq(resolve-predicate(auto), auto)
 #assert.eq(resolve-predicate(1), 1)
 #assert.eq(resolve-predicate((0, 2)), (0, 2))
+
+// --- a gap is whatever the package calls missing ---
+
+// An empty string is what a generator writes for NA, and it used to abort the
+// compile by reaching the comparison.
+#let compare = resolve-predicate((column: "margin", op: "<", value: 0.05))
+#assert.eq(compare((margin: 0.03)), true)
+#assert.eq(compare((margin: "")), false)
+#assert.eq(compare((margin: none)), false)
+
+// --- null asks whether a cell is empty ---
+
+#let empty = resolve-predicate((column: "margin", op: "==", value: none))
+#assert.eq(empty((margin: none)), true)
+#assert.eq(empty((margin: "")), true)
+#assert.eq(empty((margin: 0.03)), false)
+
+#let present = resolve-predicate((column: "margin", op: "!=", value: none))
+#assert.eq(present((margin: 0.03)), true)
+#assert.eq(present((margin: none)), false)
+
+// --- a spanner is selectable by the label the JSON gave it ---
+
+#let spanned = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((units: 1, revenue: 2),),
+    spanners: ((label: "Metrics", columns: ("units", "revenue")),),
+    styles: ((style: (fill: red), part: "column-spanners", spanners: ("Metrics",)),),
+  ),
+  build-spec,
+)
+
+#import "../../src/style.typ": build-index
+#assert.eq(build-index(spanned).len(), 1)
+
+// --- a single part name is accepted where an array is ---
+
+#let titled = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((units: 1),),
+    header: (title: "Sales", subtitle: none),
+    styles: ((style: (fill: red), part: "title", parts: "title"),),
+  ),
+  build-spec,
+)
+#assert.eq(build-index(titled).len(), 1)

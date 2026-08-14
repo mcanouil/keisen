@@ -11,6 +11,7 @@
 ///! so a move sees the columns the table actually has.
 
 #import "../parts/stub.typ": stub-column-names
+#import "../parts/substitutions.typ": is-missing
 #import "../utils/errors.typ": check, check-column
 
 // A column that exists but is not in the table is not an unknown column, and
@@ -147,9 +148,27 @@
 
   row => {
     let value = row.at(descriptor.column, default: none)
-    // A value that is not there satisfies nothing, rather than comparing types
-    // and failing inside Typst.
-    if value == none { return false }
+
+    // Comparing against null is how the subset asks whether a cell is empty:
+    // there would otherwise be no way to write it, and JSON has no other
+    // spelling for absence.
+    if descriptor.value == none {
+      let missing = is-missing(value)
+      return if descriptor.op == "==" { missing } else if descriptor.op == "!=" {
+        not missing
+      } else {
+        fail(
+          "predicate",
+          "null compares only with == and !=",
+          value: descriptor.op,
+          hint: "Ordering an empty cell has no meaning.",
+        )
+      }
+    }
+
+    // A gap satisfies nothing. It is whatever the package calls missing, not
+    // just none: an empty string is what a generator writes for NA.
+    if is-missing(value) { return false }
 
     let numeric = (int, float, decimal)
     let comparable = type(value) == type(descriptor.value) or (
@@ -165,6 +184,18 @@
     }
 
     _compare(descriptor.op, value, descriptor.value)
+  }
+}
+
+#let _keys(descriptor, allowed, scope) = {
+  for key in descriptor.keys() {
+    if key not in allowed {
+      fail(
+        scope,
+        "unknown key " + key,
+        hint: "Known keys: " + allowed.join(", ") + ".",
+      )
+    }
   }
 }
 
@@ -193,8 +224,31 @@
 
 #let _selector(value) = if value == none { auto } else { value }
 
+#let FORMAT-OPTIONS = (
+  "format-number": (
+    "decimals",
+    "significant",
+    "grouping",
+    "group-separator",
+    "decimal-separator",
+    "scale",
+    "sign",
+    "rounding",
+    "negative-zero",
+    "prefix",
+    "suffix",
+  ),
+  "format-integer": ("grouping", "group-separator", "scale", "sign", "prefix", "suffix"),
+  "format-percent": ("decimals", "scale", "symbol", "space"),
+)
+
 #let _format(descriptor) = {
   let builder = _named(FORMATTERS, descriptor, "format")
+  _keys(
+    descriptor,
+    ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
+    "format",
+  )
   let options = descriptor
   for key in ("name", "columns", "rows") {
     if key in options { let _ = options.remove(key) }
@@ -206,7 +260,13 @@
   )
 }
 
-#let _style(descriptor) = (
+#let _style(descriptor) = {
+  _keys(
+    descriptor,
+    ("style", "part", "columns", "rows", "groups", "spanners", "notes", "parts"),
+    "style",
+  )
+  (
   kind: "style",
   style: descriptor.at("style", default: (:)),
   locations: (
@@ -215,20 +275,34 @@
     columns: _selector(descriptor.at("columns", default: auto)),
     rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
     groups: _selector(descriptor.at("groups", default: auto)),
-    spanners: _selector(descriptor.at("spanners", default: auto)),
+    // Spanner labels are content once resolved, so a selector written as a
+    // string would never match the label it plainly names.
+    spanners: {
+      let given = _selector(descriptor.at("spanners", default: auto))
+      if given == auto { auto } else if type(given) == array {
+        given.map(_content)
+      } else { _content(given) }
+    },
     notes: _selector(descriptor.at("notes", default: auto)),
-    parts: descriptor.at("parts", default: ("title", "subtitle")),
+    parts: {
+      let given = descriptor.at("parts", default: ("title", "subtitle"))
+      if type(given) == array { given } else { (given,) }
+    },
   ),
-)
+  )
+}
 
-#let _summary(descriptor, scope) = (
+#let _summary(descriptor, scope) = {
+  _keys(descriptor, ("name", "label", "columns", "groups"), "summary")
+  (
   kind: "summary",
   scope: scope,
   functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary")),
   columns: _selector(descriptor.at("columns", default: auto)),
   groups: _selector(descriptor.at("groups", default: auto)),
   format: none,
-)
+  )
+}
 
 #let SERIALISED-KEYS = (
   "kind",
@@ -295,10 +369,16 @@
   if hidden.len() > 0 { directives.push((kind: "hide", columns: hidden)) }
 
   for spanner in serialised.at("spanners", default: ()) {
+    _keys(spanner, ("label", "columns", "level"), "spanner")
+    for key in ("label", "columns") {
+      if key not in spanner {
+        fail("spanner", "missing " + key, value: spanner, hint: "A spanner needs a label and the columns it covers.")
+      }
+    }
     directives.push((
       kind: "spanner",
-      label: _content(spanner.at("label")),
-      columns: spanner.at("columns"),
+      label: _content(spanner.label),
+      columns: spanner.columns,
       level: spanner.at("level", default: 1),
     ))
   }
