@@ -90,12 +90,12 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | --- | --- |
 | `format(columns, function, rows: auto)` | Any `value => content`. The escape hatch the others are built on. |
 | `format-cell(columns, function, rows: auto)` | Any `row => content`. Receives the whole input row, hidden columns and `_index` included, for a cell that depends on its neighbours. |
-| `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator`, `decimal-separator: "."`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `prefix`, `suffix`. |
+| `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator: auto`, `decimal-separator: auto`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `infinity: none`, `prefix`, `suffix`. |
 | `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
 | `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
 | `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `symbol: auto`, `position: start`, `space: auto`. |
-| `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`. |
-| `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`. |
+| `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`, `decimal-separator: auto`, `infinity: none`. |
+| `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`, `group-separator: auto`, `decimal-separator: auto`, `infinity: none`. |
 | `format-date(columns, ..)` | `pattern: "[year]-[month]-[day]"`. Takes a `datetime` or an ISO-8601 string. |
 | `format-markup(columns, ..)` | Evaluates a string of Typst markup. No arguments of its own. |
 | `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
@@ -103,6 +103,12 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
 
 : Value formatting {.striped .hover tbl-colwidths="[35,65]"}
+
+A separator left at `auto` is the theme's, through `number-group-separator` and `number-decimal-separator`, so a French or German table sets its convention once with `table-options` rather than on every directive.
+An argument written on the directive wins over the theme, as everywhere else.
+
+Only finite numbers are formatted, and an infinite value is an error unless `infinity:` says what to write for one.
+What it writes is opaque content, so it takes no part in the decimal alignment of the column around it.
 
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.
@@ -201,6 +207,7 @@ An unknown key is an error rather than a silent no-op, and `tests/unit/test-opti
 | Stub and groups | `stub-weight`, `stub-indent-step`, `row-group-weight`, `row-group-fill`, `row-group-border-top`, `row-group-repeat` |
 | Body | `row-striping`, `row-striping-fill`, `cell-inset` |
 | Summaries | `summary-weight`, `summary-fill`, `summary-border-top`, `grand-summary-border-top` |
+| Formatter defaults | `number-group-separator`, `number-decimal-separator` |
 | Footer | `footnote-marks`, `footnote-size`, `source-note-size`, `footer-border-top` |
 
 : Theme options {.striped .hover tbl-colwidths="[25,75]"}

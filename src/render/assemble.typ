@@ -54,7 +54,13 @@
   // The stub goes through the same formatting pipeline as every other column,
   // so a format directive naming the row-name column takes effect there too.
   let stub-cells = if has-stub {
-    apply-formats(spec.data, spec.formats, spec.stub.rowname, substitutions: spec.substitutions)
+    apply-formats(
+      spec.data,
+      spec.formats,
+      spec.stub.rowname,
+      substitutions: spec.substitutions,
+      options: spec.options,
+    )
   } else { () }
   let indents = if spec.stub.indent == none { () } else {
     column(spec.data, spec.stub.indent)

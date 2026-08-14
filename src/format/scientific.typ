@@ -7,7 +7,7 @@
 ///! full, so the digits are always there to read.
 
 #import "../utils/errors.typ": fail, fail-enum
-#import "number.typ": format, format-value, to-decimal
+#import "number.typ": format-family, format-value, to-decimal, unbounded
 
 // A decimal holds 28 to 29 significant digits, and a mantissa needs far fewer,
 // so the digit run is cut to what can be constructed.
@@ -70,6 +70,8 @@
 #let _slots(value, options) = {
   let text = _digits(value)
   if text == none {
+    let written = unbounded(value, options)
+    if written != none { return written }
     fail(
       "format-scientific",
       "value is not a finite number",
@@ -103,30 +105,32 @@
   rows: auto,
   decimals: 2,
   exponent: "power",
-  decimal-separator: ".",
+  decimal-separator: auto,
   sign: false,
   rounding: "half-up",
   negative-zero: false,
+  infinity: none,
 ) = {
   if exponent not in ("power", "e") {
     fail-enum("format-scientific", "exponent", exponent, ("power", "e"))
   }
 
-  format(
+  format-family(
     columns,
     rows: rows,
-    value => _slots(value, (
+    separators => value => _slots(value, (
       scope: "format-scientific",
       notation: exponent,
       prefix: none,
       suffix: none,
+      infinity: infinity,
       decimals: decimals,
       significant: none,
       // A mantissa carries one digit before the point, so there is nothing to
       // group and no separator to choose.
       grouping: none,
       group-separator: "",
-      decimal-separator: decimal-separator,
+      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
       scale: 1,
       sign: sign,
       rounding: rounding,

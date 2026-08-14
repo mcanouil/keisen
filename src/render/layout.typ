@@ -5,7 +5,7 @@
 ///! cells together; nothing here knows what a `table.cell` is.
 
 #import "../format/align.typ": align-slots, column-metrics
-#import "../format/apply.typ": apply-formats, matches-column
+#import "../format/apply.typ": apply-formats, formatter-for, matches-column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
 
@@ -81,6 +81,7 @@
     spec.formats,
     name,
     substitutions: spec.substitutions,
+    options: spec.options,
   )
 
   spec.columns.map(name => {
@@ -101,9 +102,13 @@
 #let summary-slots(spec, entry, name) = {
   let value = entry.values.at(name, default: none)
   if value == none { return none }
-  if entry.format != none { return (entry.format.function)(value) }
+  if entry.format != none { return (formatter-for(entry.format, spec.options))(value) }
   let directives = covering(spec.formats, name)
-  if directives.len() == 0 { value } else { (directives.last().function)(value) }
+  if directives.len() == 0 {
+    value
+  } else {
+    (formatter-for(directives.last(), spec.options))(value)
+  }
 }
 
 // The content of one summary cell, padded to its column's metrics.

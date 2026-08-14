@@ -11,6 +11,7 @@
   read("../../src/render/layout.typ"),
   read("../../src/render/plan.typ"),
   read("../../src/format/align.typ"),
+  read("../../src/format/apply.typ"),
   read("../../src/parts/marks.typ"),
   read("../../src/parts/notes.typ"),
 ).join()
