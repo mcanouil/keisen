@@ -8,7 +8,11 @@
 #import "src/theme/presets.typ": theme-default
 #import "src/parts/header.typ": table-header
 #import "src/parts/stub.typ": table-stub
-#import "src/parts/columns.typ": columns-hide, columns-label, columns-move
+#import "src/parts/summaries.typ": (
+  aggregate-count, aggregate-max, aggregate-mean, aggregate-median, aggregate-min,
+  aggregate-quantile, aggregate-standard-deviation, aggregate-sum, grand-summary-rows, summary-rows,
+)
+#import "src/parts/columns.typ": columns-align, columns-hide, columns-label, columns-move, columns-width
 #import "src/parts/spanners.typ": table-spanner
 #import "src/parts/notes.typ": table-footnote, table-source-note
 #import "src/parts/substitutions.typ": substitute-missing, substitute-zero

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `summary-rows()` and `grand-summary-rows()` aggregate raw values into rows at the end of each group and of the body. (#4)
+- feat: `aggregate-sum`, `-mean`, `-median`, `-min`, `-max`, `-count`, `-standard-deviation`, and `-quantile` cover the common aggregations, and any `values => value` closure works in their place. (#4)
+- feat: numeric columns align on their decimal separator, measured per column rather than per cell. (#4)
+- feat: `columns-width()` and `columns-align()` set column tracks and alignment explicitly. (#4)
+- fix: summary rows keep their label without a stub, taking the first column rather than rendering as bare numbers. (#4)
+- fix: `aggregate-sum`, `-min`, and `-max` stay in decimal arithmetic, and every aggregation accepts numeric strings. (#4)
+- fix: `aggregate-count` counts values of any type rather than numbers alone. (#4)
+- fix: `summary-rows(groups: ..)` narrows the groups it applies to instead of being silently ignored. (#4)
+- fix: summary cells share the column's decimal alignment, take its substitutions, and ignore formats aimed at particular rows. (#4)
+- fix: a grand summary no longer sits under the previous group's repeated label. (#4)
+- fix: a cell whose style changes the text keeps the column alignment rather than wrapping inside a box measured for another size. (#4)
+- fix: `columns-align()` and `columns-width()` validate what they are given. (#4)
+
 - feat: `cells-*` locations address cells by what the data says, and `table-style()` applies a style to them. (#3)
 - feat: `data-colour()` maps a column onto a palette, choosing readable text over each fill. (#3)
 - feat: `substitute-missing()` and `substitute-zero()` replace values before they reach a formatter. (#3)

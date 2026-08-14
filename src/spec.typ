@@ -8,6 +8,7 @@
 #import "data.typ": column-names, group-rows, normalise
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
+#import "format/apply.typ": matches-column
 #import "utils/errors.typ": check, check-column, fail
 
 #let _empty = (
@@ -28,6 +29,10 @@
   substitutions: (),
   colours: (),
   footnotes: (),
+  summaries: (),
+  grand-summaries: (),
+  widths: (:),
+  align: (:),
   source-notes: (),
   options: (:),
 )
@@ -44,6 +49,13 @@
   // would whitelist the same typo for every other directive.
   for name in spec.hidden { check-column(spec.data-columns, "columns-hide", name) }
 
+  check(
+    spec.summaries.len() == 0 or spec.stub.group != none,
+    "summary-rows",
+    "there are no groups to summarise",
+    hint: "Give table-stub a group column, or use grand-summary-rows for the whole body.",
+  )
+
   if spec.stub.indent != none {
     for row in spec.data {
       let depth = row.at(spec.stub.indent, default: 0)
@@ -58,6 +70,8 @@
   }
 
   for name in spec.labels.keys() { check-column(known, "columns-label", name) }
+  for name in spec.widths.keys() { check-column(known, "columns-width", name) }
+  for name in spec.align.keys() { check-column(known, "columns-align", name) }
 
   spec
 }
@@ -143,6 +157,30 @@
       spec.colours.push(directive)
     } else if directive.kind == "footnote" {
       spec.footnotes.push(directive)
+    } else if directive.kind == "width" {
+      check(
+        type(directive.widths) == dictionary,
+        "columns-width",
+        "widths must map column names to lengths",
+        value: directive.widths,
+      )
+      spec.widths = spec.widths + directive.widths
+    } else if directive.kind == "align" {
+      // Named columns are recorded as given so an unknown name is reported;
+      // a selector matching nothing would otherwise be silent.
+      if type(directive.columns) == str {
+        spec.align.insert(directive.columns, directive.alignment)
+      } else {
+        for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
+          spec.align.insert(name, directive.alignment)
+        }
+      }
+    } else if directive.kind == "summary" {
+      if directive.scope == "group" {
+        spec.summaries.push(directive)
+      } else {
+        spec.grand-summaries.push(directive)
+      }
     } else if directive.kind == "source-note" {
       spec.source-notes.push(directive.note)
     } else {

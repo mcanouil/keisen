@@ -21,3 +21,18 @@
   before: before,
   after: after,
 )
+
+// Widths are given per column; anything unnamed sizes itself. A fraction is
+// resolved by Typst against the table's own width.
+#let columns-width(widths) = (
+  kind: "width",
+  widths: widths,
+)
+
+// Alignment may be direction-relative (start, end) or absolute; the default is
+// inferred per column from the data.
+#let columns-align(alignment, columns: auto) = (
+  kind: "align",
+  alignment: alignment,
+  columns: columns,
+)

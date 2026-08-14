@@ -18,5 +18,7 @@
   table-spanner([Performance], ("units", "revenue")),
   format-integer("units"),
   format-number("revenue", decimals: 2),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
   table-source-note([Source: internal ledger.]),
 )
