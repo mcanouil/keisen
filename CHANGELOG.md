@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `format-cell()` formats a cell from the row it sits in, so a cell that depends on its neighbours can reach them; hidden columns and the reserved `_index` key included. (#30)
+- fix: a summary row is an aggregate with no row behind it, so a cell formatter never applies to one and the column falls back to whichever plain directive covers it. (#30)
+
 - docs: a "Figures and Quarto" section says that a figure does not break across pages until `#show figure: set block(breakable: true)` is in force, that `table-header` and a caption are alternatives rather than partners, and how to emit the table inside a Quarto cross-referenced div. (#28)
 - docs: the README no longer describes the API as a target rather than working code. (#28)
 - docs: the inline-nanoplot listing imports the package and defines the series it plots, so it runs as written and the rehearsal compiles it like the others. (#28)
