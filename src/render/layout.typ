@@ -16,8 +16,15 @@
 // once for the cell that padding is applied to, and once for substitutions. The
 // first two disagreeing is what put summary cells outside their column's
 // metrics, so they ask the same question here rather than each spelling it.
+// A cell formatter reads the row it sits in, and a summary row is an aggregate
+// with no row behind it, so it covers nothing here: the column falls back to
+// whichever plain directive covers it, or to the aggregate itself.
 #let covering(directives, name) = {
-  directives.filter(directive => matches-column(directive.columns, name) and directive.rows == auto)
+  directives.filter(directive => (
+    matches-column(directive.columns, name)
+      and directive.rows == auto
+      and not directive.at("cell", default: false)
+  ))
 }
 
 // Numeric columns sit against the end edge, everything else against the start

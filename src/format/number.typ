@@ -176,6 +176,24 @@
   columns: columns,
   rows: rows,
   function: function,
+  cell: false,
+)
+
+// The one formatter that reads the row rather than the value, for a cell whose
+// content depends on its neighbours. The row it receives is the input row, so
+// hidden columns and the reserved `_index` key are both reachable.
+//
+// `columns-combine` covers the common case of building one cell from named
+// neighbours, and reads better where it fits; this is the general form.
+//
+// A summary row is an aggregate of a column and has no row behind it, so a cell
+// formatter covers no column: see `covering` in src/render/layout.typ.
+#let format-cell(columns, function, rows: auto) = (
+  kind: "format",
+  columns: columns,
+  rows: rows,
+  function: function,
+  cell: true,
 )
 
 #let format-number(

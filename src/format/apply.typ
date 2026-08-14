@@ -87,6 +87,14 @@
     for (position, directive) in applicable.enumerate() {
       if matches-row(directive.rows, row) { chosen = position }
     }
-    if chosen == none { value } else { (formatters.at(chosen))(value) }
+    // A cell formatter is handed the row it sits in; every other formatter sees
+    // the value alone, because that is what people write.
+    if chosen == none {
+      value
+    } else if applicable.at(chosen).cell {
+      (formatters.at(chosen))(row)
+    } else {
+      (formatters.at(chosen))(value)
+    }
   })
 }

@@ -70,6 +70,8 @@
     columns: columns,
     rows: rows,
     nanoplot: (plot: plot, width: width, height: height, baseline: baseline, domain: domain),
+    // A plot is drawn from the column's values, not from the row around them.
+    cell: false,
     // Every other format directive carries a formatter, and the paths that
     // aggregate a column reach for it. A column of readings has nothing to
     // aggregate, so this says so rather than returning a plot of a total.

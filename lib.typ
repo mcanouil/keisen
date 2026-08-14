@@ -32,7 +32,7 @@
   cells-body, cells-column-labels, cells-column-spanners, cells-grand-summary, cells-row-groups,
   cells-source-notes, cells-stub, cells-stubhead, cells-summary, cells-title,
 )
-#import "src/format/number.typ": format, format-integer, format-number
+#import "src/format/number.typ": format, format-cell, format-integer, format-number
 #import "src/format/currency.typ": format-currency
 #import "src/format/bytes.typ": format-bytes
 #import "src/format/date.typ": format-date

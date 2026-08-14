@@ -89,6 +89,7 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | Function | Notable arguments |
 | --- | --- |
 | `format(columns, function, rows: auto)` | Any `value => content`. The escape hatch the others are built on. |
+| `format-cell(columns, function, rows: auto)` | Any `row => content`. Receives the whole input row, hidden columns and `_index` included, for a cell that depends on its neighbours. |
 | `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator`, `decimal-separator: "."`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `prefix`, `suffix`. |
 | `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
 | `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
@@ -106,6 +107,10 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.
 Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
+
+`format-cell` is the only formatter that reads the row rather than the value, and it is worth reaching for last: `columns-combine` covers the common case of building one cell from named neighbours, and reads better where it fits.
+A summary row is an aggregate of a column with no row behind it, so a cell formatter never applies to one; the summary falls back to whichever plain directive covers the column.
+A serialised specification cannot name it either, since its argument is a closure.
 
 `format-currency` knows EUR, GBP, USD, JPY, and CHF, and writes any other currency as its code, since there are more currencies than anyone should hard-code.
 `decimals: auto` follows the currency, so a yen figure carries none.
