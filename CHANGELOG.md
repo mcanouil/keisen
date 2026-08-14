@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- fix: a table without notes draws its closing rule; the rule belonged to the footer, so every table lacking a source note lost it. (#11)
+- fix: summary rows keep their label when the table has no stub, taking the first column. This was claimed for #4 and was not in the code. (#11)
+- fix: unmarked footnotes sit under the marked ones with the footer rule where it belongs, rather than splitting the notes. (#11)
+- fix: two `data-colour()` directives over one column follow the last-wins rule the rest of the package uses. (#11)
+
 - test: `tests/expect-fail/` asserts failures, since Typst has no `try`: each file must fail to compile with the message its `// expect:` comment names. (#8)
 
 - feat: `display-table(spec: ..)` accepts a specification that arrived as data, naming its formatters and aggregations and writing row predicates as comparisons, so a generator in another language needs no closures. (#10)
