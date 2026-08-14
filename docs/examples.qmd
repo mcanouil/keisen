@@ -188,6 +188,10 @@ The marks are numbered in the order a reader meets them, so the column label tak
 
 ## A table that breaks across pages
 
+A table breaks by default, so this needs nothing said.
+A table inside a `#figure` does not, whatever the table was told, until `#show figure: set block(breakable: true)` is in force.
+That is the first thing a long table runs into, and the reference says more about it under [Figures and Quarto](reference.qmd#figures-and-quarto).
+
 ```typst
 #display-table(
   readings,

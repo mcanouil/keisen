@@ -11,7 +11,8 @@ Documentation: <https://m.canouil.dev/keisen>.
 
 > [!WARNING]
 > _Keisen_ is in early development.
-> There is no release yet, and the API below is the target rather than working code.
+> There is no release yet, so the import below resolves from a clone rather than from Typst Universe.
+> The API works and is tested; it is not yet frozen.
 
 ## Quick look
 

@@ -8,7 +8,7 @@ Everything below is read from the source.
 `tests/unit/test-exports.typ` holds `lib.typ` to a list of public names, so an accidental export cannot slip in, though nothing yet checks that list against this page.
 
 Keisen has no release yet, so import `lib.typ` from a clone rather than from Typst Universe.
-A Typst package specification cannot carry a subpath, so once released the integration module under `src/` will not be reachable as `@preview/keisen:0.1.0/src/...`; how those renderers reach an installed package is an open question in the issue list.
+Everything a document needs comes out of that one file, the nanoplot renderers included, because a Typst package specification cannot carry a subpath: `@preview/keisen:0.1.0/src/...` is not valid syntax, so a module reachable only from a clone would be reachable by nobody who installs the package.
 
 ## Entry point
 
@@ -234,6 +234,52 @@ A combine pattern arrives the same way, as a template rather than a closure: `"{
 
 A serialised specification is turned back into ordinary directives and folded through the same path as a hand-written table, so the two cannot diverge: one pipeline, entered two ways.
 `examples/serialised.typ` renders `examples/table-spec.json` and compiles with the test suite.
+
+## Figures and Quarto
+
+`display-table` returns a table, never a figure.
+Wrapping is the caller's job, which leaves numbering, captions, and cross-references with whoever owns the document.
+
+```typst
+#figure(
+  display-table(sales, table-stub(rowname: "product")),
+  caption: [Regional sales for the year.],
+  kind: table,
+) <tbl-sales>
+```
+
+**A figure does not break across pages.**
+`breakable: true` is the default here, and it has no effect inside a figure until this is in force:
+
+```typst
+#show figure: set block(breakable: true)
+```
+
+This is the first thing anyone hits with a long table: the table stops breaking the moment it is wrapped, and nothing about the wrapping says so.
+Typst also places figure captions below by default, so a table caption usually wants moving to the top with a show rule.
+
+`table-header` and a figure caption are alternatives, not partners.
+An in-table title is the `gt` house style; a caption is numbered and can be referenced.
+Using both prints the title twice.
+
+Under Quarto, emit the table alone and let Quarto own the float:
+
+````markdown
+::: {#tbl-sales}
+
+```{=typst}
+#display-table(sales, table-stub(rowname: "product"))
+```
+
+Regional sales for the year.
+
+:::
+````
+
+Hand-rolling `#figure` inside a raw Typst block fights Quarto's cross-reference system, which is what the enclosing div is for.
+
+A very wide table is the caller's problem too, solved with `rotate(reflow: true)` around it or a flipped page.
+The package assumes nothing about page geometry, so it survives either.
 
 ## Limitations
 
