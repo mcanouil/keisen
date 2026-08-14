@@ -3,6 +3,7 @@
 
 #import "../../lib.typ": display-table
 #import "../../src/spec.typ": build-spec
+#import "../../src/render/layout.typ": column-cells
 #import "../../src/spec/resolve.typ": resolve-predicate, resolve-serialised
 
 // --- predicates ---
@@ -184,3 +185,21 @@
   build-spec,
 )
 #assert.eq(build-index(titled).len(), 1)
+
+// A combine pattern cannot be a closure in JSON, so it arrives as a template
+// numbering its sources from one in `from` order.
+#let combined = resolve-serialised(
+  (
+    kind: "display-table",
+    data: (estimate: (1.234, -0.567), error: (0.021, 0.043)),
+    combines: ((into: "effect", from: ("estimate", "error"), pattern: "{1} ({2})", label: "Effect"),),
+    formats: ((name: "format-number", columns: "estimate", decimals: 2),),
+  ),
+  build-spec,
+)
+#assert.eq(combined.columns, ("effect",))
+#assert.eq(combined.labels.effect, [Effect])
+
+#let cells = column-cells(combined)
+#assert(repr(cells.first().first()).contains("1.23"))
+#assert(repr(cells.first().first()).contains("0.021"))

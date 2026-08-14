@@ -143,12 +143,13 @@
 
 // Summaries per group, in group order, and then for the body as a whole.
 //
-// A nanoplot column is left out of every summary, because aggregating series of
-// readings has no meaning. Naming one explicitly is refused when the spec is
-// validated; this is what makes `columns: auto` skip it quietly.
+// Nanoplot and combined columns are left out of every summary: a series of
+// readings has no total, and a combined column holds content built from columns
+// that are no longer shown. Naming either explicitly is refused when the spec is
+// validated; this is what makes `columns: auto` skip them quietly.
 #let summary-values(spec) = {
-  let plots = nanoplot-columns(spec.formats, spec.columns)
-  let columns = spec.columns.filter(name => name not in plots)
+  let skip = nanoplot-columns(spec.formats, spec.columns) + spec.combines.map(directive => directive.into)
+  let columns = spec.columns.filter(name => name not in skip)
   let groups = spec.groups.map(group => _rows-for(
     directives-for(spec.summaries, group.label),
     group.rows.map(position => spec.data.at(position)),

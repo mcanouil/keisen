@@ -67,8 +67,19 @@ Row groups render as level-3 native subheaders, so a group spanning a page break
 | `columns-width(widths)` | A dictionary of column name to length, fraction, or `auto`. |
 | `columns-hide(..columns)` | Removes columns from the table; they stay readable by predicates and formatters. |
 | `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. |
+| `columns-combine(into, from, pattern, label: auto, hide-sources: true)` | Builds one column from several. `pattern` takes one argument per source, in `from` order. |
 
 : Column directives {.striped .hover tbl-colwidths="[45,55]"}
+
+`columns-combine` receives the **formatted** content of its sources, not their raw values, which is what makes `(estimate, error) => [#estimate (#error)]` read the way it is written: each source keeps whatever its own `format-*` directive gave it.
+The combined column takes the place of the first of its sources, and the sources are hidden rather than dropped, so predicates and formatters can still read them; `hide-sources: false` shows them as well.
+
+A combined column is opaque afterwards, and that is the price of the pattern being free-form.
+It carries content rather than alignment slots, so it is not decimal-aligned; it infers start alignment, so give it `columns-align(end, columns: ..)` when it holds figures; and it cannot be summarised, since content has no total.
+
+There is no `columns-show`, and the asymmetry is deliberate.
+Directives are the document's own, so a column is shown by not hiding it; an unhide exists only to undo a sibling directive a few lines above, which is ceremony rather than a feature.
+A column named by no `columns-hide` is visible already.
 
 ## Formatters
 
@@ -219,11 +230,13 @@ Every key is checked, inside a descriptor as well as at the top level, so a miss
 That is the whole subset: no arithmetic, no function calls, no set tests.
 Anything more expressive belongs in a Typst specification, which keeps the schema from drifting into an expression language.
 
+A combine pattern arrives the same way, as a template rather than a closure: `"{1} ({2})"`, numbering the sources from one in `from` order.
+
 A serialised specification is turned back into ordinary directives and folded through the same path as a hand-written table, so the two cannot diverge: one pipeline, entered two ways.
 `examples/serialised.typ` renders `examples/table-spec.json` and compiles with the test suite.
 
 ## Limitations
 
 - Summary rows require groups, from `table-stub(group: ..)`; use `grand-summary-rows` for a table without them.
-- A combined column is not yet available; `columns-combine` is planned.
-- A column of nanoplots cannot be summarised: a series of readings has nothing to aggregate, and saying so is an error rather than a plot of a total.
+- Neither a nanoplot column nor a combined column can be summarised: a series of readings has nothing to aggregate, and a combined column holds content rather than quantities. Naming either in `summary-rows` is an error rather than a blank cell.
+- A combined column is opaque, so it is not decimal-aligned and infers start alignment.

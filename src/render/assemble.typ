@@ -15,7 +15,7 @@
 #import "../locations.typ": PARTS
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
-#import "layout.typ": alignments, infer-alignment, metrics, slots-to-content, summarised
+#import "layout.typ": alignments, column-cells, infer-alignment, metrics, slots-to-content, summarised
 #import "plan.typ": build-plan
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
@@ -47,12 +47,7 @@
   // emits and the header the plan described cannot come from different calls.
   let (rows: plan, spanners: levels) = build-plan(spec)
   let indices = range(names.len())
-  let cells = names.map(name => apply-formats(
-    spec.data,
-    spec.formats,
-    name,
-    substitutions: spec.substitutions,
-  ))
+  let cells = column-cells(spec)
   let footnotes = assign-marks(spec)
   let summaries = summary-values(spec)
 

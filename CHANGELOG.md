@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `columns-combine()` builds one column from several, the pattern reading the formatted content of its sources so each keeps the formatting its own directive gave it. (#23)
+- feat: a serialised specification carries a combine as a template, `"{1} ({2})"`, numbering its sources from one, since JSON cannot hold a closure. (#23)
+- docs: there is no `columns-show`, and the reference now says why rather than leaving the asymmetry unexplained. (#23)
+
 - test: render probes read the compiled output for the rules, fills, and contrast a theme promises, which compiling alone cannot see. (#22)
 
 - fix: the row plan carries the spanner rows it counted, so the header the renderer emits and the header the plan described cannot come from separate calls. (#21)

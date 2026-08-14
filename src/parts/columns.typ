@@ -29,6 +29,23 @@
   widths: widths,
 )
 
+// One column built from several. `pattern` takes one argument per source, in
+// `from` order, and receives their formatted content: the combine stage sits
+// after formatting, which is what makes `(estimate, error) => [#estimate
+// (#error)]` read the way it is written.
+//
+// The result takes the place of the first of its sources, so it sits where the
+// reader was already looking, and the sources are hidden rather than dropped:
+// they stay readable by predicates and formatters.
+#let columns-combine(into, from, pattern, label: auto, hide-sources: true) = (
+  kind: "combine",
+  into: into,
+  from: from,
+  pattern: pattern,
+  label: label,
+  hide-sources: hide-sources,
+)
+
 // Alignment may be direction-relative (start, end) or absolute; the default is
 // inferred per column from the data.
 #let columns-align(alignment, columns: auto) = (
