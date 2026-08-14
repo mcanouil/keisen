@@ -9,6 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column
+#import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
 #let _empty = (
@@ -87,7 +88,7 @@
     column-names(spec.data)
   }
   spec.columns = spec.data-columns
-  spec.options = theme
+  spec.options = validate-options(theme, "display-table")
 
   for directive in directives {
     check(

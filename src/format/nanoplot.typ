@@ -43,12 +43,23 @@
   }
   // A fractional width would have to be resolved inside the cell with layout(),
   // which forbids page breaking there; em and pt need no such thing.
+  for (name, size) in (("width", width), ("height", height)) {
+    check(
+      type(size) != fraction,
+      "format-nanoplot",
+      name + " cannot be a fraction",
+      value: size,
+      hint: "Give it in em or pt: resolving a fraction inside a cell forbids page breaking there.",
+    )
+  }
+
+  // The domain is what makes a column of nanoplots comparable, so the column's
+  // values are required rather than quietly falling back to per-cell scaling.
   check(
-    type(width) != fraction,
+    values != none or domain != auto,
     "format-nanoplot",
-    "width cannot be a fraction",
-    value: width,
-    hint: "Give the width in em or pt so the cell stays breakable.",
+    "no values to scale against",
+    hint: "Pass values: the whole column, or domain: an explicit (low, high).",
   )
 
   format(
