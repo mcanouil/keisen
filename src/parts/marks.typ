@@ -68,9 +68,9 @@
   let next = 1
   let style = numbering-of(option(spec.options, "footnote-marks"))
 
-  for (index, entry) in order {
+  for (position, (index, entry)) in order.enumerate() {
     if entry.addresses.len() == 0 {
-      numbered.push((index: index, mark: none, entry: entry))
+      numbered.push((index: index, position: position, mark: none, entry: entry))
       continue
     }
     // Keyed by the note and the mark asked for: two notes reading the same but
@@ -80,15 +80,33 @@
       marks.insert(key, if entry.mark == auto { style(next) } else { entry.mark })
       if entry.mark == auto { next += 1 }
     }
-    numbered.push((index: index, mark: marks.at(key), entry: entry))
+    numbered.push((index: index, position: position, mark: marks.at(key), entry: entry))
   }
 
+  // Returned in the order the directives were written, since that is what every
+  // caller but the footer wants; `position` carries the reading order the marks
+  // were numbered in, which is the order the footer prints them in.
   numbered.sorted(key: entry => entry.index).map(entry => (
     note: entry.entry.note,
     mark: entry.mark,
+    position: entry.position,
     addresses: entry.entry.addresses,
   ))
 }
+
+// The footer, in the order it prints: the marked notes behind their marks, then
+// the unmarked ones, which explain the table rather than a cell.
+//
+// Marked notes follow their marks rather than the order they were written in. A
+// note marking a row further down is numbered later, so printing the footer in
+// directive order would list mark 2 above mark 1, and cells-footnotes would
+// address rows a reader counting marks could not predict.
+// Parenthesised because a leading `+` on a new line parses as a unary operator
+// on the array below it rather than as concatenation.
+#let footer-notes(footnotes) = (
+  footnotes.filter(footnote => footnote.mark != none).sorted(key: footnote => footnote.position)
+    + footnotes.filter(footnote => footnote.mark == none)
+)
 
 // Marks that belong on one cell, in the order they were numbered.
 #let marks-for(footnotes, part, row, column) = {

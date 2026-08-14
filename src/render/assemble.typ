@@ -10,7 +10,7 @@
 #import "../format/apply.typ": apply-formats, matches-column
 #import "../data.typ": column
 #import "../parts/colour.typ": colour-styles
-#import "../parts/marks.typ": assign-marks, marks-for
+#import "../parts/marks.typ": assign-marks, footer-notes, marks-for
 #import "../parts/summaries.typ": summary-values
 #import "../locations.typ": PARTS
 #import "../style.typ": build-index, style-for
@@ -325,15 +325,11 @@
     ))
   }
 
-  // Marked notes print under the source notes, each behind its own mark, then
-  // the unmarked ones, which explain the table rather than a cell. Their
-  // position in that sequence is what cells-footnotes addresses, so the two
-  // passes count through one running position rather than each from zero.
+  // The footer prints the marked notes behind their marks and then the unmarked
+  // ones, and a note's place in that sequence is what cells-footnotes addresses,
+  // so the order is decided in one place and counted through once.
   let footnote-row = 0
-  for footnote in (
-    footnotes.filter(footnote => footnote.mark != none)
-      + footnotes.filter(footnote => footnote.mark == none)
-  ) {
+  for footnote in footer-notes(footnotes) {
     let body = if footnote.mark == none { footnote.note } else {
       super(footnote.mark) + footnote.note
     }

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - feat: `cells-footnotes()` addresses the footnote rows, numbered by where they land in the footer, so a marked note can be styled as a source note already could. (#33)
 - fix: footnote rows are emitted with a style lookup instead of an empty dictionary, so a style aimed at one is no longer dropped in silence. (#33)
+- fix: the footer prints marked notes in mark order, so a note marking a later row no longer appears above the note whose mark precedes it. (#33)
 
 - feat: `group-separator` and `decimal-separator` default to `auto` and are answered by the theme's `number-group-separator` and `number-decimal-separator`, so a French or German table sets its convention once rather than on every directive. (#31)
 - feat: `infinity:` writes an infinite value as content instead of refusing it, opaque to the decimal alignment of the column around it. (#31)

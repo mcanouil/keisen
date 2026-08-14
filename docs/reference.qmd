@@ -164,7 +164,8 @@ A renderer is any `(numbers, domain: none, width: .., height: ..) => content`, s
 `cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-summary(groups: auto, columns: auto, rows: auto)`, `cells-grand-summary(columns: auto, rows: auto)`, `cells-source-notes(notes: auto)`, `cells-footnotes(notes: auto)`.
 
 A footnote row is numbered by where it lands in the footer, so `notes: 0` is the first note printed under the table.
-The footer prints the marked notes before the unmarked ones, each group in the order it was written, which is not necessarily the order the `table-footnote` calls appear in.
+The footer prints the marked notes in mark order, then the unmarked ones in the order they were written.
+Marks are numbered in reading order rather than in the order the `table-footnote` calls appear, so a note written first but marking a later row prints second, behind the higher mark.
 A footnote cannot mark a footnote row: which row a note lands on is decided by numbering the marks, so a mark there would have to be numbered before the numbering it takes part in, and it is refused rather than silently ignored.
 
 A summary row answers to the label that names it and to its position within the group, so `rows: "Subtotal"` and `rows: 0` reach the same row.

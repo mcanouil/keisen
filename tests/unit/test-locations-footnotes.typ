@@ -7,6 +7,7 @@
 // exist says so rather than quietly matching nothing.
 
 #import "../../src/locations.typ": PARTS, cells-body, cells-footnotes, expand
+#import "../../src/parts/marks.typ": assign-marks, footer-notes
 #import "../../src/parts/notes.typ": table-footnote
 #import "../../src/parts/stub.typ": table-stub
 #import "../../src/spec.typ": build-spec
@@ -46,3 +47,22 @@
 
 // A table with no footnotes has no footnote rows to address.
 #assert.eq(expand(cells-footnotes(), spec + (footnote-rows: 0)), ())
+
+// --- the footer prints marked notes in mark order ---
+
+// Marks are numbered in reading order, so the note written first here is the
+// second a reader meets. Printing the footer in directive order would list mark
+// 2 above mark 1, and this location would then address rows nobody could
+// predict by counting marks.
+#let crossed = build-spec(
+  (name: ("a", "b", "c"), units: (1, 2, 3)),
+  (
+    table-footnote([Written first, marks the last row.], locations: cells-body(rows: 2)),
+    table-footnote([Written second, marks the first row.], locations: cells-body(rows: 0)),
+    table-footnote([Unmarked, and printed last.]),
+  ),
+  (:),
+)
+#let footer = footer-notes(assign-marks(crossed))
+#assert.eq(footer.map(footnote => footnote.mark), ("1", "2", none))
+#assert.eq(footer.first().note, [Written second, marks the first row.])
