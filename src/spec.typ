@@ -9,7 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
-#import "format/apply.typ": matches-column, nanoplot-columns
+#import "format/apply.typ": matches-column, matches-row, nanoplot-columns
 #import "spec/resolve.typ": apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
@@ -28,6 +28,7 @@
   labels: (:),
   header: (title: none, subtitle: none),
   stub: (rowname: none, group: none, label: none, indent: none),
+  row-groups: (),
   groups: (),
   spanners: (),
   moves: (),
@@ -44,6 +45,35 @@
   source-notes: (),
   options: (:),
 )
+
+// Declared groups, in the order they were written, resolved against the data.
+//
+// A row claimed twice belongs to the last group that claims it, so a group
+// written later corrects the one before it rather than duplicating its rows. A
+// group left with nothing of its own is dropped: a label over no rows is noise
+// the reader has to account for.
+#let _declared-groups(rows, directives) = {
+  let claimed = directives
+    .enumerate()
+    .map(((index, directive)) => rows
+      .filter(row => matches-row(directive.rows, row))
+      .map(row => (position: row._index, owner: index)))
+    .flatten()
+    .fold((:), (owners, claim) => {
+      owners.insert(str(claim.position), claim.owner)
+      owners
+    })
+
+  directives
+    .enumerate()
+    .map(((index, directive)) => (
+      label: directive.label,
+      rows: rows
+        .map(row => row._index)
+        .filter(position => claimed.at(str(position), default: -1) == index),
+    ))
+    .filter(group => group.rows.len() > 0)
+}
 
 #let _validate(spec) = {
   let stub-columns = stub-column-names(spec.stub)
@@ -108,11 +138,40 @@
     )
   }
 
+  // Groups come from the data or from the document, never from both: a table
+  // whose grouping had two sources would need a rule for which one wins, and
+  // the rule nobody writes down is the one every reader gets wrong.
   check(
-    spec.summaries.len() == 0 or spec.stub.group != none,
+    spec.row-groups.len() == 0 or spec.stub.group == none,
+    "table-row-group",
+    "the groups already come from a column",
+    hint: "Drop the group column from table-stub, or drop the table-row-group calls.",
+  )
+
+  // An index outside the data is a typo by definition; a predicate that matches
+  // no row is not, since a table built from filtered data legitimately has
+  // fewer rows on some renderings than on others.
+  for directive in spec.row-groups {
+    let indices = if type(directive.rows) == int { (directive.rows,) } else if (
+      type(directive.rows) == array
+    ) { directive.rows } else { () }
+    for position in indices {
+      check(
+        type(position) == int and position >= 0 and position < spec.data.len(),
+        "table-row-group",
+        "row " + repr(position) + " is not in the data",
+        hint: "Rows are numbered from zero, and this table has "
+          + str(spec.data.len())
+          + " of them.",
+      )
+    }
+  }
+
+  check(
+    spec.summaries.len() == 0 or spec.stub.group != none or spec.row-groups.len() > 0,
     "summary-rows",
     "there are no groups to summarise",
-    hint: "Give table-stub a group column, or use grand-summary-rows for the whole body.",
+    hint: "Give table-stub a group column, declare groups with table-row-group, or use grand-summary-rows for the whole body.",
   )
 
   if spec.stub.indent != none {
@@ -210,6 +269,8 @@
       // the column list while staying in the row store for predicates.
       let promoted = stub-column-names(directive)
       spec.columns = spec.columns.filter(name => name not in promoted)
+    } else if directive.kind == "row-group" {
+      spec.row-groups.push(directive)
     } else if directive.kind == "labels" {
       spec.labels = spec.labels + directive.labels
     } else if directive.kind == "hide" {
@@ -270,7 +331,7 @@
         "display-table",
         "unknown directive",
         value: directive.kind,
-        hint: "This version handles header, stub, labels, hide, move, spanner, format, style, substitute, colour, footnote, and source-note.",
+        hint: "This version handles header, stub, row-group, labels, hide, move, spanner, format, style, substitute, colour, footnote, and source-note.",
       )
     }
   }
@@ -280,6 +341,12 @@
   // grouping, which would otherwise die inside the data layer rather than
   // naming the offending directive.
   let validated = validate-spanners(_validate(apply-moves(apply-combines(spec))))
-  validated.groups = group-rows(validated.data, validated.stub.group)
+  // Derived from the column when the stub names one, declared by the document
+  // otherwise. Validation has already refused both at once.
+  validated.groups = if validated.row-groups.len() > 0 {
+    _declared-groups(validated.data, validated.row-groups)
+  } else {
+    group-rows(validated.data, validated.stub.group)
+  }
   validated
 }

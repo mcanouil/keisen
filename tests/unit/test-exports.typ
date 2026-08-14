@@ -21,8 +21,8 @@
   "format-percent", "format-scientific",
   "grand-summary-rows", "nanoplot-bar", "nanoplot-line", "nanoplot-points",
   "style", "substitute-missing", "substitute-zero", "summary-rows",
-  "table-footnote", "table-header", "table-options", "table-source-note", "table-spanner",
-  "table-stub", "table-style",
+  "table-footnote", "table-header", "table-options", "table-row-group", "table-source-note",
+  "table-spanner", "table-stub", "table-style",
   "theme-booktabs", "theme-compact", "theme-default", "theme-minimal",
 )
 
