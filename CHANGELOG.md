@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- ci: `tools/check.sh` runs on every pull request, so the tests, the probes and the import boundary are verified somewhere other than the author's machine; `shellcheck` and `shfmt` run over the scripts alongside them. (#25)
+
 - test: every test page grows to fit what it holds, so a rendered image is the table rather than the table and a field of white; `tools/check.sh` holds them to it. (#24)
 
 - feat: `columns-combine()` builds one column from several, the pattern reading the formatted content of its sources so each keeps the formatting its own directive gave it. (#23)

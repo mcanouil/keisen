@@ -1,0 +1,109 @@
+name: Checks
+
+# Everything tools/check.sh runs: the import boundary, the empty-module and
+# fitted-page guards, the unit tests, the expect-fail suite, the probes, the
+# visual tests and the examples.
+#
+# Until this workflow existed, the only check on a pull request was the Pages
+# render, so a green tick meant the documentation site built and said nothing
+# about the package.
+#
+# The two path lists are the same list written twice: GitHub Actions does not
+# honour YAML anchors, so they must be kept in step by hand.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "lib.typ"
+      - "tests/**"
+      - "examples/**"
+      - "tools/**"
+      - "typst.toml"
+      - "CITATION.cff"
+      - "CHANGELOG.md"
+      - ".github/workflows/checks.yml"
+  pull_request:
+    # The default activity types fire nothing when a pull request leaves draft,
+    # so `ready_for_review` is what runs the suite once the draft is lifted.
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "src/**"
+      - "lib.typ"
+      - "tests/**"
+      - "examples/**"
+      - "tools/**"
+      - "typst.toml"
+      - "CITATION.cff"
+      - "CHANGELOG.md"
+      - ".github/workflows/checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One active run per ref; a superseded run tells nobody anything.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: Compile the suite
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft != true }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Read Typst version from typst.toml
+        id: typst-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
+          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: ${{ steps.typst-version.outputs.version }}
+
+      # The runner does not carry Libertinus Serif, which the visual tests name.
+      # Typst falls back with a warning rather than failing, and nothing here
+      # asserts on a glyph: the suite compiles documents and greps the rendered
+      # SVG for strokes. Installing the font would change no result.
+      - name: Run the checks
+        run: tools/check.sh
+
+  lint:
+    name: Lint the shell scripts
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft != true }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # shellcheck ships with the runner image; shfmt does not.
+      - name: Install shfmt
+        shell: bash
+        run: |
+          set -euo pipefail
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.13.1
+          printf '%s/bin\n' "$(go env GOPATH)" >> "${GITHUB_PATH}"
+
+      - name: Run shellcheck
+        run: shellcheck tools/*.sh docs/_scripts/*.sh
+
+      # Formatting is checked on this repository's own scripts alone. The two
+      # under docs/_scripts come from the site scaffold and keep its tab
+      # indentation; reformatting them here would only diverge from the source
+      # they are regenerated from. shellcheck above covers them either way.
+      - name: Run shfmt
+        run: shfmt -d tools/*.sh
