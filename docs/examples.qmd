@@ -171,7 +171,7 @@ Revenue rose through the year #nanoplot-line(series, width: 4em), reading
 #nanoplot-bar(series, width: 4em) by volume, all at #raw("0.8em").
 ```
 
-![Two lines of prose with a sparkline, a marked sparkline, and a bar plot set inline among the words at the height of the text, then the same sparkline again at a larger text size, drawn correspondingly larger.](assets/examples/nanoplots-inline.png)
+![A line of prose with a sparkline, a marked sparkline, and a bar plot set inline among the words at the height of the text, and below it the same sparkline at a larger text size, drawn correspondingly larger.](assets/examples/nanoplots-inline.png)
 
 The second line is the point: the plots carry no size of their own, so `set text(size: ..)` moves them with everything else.
 

@@ -4,7 +4,7 @@
 
 #import "../../lib.typ": nanoplot-bar, nanoplot-line, nanoplot-points
 
-#set page(width: 12cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
 
 #let series = (3.0, 3.4, 3.1, 4.2, 4.0, 4.9)

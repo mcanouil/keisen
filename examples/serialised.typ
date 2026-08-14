@@ -6,7 +6,7 @@
 
 #import "../lib.typ": display-table
 
-#set page(width: 13cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
 
 #display-table(spec: json("table-spec.json"))
