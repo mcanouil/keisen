@@ -116,7 +116,10 @@ A renderer is any `(numbers, domain: none, width: .., height: ..) => content`, s
 
 `table-style` and `table-footnote` take one location or an array of them.
 
-`cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-source-notes(notes: auto)`.
+`cells-body(columns: auto, rows: auto)`, `cells-stub(rows: auto)`, `cells-stubhead()`, `cells-row-groups(groups: auto)`, `cells-column-labels(columns: auto)`, `cells-column-spanners(spanners: auto)`, `cells-title(parts: ("title", "subtitle"))`, `cells-summary(groups: auto, columns: auto, rows: auto)`, `cells-grand-summary(columns: auto, rows: auto)`, `cells-source-notes(notes: auto)`.
+
+A summary row answers to the label that names it and to its position within the group, so `rows: "Subtotal"` and `rows: 0` reach the same row.
+`columns: none` is the cell carrying the row's own label, which is how a note goes on the row once rather than on every cell of it.
 
 A location expands against the table into `(part, row, column)` addresses.
 This is the part Typst show rules cannot express: they select by element type in document order and never see the row behind a cell.

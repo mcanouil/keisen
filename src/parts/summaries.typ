@@ -96,8 +96,14 @@
   format: format,
 )
 
+// The label of each row a set of summary directives produces, in the order they
+// are produced. The row plan counts these and the location DSL names them, so
+// both must read the same order as `_rows-for` below: directive order, then the
+// order the functions were written in.
+#let summary-labels(directives) = directives.map(directive => directive.functions.keys()).flatten()
+
 // How many rows a set of summary directives produces: one per named function.
-#let summary-count(directives) = directives.map(directive => directive.functions.len()).sum(default: 0)
+#let summary-count(directives) = summary-labels(directives).len()
 
 // Directives that apply to one group, so a groups selector actually narrows the
 // rows it produces.

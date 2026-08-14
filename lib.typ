@@ -27,8 +27,8 @@
 #import "src/parts/colour.typ": data-colour
 #import "src/style.typ": style, table-style
 #import "src/locations.typ": (
-  cells-body, cells-column-labels, cells-column-spanners, cells-row-groups, cells-source-notes,
-  cells-stub, cells-stubhead, cells-title,
+  cells-body, cells-column-labels, cells-column-spanners, cells-grand-summary, cells-row-groups,
+  cells-source-notes, cells-stub, cells-stubhead, cells-summary, cells-title,
 )
 #import "src/format/number.typ": format, format-integer, format-number
 #import "src/format/percent.typ": format-percent

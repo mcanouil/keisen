@@ -192,10 +192,13 @@
     let border = top-border(part)
     let rule = if border == none { (:) } else { (top: border) }
     let label = text(weight: setting("summary-weight"), [#entry.label])
+    // A summary cell takes its marks like any other: the label cell through the
+    // stub address, the rest by column.
+    let marked(body, column) = _marked(body, marks-for(footnotes, part, row-key, column))
     if has-stub {
       cells.push(_cell(
         style-for(index, part, row-key, none),
-        label,
+        marked(label, none),
         align: start,
         fill: setting("summary-fill"),
         stroke: rule,
@@ -205,7 +208,7 @@
       if not has-stub and position == 0 {
         cells.push(_cell(
           style-for(index, part, row-key, name),
-          label,
+          marked(label, name),
           align: start,
           fill: setting("summary-fill"),
           stroke: rule,
@@ -214,7 +217,7 @@
       }
       cells.push(_cell(
         style-for(index, part, row-key, name),
-        summarised(entry, name, metrics.at(position)),
+        marked(summarised(entry, name, metrics.at(position)), name),
         align: alignments.at(position),
         fill: setting("summary-fill"),
         stroke: rule,

@@ -14,11 +14,14 @@
   let order = (:)
   for (position, entry) in build-plan(spec).enumerate() {
     if entry.source == none { continue }
-    if type(entry.source) != int { continue }
+    // Keyed by `repr` rather than `str`, because a summary row is identified by
+    // the pair `(group, row)` and would otherwise have no place in the order.
     let parts = if entry.part == "body" { ("body", "stub") } else if entry.part == "group" {
       ("row-groups",)
+    } else if entry.part == "summary" { ("summary",) } else if entry.part == "grand-summary" {
+      ("grand-summary",)
     } else if entry.part == "source-note" { ("source-notes",) } else { () }
-    for part in parts { order.insert(part + "|" + str(entry.source), position) }
+    for part in parts { order.insert(part + "|" + repr(entry.source), position) }
   }
   order
 }
@@ -28,9 +31,10 @@
   let part-rank = if part == none { MARK-ORDER.len() } else { part }
 
   // Within a part, follow the rendered row, then the column left to right.
-  let row = if type(address.row) == int {
-    display.at(address.part + "|" + str(address.row), default: address.row)
-  } else { -1 }
+  let row = display.at(
+    address.part + "|" + repr(address.row),
+    default: if type(address.row) == int { address.row } else { -1 },
+  )
 
   let column = columns.position(name => name == address.column)
   (part-rank, row, if column == none { -1 } else { column })

@@ -70,6 +70,31 @@ Summaries close each group and then the body.
 Striping counts body rows alone, so a group label never takes a stripe or shifts the phase.
 `aggregate-sum` stays in decimal arithmetic, so the totals are exact rather than nearly right.
 
+### Picking a summary out
+
+A subtotal is addressed like any other cell, through `cells-summary` and `cells-grand-summary`.
+
+```typst
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
+  table-style(style(fill: luma(235)), locations: cells-summary()),
+  table-style(
+    style(text: (fill: rgb("#08519c"))),
+    locations: cells-grand-summary(columns: "revenue"),
+  ),
+  table-footnote(
+    [Subtotals exclude intra-group sales.],
+    locations: cells-summary(groups: "North", columns: none),
+  ),
+  table-footnote([Audited.], locations: cells-grand-summary(columns: "revenue")),
+```
+
+![A sales table where both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two.](assets/examples/summaries.png)
+
+`cells-summary()` with no arguments takes the whole row, its label cell included.
+`columns: none` is that label cell alone, which is how the note lands on the row once instead of on each of its cells.
+A summary row answers to its label as readily as to its position, so `rows: "Subtotal"` says what `rows: 0` says.
+
 ## Styling by what the data says
 
 A cell is highlighted because of its value, not its position.
