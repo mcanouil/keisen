@@ -1,22 +1,22 @@
 ///! Nanoplot protocol and shared domains.
 ///!
-///! The core owns the protocol, the domain, and the cell box, and ships no
-///! renderer: a nanoplot is drawn by whichever function is passed as `plot`,
-///! and src/integrations/gribouille.typ provides the ones this package
-///! recommends.
+///! The core owns the protocol, the domain, and the cell box. A nanoplot is
+///! drawn by whichever function is passed as `plot`, and src/format/renderers.typ
+///! provides three drawn with native Typst primitives.
 ///!
 ///! The domain spans every row in the column, because comparability down the
 ///! column is the whole point of a nanoplot: sparklines scaled per cell say
-///! nothing.
+///! nothing. It is computed from the column being formatted rather than taken
+///! as an argument, so a directive cannot be handed one column's readings and
+///! aimed at another.
 
-#import "../utils/errors.typ": check, fail-type
-#import "number.typ": format
+#import "../utils/errors.typ": check, fail, fail-type
 
 #let _values-of(value) = {
   if type(value) != array { return () }
   value
     .filter(entry => type(entry) in (int, float, decimal))
-    .map(entry => if type(entry) == decimal { float(entry) } else { entry })
+    .map(entry => float(entry))
 }
 
 // The domain across every row of the column, so each cell draws on the same
@@ -28,6 +28,19 @@
   (calc.min(..numbers), calc.max(..numbers))
 }
 
+// The cell formatter, built once the column's domain is known. `apply-formats`
+// is what knows it, since it is what holds the column.
+#let nanoplot-cell(options, domain) = value => {
+  let numbers = _values-of(value)
+  if numbers.len() == 0 { return [] }
+  box(
+    width: options.width,
+    height: options.height,
+    baseline: options.baseline,
+    (options.plot)(numbers, domain: domain, width: options.width, height: options.height),
+  )
+}
+
 #let format-nanoplot(
   columns,
   rows: auto,
@@ -36,7 +49,6 @@
   height: 0.8em,
   baseline: 15%,
   domain: auto,
-  values: none,
 ) = {
   if type(plot) != function {
     fail-type("format-nanoplot", "plot", plot, "a renderer function")
@@ -53,28 +65,19 @@
     )
   }
 
-  // The domain is what makes a column of nanoplots comparable, so the column's
-  // values are required rather than quietly falling back to per-cell scaling.
-  check(
-    values != none or domain != auto,
-    "format-nanoplot",
-    "no values to scale against",
-    hint: "Pass values: the whole column, or domain: an explicit (low, high).",
-  )
-
-  format(
-    columns,
+  (
+    kind: "format",
+    columns: columns,
     rows: rows,
-    value => {
-      let numbers = _values-of(value)
-      if numbers.len() == 0 { return [] }
-      let scale = shared-domain(if values == none { (value,) } else { values }, given: domain)
-      box(
-        width: width,
-        height: height,
-        baseline: baseline,
-        plot(numbers, domain: scale, width: width, height: height),
-      )
-    },
+    nanoplot: (plot: plot, width: width, height: height, baseline: baseline, domain: domain),
+    // Every other format directive carries a formatter, and the paths that
+    // aggregate a column reach for it. A column of readings has nothing to
+    // aggregate, so this says so rather than returning a plot of a total.
+    function: value => fail(
+      "format-nanoplot",
+      "a column of nanoplots cannot be summarised",
+      value: value,
+      hint: "Name the other columns in summary-rows: aggregating series of readings has no meaning.",
+    ),
   )
 }

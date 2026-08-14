@@ -4,7 +4,7 @@
 
 #import "../../lib.typ": *
 
-#set page(width: 15cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 9pt)
 
 #let sales = (product: ("Bolt", "Nut"), units: (1250, 860))

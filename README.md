@@ -74,11 +74,11 @@ A skill that documents a moving surface is worse than none.
 
 ## Dependencies
 
-The core imports no third-party Typst package.
+_Keisen_ imports no third-party Typst package, so installing it fetches _Keisen_ and nothing else.
 See [`typst.toml`](typst.toml) for the authoritative Typst compiler version.
 
 Formatting is a protocol rather than a dependency, so packages such as [`zero`](https://typst.app/universe/package/zero/) plug in without _Keisen_ importing them.
-Nanoplots are drawn by [`gribouille`](https://github.com/mcanouil/gribouille), fetched only when `src/integrations/gribouille.typ` is imported, and never otherwise.
+Nanoplots are drawn with native Typst primitives for the same reason, and `format-nanoplot` takes any renderer, so one written in a document works as well as the three that ship.
 
 ## Contributing
 

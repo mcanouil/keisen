@@ -2,7 +2,7 @@
 
 #import "../../lib.typ": *
 
-#set page(width: 14cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
 
 #display-table(

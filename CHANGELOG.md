@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: nanoplots are drawn with native Typst primitives and exported from the package, so they work when it is installed rather than only from a clone. (#16)
+- feat: a nanoplot may be as small as the text around it; the renderers need no minimum canvas, and a sparkline sits inline at `0.8em`. (#16)
+- fix: `format-nanoplot()` takes the shared domain from the column it formats, and no longer accepts `values`, which could be another column's readings entirely. (#16)
+- fix: a column of nanoplots is left out of a summary over every column, and naming one in `summary-rows()` is reported rather than answered with a blank cell. (#16)
+- fix: nothing under `src/` imports a third-party package, and `tools/import-boundary.sh` holds it to that. (#16)
+- fix: a nanoplot stays inside its cell when a reading falls outside an explicit `domain`, rather than being drawn across whatever sits beside it. (#16)
+
 - docs: `ARCHITECTURE.md` records the Typst constraints that shaped the package, each of which explains a decision that reads as arbitrary without it. (#13)
 
 - fix: the header, stub, and substitution descriptors of a serialised specification validate their keys, like every other descriptor. (#12)
@@ -33,12 +40,12 @@ All notable changes to this project will be documented in this file.
 
 - feat: `table-options()` and the `theme-default`, `theme-booktabs`, `theme-compact`, and `theme-minimal` presets set borders, fills, striping, insets, and sizes. (#5)
 - feat: `format-nanoplot()` draws in-cell plots through any renderer, sharing one domain down the column so cells can be compared. (#5)
-- feat: `src/integrations/gribouille.typ` provides `nanoplot-line`, `nanoplot-bar`, and `nanoplot-points`, and is the only file importing a third-party package. (#5)
+- feat: `nanoplot-line`, `nanoplot-bar`, and `nanoplot-points` draw a series with native Typst primitives, and any function of the same shape works in their place. (#5)
 - fix: the shared nanoplot domain reaches the renderer, so a flat series no longer draws like a volatile one. (#5)
 - fix: theme borders draw; every rule is a cell rule, since a cell stroke of `none` overrode the table-level one. (#5)
 - fix: the options that presets set are read: fonts, sizes, breakability, alignment inference, indent step, and the header and spanner rules. (#5)
 - fix: a theme is validated like `table-options()`, so an uncalled preset or a mistyped key is reported. (#5)
-- fix: `format-nanoplot()` requires the column values or an explicit domain, rejects fractional sizes, and the gribouille renderers report their own minimum size. (#5)
+- fix: `format-nanoplot()` rejects a fractional width, which could only be resolved inside the cell at the cost of page breaking there. (#5)
 
 - feat: `summary-rows()` and `grand-summary-rows()` aggregate raw values into rows at the end of each group and of the body. (#4)
 - feat: `aggregate-sum`, `-mean`, `-median`, `-min`, `-max`, `-count`, `-standard-deviation`, and `-quantile` cover the common aggregations, and any `values => value` closure works in their place. (#4)

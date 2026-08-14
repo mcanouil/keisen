@@ -33,6 +33,7 @@
 #import "src/format/number.typ": format, format-integer, format-number
 #import "src/format/percent.typ": format-percent
 #import "src/format/nanoplot.typ": format-nanoplot
+#import "src/format/renderers.typ": nanoplot-bar, nanoplot-line, nanoplot-points
 #import "src/utils/errors.typ": check as _check
 
 // Build a display table from data and any number of directives.

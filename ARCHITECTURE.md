@@ -31,19 +31,18 @@ Entry points trace the same path:
 | Directory | Purpose |
 | --- | --- |
 | `src/parts/` | One file per table part: header, stub, columns, spanners, body, summaries, notes. Each exports its directive constructors. |
-| `src/format/` | Value formatters, the selector matching they share, and decimal alignment. |
+| `src/format/` | Value formatters, the selector matching they share, decimal alignment, and the nanoplot renderers. |
 | `src/render/` | Row plan, layout, widths, assembly, accessibility metadata. |
 | `src/theme/` | Option dictionary, presets, shared element builders. |
-| `src/integrations/` | The only place a third-party package may be imported. |
 | `src/utils/` | Leaf helpers: types, errors, numbers, colour. No rendering here. |
 
 ## Design tenets
 
 - **Spec dictionary as the intermediate form.**
   Directives are plain dictionaries, so a generator in another language can build a spec directly instead of emitting markup.
-- **Dependency-free core.**
-  Formatting is a protocol, `value => content`, so `zero`, `datify`, or any other package plugs in without the core importing it.
-  Typst resolves imports per file, so an integration module the user never imports never fetches its dependency.
+- **Dependency-free, wholly.**
+  Nothing under `src/` imports a third-party package, so installing keisen fetches keisen.
+  Formatting is a protocol, `value => content`, so `zero`, `datify`, or any other package plugs in without the package importing it, and the nanoplot renderers are drawn with native primitives for the same reason.
 - **One argument per predicate.**
   Typst closures fail on arity mismatch, so predicates take the row alone and read position from the reserved `_index` key.
 - **Explicit cells.**
@@ -76,8 +75,10 @@ otherwise look arbitrary.
   `columns` is required throughout the format family, and "every column" is
   written explicitly as `auto`.
 - **A package specification cannot carry a subpath.**
-  `@preview/keisen:x.y.z/src/...` is not valid syntax, so the integration module
-  is reachable only from a clone. This is unresolved and blocks a release.
+  `@preview/keisen:x.y.z/src/...` is not valid syntax, so anything a reader must
+  import has to come out of `lib.typ`. An optional module reachable only from a
+  clone is not optional; it is unreachable. That is why the nanoplot renderers
+  are native and exported rather than sitting behind a third-party integration.
 - **Named arguments are identifiers.**
   Option names are written unquoted, `table-options(row-striping: true)`.
 - **`measure` assumes infinite space and ignores column tracks** (typst/typst#3943).
@@ -86,8 +87,10 @@ otherwise look arbitrary.
   That is what makes a row group reprint its label across a page break, and it
   is why the grand summary is wrapped in a non-repeating header of its own.
 - **Packages declare no dependencies.**
-  Imports resolve per file at compile time, which is what makes an optional
-  integration module possible at all.
+  Imports resolve per file at compile time, so a dependency is only fetched when
+  a file that imports it is itself imported. Combined with the rule above, that
+  makes an optional dependency reachable only from a clone, which is no use to
+  anyone installing from Universe.
 
 ## Error conventions
 

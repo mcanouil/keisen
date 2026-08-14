@@ -69,14 +69,14 @@ Locations
 : Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is the fourth cell of the ninth row.
 
 Nanoplots
-: Sparklines and bars inside cells, sharing one domain down a column so they can be compared.
+: Sparklines and bars inside cells, drawn with native primitives and sharing one domain down a column so they can be compared. Small enough to sit inline at the height of the text.
 
 Themes
 : Four presets that are option dictionaries, so a theme and an option call are the same kind of thing and compose by merging.
 
 ## Design
 
-The core imports no third-party package, so formatting stays pluggable and installing Keisen pulls in nothing else.
+Keisen imports no third-party package at all, so formatting stays pluggable and installing it pulls in nothing else.
 Row groups are rendered as native repeating subheaders, which means a group that spans a page break reprints its label.
 
 ## Links

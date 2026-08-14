@@ -6,7 +6,7 @@
 ///! path as the body cells above it.
 
 #import "../data.typ": column
-#import "../format/apply.typ": matches-column
+#import "../format/apply.typ": matches-column, nanoplot-columns
 #import "../format/number.typ": to-decimal
 #import "../utils/errors.typ": check
 #import "substitutions.typ": is-missing
@@ -136,14 +136,20 @@
 }
 
 // Summaries per group, in group order, and then for the body as a whole.
+//
+// A nanoplot column is left out of every summary, because aggregating series of
+// readings has no meaning. Naming one explicitly is refused when the spec is
+// validated; this is what makes `columns: auto` skip it quietly.
 #let summary-values(spec) = {
+  let plots = nanoplot-columns(spec.formats, spec.columns)
+  let columns = spec.columns.filter(name => name not in plots)
   let groups = spec.groups.map(group => _rows-for(
     directives-for(spec.summaries, group.label),
     group.rows.map(position => spec.data.at(position)),
-    spec.columns,
+    columns,
   ))
   (
     groups: groups,
-    grand: _rows-for(spec.grand-summaries, spec.data, spec.columns),
+    grand: _rows-for(spec.grand-summaries, spec.data, columns),
   )
 }

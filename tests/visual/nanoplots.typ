@@ -1,10 +1,10 @@
-// Milestone 5: in-cell nanoplots drawn by gribouille, sharing one domain down
-// the column so the sparklines can be compared.
+// In-cell nanoplots drawn with native primitives, sharing one domain down the
+// column so the sparklines can be compared. Cash must read as flat: scaled per
+// cell, its small wobble would draw exactly like real movement.
 
 #import "../../lib.typ": *
-#import "../../src/integrations/gribouille.typ": nanoplot-bar, nanoplot-line
 
-#set page(width: 14cm, height: auto, margin: 1cm)
+#set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
 
 #let trends = (
@@ -23,8 +23,8 @@
   table-header(title: [Portfolio], subtitle: [Twelve-month trends]),
   table-stub(rowname: "asset", label: [Asset]),
   columns-label(trend: [Trend], volume: [Volume], weight: [Weight]),
-  format-nanoplot("trend", plot: nanoplot-line, width: 8em, height: 3.2em, baseline: 35%, values: trends),
-  format-nanoplot("volume", plot: nanoplot-bar, width: 8em, height: 3.2em, baseline: 35%, values: trends),
+  format-nanoplot("trend", plot: nanoplot-line, width: 6em, height: 1em, baseline: 25%),
+  format-nanoplot("volume", plot: nanoplot-bar, width: 6em, height: 1em, baseline: 25%),
   format-percent("weight", decimals: 1),
   table-source-note([Source: portfolio ledger.]),
 )

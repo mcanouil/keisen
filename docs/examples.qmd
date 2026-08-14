@@ -144,15 +144,14 @@ In-cell plots are drawn by whichever renderer is passed, and the domain is share
 
 ```typst
 #import "@preview/keisen:0.1.0": *
-#import "src/integrations/gribouille.typ": nanoplot-bar, nanoplot-line
 
 #display-table(
   (asset: ("Equities", "Bonds", "Cash"), trend: trends, volume: trends, weight: (0.62, 0.31, 0.07)),
   table-header(title: [Portfolio], subtitle: [Twelve-month trends]),
   table-stub(rowname: "asset", label: [Asset]),
   columns-label(trend: [Trend], volume: [Volume], weight: [Weight]),
-  format-nanoplot("trend", plot: nanoplot-line, width: 8em, height: 3.2em, baseline: 35%, values: trends),
-  format-nanoplot("volume", plot: nanoplot-bar, width: 8em, height: 3.2em, baseline: 35%, values: trends),
+  format-nanoplot("trend", plot: nanoplot-line, width: 6em, height: 1em, baseline: 25%),
+  format-nanoplot("volume", plot: nanoplot-bar, width: 6em, height: 1em, baseline: 25%),
   format-percent("weight", decimals: 1),
   table-source-note([Source: portfolio ledger.]),
 )
@@ -160,11 +159,20 @@ In-cell plots are drawn by whichever renderer is passed, and the domain is share
 
 ![A portfolio table with a sparkline and a bar plot per row: equities rising, bonds falling, and cash nearly flat.](assets/examples/nanoplots.png)
 
-Cash reads as flat because all three rows share one scale.
+Cash reads as flat because all three rows share one scale, taken from the column itself rather than passed in.
 Scaled per cell, its small wobble would draw exactly like the others' real movement, which is how a nanoplot lies.
 
-The renderers live in `src/integrations/gribouille.typ`, the only file in the package that imports another package, and a document that never imports it never fetches `gribouille`.
+The renderers are drawn with native Typst primitives and come out of the package like everything else, so nothing else is fetched to draw them.
+Because every coordinate is a fraction of the box, an `em` size needs no absolute resolution and no minimum canvas, which is what lets a nanoplot be the size a nanoplot is meant to be.
 
-That import is written against a clone, because a Typst package specification cannot carry a subpath: `@preview/keisen:0.1.0/src/integrations/gribouille.typ` is not valid syntax and never will be.
-How these renderers reach a reader who installed the package from Typst Universe is an open question, tracked in the issue list.
-Until it is answered, `format-nanoplot` takes any function, so a renderer written in the document works today.
+```typst
+Revenue rose through the year #nanoplot-line(series, width: 4em), reading
+#nanoplot-points(series, width: 4em) by quarter and
+#nanoplot-bar(series, width: 4em) by volume, all at #raw("0.8em").
+```
+
+![A line of prose with a sparkline, a marked sparkline, and a bar plot set inline among the words at the height of the text, and below it the same sparkline at a larger text size, drawn correspondingly larger.](assets/examples/nanoplots-inline.png)
+
+The second line is the point: the plots carry no size of their own, so `set text(size: ..)` moves them with everything else.
+
+`format-nanoplot` takes any `(numbers, domain: none, width: .., height: ..) => content`, so a renderer written in the document works exactly as well as the three that ship.
