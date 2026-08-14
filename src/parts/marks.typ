@@ -68,7 +68,9 @@
       numbered.push((index: index, mark: none, entry: entry))
       continue
     }
-    let key = repr(entry.note)
+    // Keyed by the note and the mark asked for: two notes reading the same but
+    // marked differently are two marks, and the caller's choice is not lost.
+    let key = repr(entry.note) + "|" + repr(entry.mark)
     if key not in marks {
       marks.insert(key, if entry.mark == auto { style(next) } else { entry.mark })
       if entry.mark == auto { next += 1 }

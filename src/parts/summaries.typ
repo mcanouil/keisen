@@ -102,13 +102,18 @@
 // Directives that apply to one group, so a groups selector actually narrows the
 // rows it produces.
 #let directives-for(directives, label) = {
-  directives.filter(directive => {
-    let selector = directive.groups
-    if selector == auto { true }
-    else if type(selector) == array { label in selector }
-    else if type(selector) == function { selector(label) }
-    else { selector == label }
-  })
+  // Group labels are strings, since group-by stringifies whatever the column
+  // held, so a numeric selector matches the label it plainly names. The
+  // location DSL coerces the same way; the two must agree or a summary and a
+  // style disagree about which group they mean.
+  let matches(selector) = {
+    if selector == auto { true } else if type(selector) == array {
+      selector.any(candidate => matches(candidate))
+    } else if type(selector) == function { selector(label) } else if type(selector) in (int, float) {
+      str(selector) == label
+    } else { selector == label }
+  }
+  directives.filter(directive => matches(directive.groups))
 }
 
 // One entry per summary row: its label and the aggregated value per column.

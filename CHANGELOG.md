@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- fix: the header, stub, and substitution descriptors of a serialised specification validate their keys, like every other descriptor. (#12)
+- fix: a serialised style takes colours as hex strings, since JSON cannot spell `rgb()`, and reports one that is not a colour. (#12)
+- fix: `summary-rows(groups: ..)` coerces a numeric selector to the label it names, as the location DSL already did. (#12)
+- fix: `columns-move()` rejects a column named twice and both `before:` and `after:` together. (#12)
+- fix: two footnotes reading alike but marked differently keep their own marks. (#12)
+
 - fix: a table without notes draws its closing rule; the rule belonged to the footer, so every table lacking a source note lost it. (#11)
 - fix: summary rows keep their label when the table has no stub, taking the first column. This was claimed for #4 and was not in the code. (#11)
 - fix: unmarked footnotes sit under the marked ones with the footer rule where it belongs, rather than splitting the notes. (#11)

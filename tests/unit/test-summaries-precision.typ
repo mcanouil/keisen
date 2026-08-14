@@ -42,3 +42,25 @@
   build-plan(spec).map(entry => entry.part),
   ("labels", "group", "body", "summary", "group", "body"),
 )
+
+// --- a numeric group selector matches the label it names ---
+
+// Group labels are strings, since group-by stringifies the column. The location
+// DSL coerces numbers the same way, and the two must agree.
+#import "../../src/locations.typ": cells-row-groups, expand
+#import "../../src/parts/summaries.typ": directives-for
+
+#let numeric = build-spec(
+  (name: ("a", "b"), year: (2023, 2024), units: (1, 2)),
+  (
+    table-stub(rowname: "name", group: "year"),
+    summary-rows(functions: (Subtotal: aggregate-sum), groups: 2023),
+  ),
+  (:),
+)
+
+#assert.eq(expand(cells-row-groups(groups: 2023), numeric).len(), 1)
+#assert.eq(directives-for(numeric.summaries, "2023").len(), 1)
+#assert.eq(directives-for(numeric.summaries, "2024").len(), 0)
+#assert.eq(summary-values(numeric).groups.at(0).len(), 1)
+#assert.eq(summary-values(numeric).groups.at(1).len(), 0)

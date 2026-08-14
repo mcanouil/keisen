@@ -78,3 +78,18 @@
 )
 #assert.eq(formatted.first(), [--])
 #assert.eq(formatted.last().integer, "5")
+
+// --- the same text with different marks stays two marks ---
+
+// Sharing is keyed by the note and the mark asked for, so an explicit mark is
+// never swallowed by an identical note above it.
+#let distinct = assign-marks(build-spec(
+  (units: (10, 20)),
+  (
+    table-footnote([Same text.], locations: cells-body(rows: 0)),
+    table-footnote([Same text.], locations: cells-body(rows: 1), mark: [#sym.dagger]),
+  ),
+  (:),
+))
+#assert.eq(distinct.first().mark, "1")
+#assert.eq(distinct.last().mark, [#sym.dagger])
