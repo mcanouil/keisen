@@ -155,12 +155,12 @@
   (
     kind: "number",
     sign: sign,
-    prefix: none,
+    prefix: options.at("prefix", default: none),
     integer: group-digits(integer, options.grouping, options.group-separator),
     separator: if shown > 0 { options.decimal-separator } else { "" },
     fraction: fraction,
     exponent: none,
-    suffix: none,
+    suffix: options.at("suffix", default: none),
   )
 }
 
@@ -186,11 +186,15 @@
   sign: false,
   rounding: "half-up",
   negative-zero: false,
+  prefix: none,
+  suffix: none,
 ) = format(
   columns,
   value => format-value(
     value,
     (
+      prefix: prefix,
+      suffix: suffix,
       decimals: decimals,
       significant: significant,
       grouping: grouping,
