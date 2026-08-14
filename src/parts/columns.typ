@@ -13,8 +13,8 @@
   columns: columns.pos(),
 )
 
-// Reordering is resolved against the column list as it stands when the spec is
-// folded, so directives may be written in any order.
+// Reordering is recorded here and resolved in src/spec/resolve.typ once every
+// directive has landed, so a move reads the same wherever it is written.
 #let columns-move(..columns, before: none, after: none) = (
   kind: "move",
   columns: columns.pos(),

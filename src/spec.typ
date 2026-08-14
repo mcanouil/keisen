@@ -9,6 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column
+#import "spec/resolve.typ": apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
@@ -25,6 +26,7 @@
   stub: (rowname: none, group: none, label: none, indent: none),
   groups: (),
   spanners: (),
+  moves: (),
   formats: (),
   styles: (),
   substitutions: (),
@@ -127,27 +129,9 @@
     } else if directive.kind == "spanner" {
       spec.spanners.push(directive)
     } else if directive.kind == "move" {
-      let anchor = if directive.before != none { directive.before } else { directive.after }
-      check(
-        anchor != none,
-        "columns-move",
-        "no anchor given",
-        hint: "Pass before: or after: naming the column to move relative to.",
-      )
-      for name in directive.columns {
-        check-column(spec.columns, "columns-move", name)
-      }
-
-      let rest = spec.columns.filter(name => name not in directive.columns)
-      let at = rest.position(name => name == anchor)
-      check(
-        at != none,
-        "columns-move",
-        "unknown anchor column " + anchor,
-        hint: "Move relative to a visible column other than the ones being moved.",
-      )
-      let cut = if directive.before != none { at } else { at + 1 }
-      spec.columns = rest.slice(0, cut) + directive.columns + rest.slice(cut)
+      // Recorded rather than applied: ordering resolves once the table knows
+      // which columns it has, so a move reads the same wherever it is written.
+      spec.moves.push(directive)
     } else if directive.kind == "format" {
       spec.formats.push(directive)
     } else if directive.kind == "style" {
@@ -196,9 +180,11 @@
     }
   }
 
-  // Validation first: grouping on an unknown column would otherwise die inside
-  // the data layer rather than naming the offending directive.
-  let validated = validate-spanners(_validate(spec))
+  // Ordering first, so spanner adjacency and every column check see the order
+  // the table will actually render in. Validation then runs once, before
+  // grouping, which would otherwise die inside the data layer rather than
+  // naming the offending directive.
+  let validated = validate-spanners(_validate(apply-moves(spec)))
   validated.groups = group-rows(validated.data, validated.stub.group)
   validated
 }
