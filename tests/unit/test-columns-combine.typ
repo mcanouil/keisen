@@ -4,7 +4,8 @@
 // pattern never sees a raw value it would have to format itself.
 
 #import "../../lib.typ": (
-  aggregate-sum, columns-combine, columns-label, format-number, grand-summary-rows, table-stub,
+  aggregate-sum, columns-combine, columns-hide, columns-label, columns-move, format-number,
+  grand-summary-rows, table-stub,
 )
 #import "../../src/render/layout.typ": column-cells
 #import "../../src/spec.typ": build-spec
@@ -71,6 +72,42 @@
 )
 #assert.eq(labelled.labels.effect, [Effect])
 #assert.eq(labelled.labels.gene, [Gene])
+
+// Where the column goes is resolved once the fold is done, so directive order
+// does not decide it. Deciding it mid-fold read whichever columns happened to
+// be present at that moment: hiding a source first put the result at the end of
+// the table, and hiding it afterwards did not.
+#let wide = (a: (1,), b: (2,), c: (3,), d: (4,))
+#let joined = (x, y) => [#x/#y]
+
+#let hidden-first = build-spec(wide, (columns-hide("b"), columns-combine("bc", ("b", "c"), joined)), (:))
+#let hidden-last = build-spec(wide, (columns-combine("bc", ("b", "c"), joined), columns-hide("b")), (:))
+#assert.eq(hidden-first.columns, ("a", "bc", "d"))
+#assert.eq(hidden-first.columns, hidden-last.columns)
+#assert.eq(hidden-first.hidden, hidden-last.hidden)
+
+// A column hidden twice is hidden once.
+#assert.eq(hidden-first.hidden.dedup(), hidden-first.hidden)
+
+// The same holds for a move written either side of the combine that creates the
+// column it moves.
+#let move-first = build-spec(
+  wide,
+  (columns-move("bc", before: "a"), columns-combine("bc", ("b", "c"), joined)),
+  (:),
+)
+#let move-last = build-spec(
+  wide,
+  (columns-combine("bc", ("b", "c"), joined), columns-move("bc", before: "a")),
+  (:),
+)
+#assert.eq(move-first.columns, ("bc", "a", "d"))
+#assert.eq(move-first.columns, move-last.columns)
+
+// A source promoted into the stub is no longer a column, and the combined
+// column still takes its place rather than falling to the end.
+#let stubbed = build-spec(wide, (table-stub(rowname: "b"), columns-combine("bc", ("b", "c"), joined)), (:))
+#assert.eq(stubbed.columns, ("a", "bc", "d"))
 
 // Keeping the sources is a choice: a table that shows both the parts and the
 // combination is a table, not a mistake.

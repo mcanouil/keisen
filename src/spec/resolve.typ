@@ -32,6 +32,53 @@
   check-column(spec.columns, "columns-move", name)
 }
 
+// Where a combined column goes, resolved once every directive has landed.
+//
+// Deciding this inside the fold read whichever columns happened to be present
+// at that moment, so hiding a source before the combine put the result at the
+// end of the table and hiding it afterwards did not. Directive order is free
+// everywhere else, and this is the same fix `apply-moves` exists to be.
+#let apply-combines(spec) = {
+  let out = spec
+
+  // Position in the data as it arrived, which no directive changes. A column
+  // built by an earlier combine sits where its own first source sat, so a chain
+  // of combines resolves in the order a reader would draw them.
+  let order = (:)
+  for (index, name) in out.data-columns.enumerate() { order.insert(name, index) }
+  for directive in out.combines {
+    let sources = if type(directive.from) == array { directive.from } else { () }
+    if sources.len() > 0 and directive.into not in order and sources.first() in order {
+      order.insert(directive.into, order.at(sources.first()))
+    }
+  }
+
+  for directive in out.combines {
+    let sources = if type(directive.from) == array { directive.from } else { () }
+    let hidden = if directive.hide-sources { sources } else { () }
+    let kept = out.columns.filter(name => name not in hidden)
+
+    out.columns = if directive.into in kept { kept } else if directive.into not in order {
+      kept
+    } else {
+      // Counted over the columns that survive, against the order the data had:
+      // the result takes the place of the first of its sources whether or not
+      // that source is still shown.
+      let anchor = order.at(directive.into)
+      let at = kept.filter(name => order.at(name, default: order.len()) < anchor).len()
+      kept.slice(0, at) + (directive.into,) + kept.slice(at)
+    }
+
+    // Hidden sources stay readable by predicates and formatters. A name already
+    // hidden is not hidden twice.
+    for name in hidden {
+      if name != directive.into and name not in out.hidden { out.hidden.push(name) }
+    }
+  }
+
+  out
+}
+
 #let apply-moves(spec) = {
   let columns = spec.columns
 

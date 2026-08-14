@@ -9,7 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column, nanoplot-columns
-#import "spec/resolve.typ": apply-moves
+#import "spec/resolve.typ": apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
@@ -71,6 +71,16 @@
       hint: "Write (estimate, error) => [#estimate (#error)], one parameter per source.",
     )
     for name in directive.from { check-column(spec.data-columns, "columns-combine", name) }
+    // Checked before the message below is built: `check` evaluates its problem
+    // eagerly, so concatenating an `into` that is not a string would fail as a
+    // Typst type error rather than in this package's grammar.
+    check(
+      type(directive.into) == str,
+      "columns-combine",
+      "into must be the name of the column to build",
+      value: directive.into,
+      hint: "Give a column name as a string.",
+    )
     check(
       directive.into in directive.from or directive.into not in spec.data-columns,
       "columns-combine",
@@ -186,32 +196,10 @@
       spec.hidden = spec.hidden + directive.columns
       spec.columns = spec.columns.filter(name => name not in directive.columns)
     } else if directive.kind == "combine" {
+      // Recorded rather than applied, exactly as a move is: where the combined
+      // column goes depends on which columns the table ends up with, so it is
+      // resolved once the fold is done and reads the same wherever it is written.
       spec.combines.push(directive)
-      // The result takes the place of the first of its sources, so it sits
-      // where the reader was already looking. Sources are hidden rather than
-      // dropped: they stay readable by predicates and formatters.
-      // The fold reads `from` before validation does, so a malformed one is
-      // taken as naming nothing rather than crashing here: validation reports it
-      // in the package's own grammar a moment later.
-      let sources = if type(directive.from) == array { directive.from } else { () }
-      let hidden = if directive.hide-sources { sources } else { () }
-      let anchor = if sources.len() == 0 { none } else {
-        spec.columns.position(name => name == sources.first())
-      }
-      let kept = spec.columns.filter(name => name not in hidden)
-
-      spec.columns = if directive.into in kept {
-        kept
-      } else {
-        // Counted over the columns that survive, since removing the sources
-        // shifts everything after them.
-        let at = if anchor == none { kept.len() } else {
-          spec.columns.slice(0, anchor).filter(name => name not in hidden).len()
-        }
-        kept.slice(0, at) + (directive.into,) + kept.slice(at)
-      }
-
-      spec.hidden = spec.hidden + hidden.filter(name => name != directive.into)
       if directive.label != auto { spec.labels.insert(directive.into, directive.label) }
     } else if directive.kind == "spanner" {
       spec.spanners.push(directive)
@@ -271,7 +259,7 @@
   // the table will actually render in. Validation then runs once, before
   // grouping, which would otherwise die inside the data layer rather than
   // naming the offending directive.
-  let validated = validate-spanners(_validate(apply-moves(spec)))
+  let validated = validate-spanners(_validate(apply-moves(apply-combines(spec))))
   validated.groups = group-rows(validated.data, validated.stub.group)
   validated
 }

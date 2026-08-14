@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - feat: `columns-combine()` builds one column from several, the pattern reading the formatted content of its sources so each keeps the formatting its own directive gave it. (#23)
 - feat: a serialised specification carries a combine as a template, `"{1} ({2})"`, numbering its sources from one, since JSON cannot hold a closure. (#23)
+- fix: where a combined column sits is resolved once every directive has landed, so hiding a source before or after the combine reads the same, as it already did for `columns-move()`. (#23)
+- fix: `columns-combine()` reports a malformed `into` in the package's own grammar rather than as a Typst type error. (#23)
 - docs: there is no `columns-show`, and the reference now says why rather than leaving the asymmetry unexplained. (#23)
 
 - test: render probes read the compiled output for the rules, fills, and contrast a theme promises, which compiling alone cannot see. (#22)
