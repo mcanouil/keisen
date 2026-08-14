@@ -1,0 +1,30 @@
+// Milestone 5: in-cell nanoplots drawn by gribouille, sharing one domain down
+// the column so the sparklines can be compared.
+
+#import "../../lib.typ": *
+#import "../../src/integrations/gribouille.typ": nanoplot-bar, nanoplot-line
+
+#set page(width: 14cm, height: auto, margin: 1cm)
+#set text(font: "Libertinus Serif", size: 10pt)
+
+#let trends = (
+  (1.0, 1.2, 1.1, 1.4, 1.8, 2.1),
+  (2.0, 1.8, 1.6, 1.5, 1.2, 0.9),
+  (1.5, 1.5, 1.6, 1.5, 1.7, 1.6),
+)
+
+#display-table(
+  (
+    asset: ("Equities", "Bonds", "Cash"),
+    trend: trends,
+    volume: trends,
+    weight: (0.62, 0.31, 0.07),
+  ),
+  table-header(title: [Portfolio], subtitle: [Twelve-month trends]),
+  table-stub(rowname: "asset", label: [Asset]),
+  columns-label(trend: [Trend], volume: [Volume], weight: [Weight]),
+  format-nanoplot("trend", plot: nanoplot-line, width: 8em, height: 3.2em, baseline: 35%, values: trends),
+  format-nanoplot("volume", plot: nanoplot-bar, width: 8em, height: 3.2em, baseline: 35%, values: trends),
+  format-percent("weight", decimals: 1),
+  table-source-note([Source: portfolio ledger.]),
+)

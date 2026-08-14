@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `table-options()` and the `theme-default`, `theme-booktabs`, `theme-compact`, and `theme-minimal` presets set borders, fills, striping, insets, and sizes. (#5)
+- feat: `format-nanoplot()` draws in-cell plots through any renderer, sharing one domain down the column so cells can be compared. (#5)
+- feat: `src/integrations/gribouille.typ` provides `nanoplot-line`, `nanoplot-bar`, and `nanoplot-points`, and is the only file importing a third-party package. (#5)
+- fix: the shared nanoplot domain reaches the renderer, so a flat series no longer draws like a volatile one. (#5)
+- fix: theme borders draw; every rule is a cell rule, since a cell stroke of `none` overrode the table-level one. (#5)
+- fix: the options that presets set are read: fonts, sizes, breakability, alignment inference, indent step, and the header and spanner rules. (#5)
+- fix: a theme is validated like `table-options()`, so an uncalled preset or a mistyped key is reported. (#5)
+- fix: `format-nanoplot()` requires the column values or an explicit domain, rejects fractional sizes, and the gribouille renderers report their own minimum size. (#5)
+
 - feat: `summary-rows()` and `grand-summary-rows()` aggregate raw values into rows at the end of each group and of the body. (#4)
 - feat: `aggregate-sum`, `-mean`, `-median`, `-min`, `-max`, `-count`, `-standard-deviation`, and `-quantile` cover the common aggregations, and any `values => value` closure works in their place. (#4)
 - feat: numeric columns align on their decimal separator, measured per column rather than per cell. (#4)
