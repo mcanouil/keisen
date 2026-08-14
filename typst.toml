@@ -12,6 +12,7 @@ keywords = ["table", "display-table", "formatting", "reporting"]
 categories = ["report"]
 exclude = [
   ".claude",
+  ".editorconfig",
   ".github",
   ".gitignore",
   ".kata.toml",

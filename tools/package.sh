@@ -14,8 +14,9 @@
 #         as both .tar.gz and .zip. version defaults to the typst.toml value;
 #         basename defaults to keisen-<version>.
 #
-# What ships is decided here and by `exclude` in typst.toml, and the two must
-# agree: this script is the one that runs, so it is the one to read.
+# What ships is decided here and by `exclude` in typst.toml. The two must
+# agree, and `stage` refuses to run when they do not: a tracked file named by
+# neither would ship without anyone deciding that it should.
 
 set -euo pipefail
 
@@ -26,9 +27,36 @@ read_version() {
   awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml
 }
 
+# What ships is decided twice: by the payload this script copies, and by
+# `exclude` in typst.toml, which is what Typst Universe reads. A file named by
+# neither ships without anyone having decided that it should, which is how a
+# repository's own housekeeping ends up published.
+verify_coverage() {
+  local excluded payload=" typst.toml lib.typ LICENSE README.md src "
+  excluded=" $(awk '/^exclude[[:space:]]*=/, /\]/' typst.toml |
+    grep -oE '"[^"]+"' | tr -d '"' | tr '\n' ' ')"
+
+  local uncovered=()
+  local entry
+  while IFS= read -r entry; do
+    [[ "${payload}" == *" ${entry} "* ]] && continue
+    [[ "${excluded}" == *" ${entry} "* ]] && continue
+    uncovered+=("${entry}")
+  done < <(git ls-files | sed -E 's|/.*||' | sort -u)
+
+  if [[ ${#uncovered[@]} -gt 0 ]]; then
+    printf 'package: tracked and neither staged nor excluded\n' >&2
+    printf '  %s\n' "${uncovered[@]}" >&2
+    printf '  add each to the payload above, or to exclude in typst.toml\n' >&2
+    exit 1
+  fi
+}
+
 stage() {
   local dest="${1:?stage: destination dir required}"
   local version="${2:-}"
+
+  verify_coverage
 
   mkdir -p "${dest}"
   cp typst.toml lib.typ LICENSE "${dest}/"

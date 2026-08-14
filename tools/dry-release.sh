@@ -36,8 +36,13 @@ esac
 INSTALL_DIR="${DATA_DIR}/packages/preview/keisen"
 INSTALL_LINK="${INSTALL_DIR}/${VERSION}"
 
+# Only a link this run created is removed. A developer may keep one of their
+# own pointing somewhere they are working, and a rehearsal that silently
+# deletes it would be worse than one that refuses to run.
+LINKED_HERE=0
+
 cleanup() {
-  if [[ -L "${INSTALL_LINK}" ]]; then
+  if [[ ${LINKED_HERE} -eq 1 && -L "${INSTALL_LINK}" ]]; then
     rm -f "${INSTALL_LINK}"
   fi
 }
@@ -48,11 +53,13 @@ tools/package.sh stage "${STAGE}"
 printf 'Staged payload at %s\n' "${STAGE}"
 
 mkdir -p "${INSTALL_DIR}"
-if [[ -e "${INSTALL_LINK}" && ! -L "${INSTALL_LINK}" ]]; then
-  echo "${INSTALL_LINK} exists and is not a symlink; refusing to overwrite" >&2
+if [[ -e "${INSTALL_LINK}" || -L "${INSTALL_LINK}" ]]; then
+  printf '%s already exists; refusing to overwrite an installed copy\n' "${INSTALL_LINK}" >&2
+  printf '  remove it, or run with a version this machine does not carry\n' >&2
   exit 1
 fi
 ln -sfn "${STAGE}" "${INSTALL_LINK}"
+LINKED_HERE=1
 printf 'Linked @preview/keisen:%s -> %s\n' "${VERSION}" "${STAGE}"
 
 SMOKE_DIR="${STAGE_ROOT}/smoke"
@@ -126,11 +133,22 @@ if [[ ${failures} -gt 0 ]]; then
 fi
 
 # The lint Typst Universe itself runs on a submission, so a finding here is a
-# finding upstream. It reaches the network: the homepage and repository URLs
-# are fetched, and both 404 until the documentation site is published, which
-# happens at the release this script rehearses.
+# finding upstream. It is reported rather than fatal: it fetches the homepage
+# and repository URLs, and the homepage 404s until the documentation site is
+# published, which happens at the release this script rehearses. Failing on
+# that would make the rehearsal fail on every machine that has the tool, which
+# is the same as having no rehearsal.
+#
+# It must be clean before a submission. Nothing here can tell that apart from
+# the expected 404, so a human reads it.
 if command -v typst-package-check >/dev/null 2>&1; then
-  typst-package-check check "${STAGE}"
+  printf '\nManifest lint (advisory, reaches the network):\n'
+  if typst-package-check check "${STAGE}"; then
+    printf 'Manifest lint clean.\n'
+  else
+    printf '\ntypst-package-check reported the above. Until the documentation site\n' >&2
+    printf 'is published an unreachable homepage is expected; anything else is not.\n' >&2
+  fi
 else
   printf 'typst-package-check not installed; skipping manifest lint.\n'
 fi

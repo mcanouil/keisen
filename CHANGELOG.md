@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - build: `tools/package.sh`, `tools/stage-readme.sh` and `tools/dry-release.sh` stage the payload a release publishes and compile the suite and the documentation's listings against an installed copy of it, so an import that only works from this working tree is caught before it ships. (#26)
 - fix: the nanoplot listing in the documentation defines the series it plots, so it compiles as written rather than reporting an unknown variable. (#26)
 - build: `tools/version-check.sh` holds `typst.toml`, `CITATION.cff` and `CHANGELOG.md` to the same version, and runs inside `tools/check.sh`. (#26)
+- build: staging refuses to run when a tracked file is neither in the payload nor in `exclude`, so nothing ships because nobody named it. (#26)
 
 - ci: `tools/check.sh` runs on every pull request, so the tests, the probes and the import boundary are verified somewhere other than the author's machine; `shellcheck` and `shfmt` run over the scripts alongside them. (#25)
 
