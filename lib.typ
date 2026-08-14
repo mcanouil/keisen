@@ -10,6 +10,7 @@
 ///! tests/unit/test-exports.typ holds the rest of the surface to the grammar.
 
 #import "src/spec.typ": build-spec as _build-spec
+#import "src/spec/resolve.typ": resolve-serialised as _resolve-serialised
 #import "src/render/assemble.typ": assemble as _assemble
 #import "src/theme/presets.typ": theme-booktabs, theme-compact, theme-default, theme-minimal
 #import "src/theme/options.typ": table-options
@@ -58,7 +59,13 @@
       value: spec,
       hint: "Pass data and directives instead, or a specification in the serialised form.",
     )
-    spec
+    // A specification that reached Typst as data names its formatters instead
+    // of carrying them, and is resolved back into directives before rendering.
+    if spec.at("built", default: false) {
+      spec
+    } else {
+      _resolve-serialised(spec, _build-spec, theme: theme)
+    }
   } else {
     let positional = arguments.pos()
     _check(

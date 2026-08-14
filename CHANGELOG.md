@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- test: `tests/expect-fail/` asserts failures, since Typst has no `try`: each file must fail to compile with the message its `// expect:` comment names. (#8)
+
+- feat: `display-table(spec: ..)` accepts a specification that arrived as data, naming its formatters and aggregations and writing row predicates as comparisons, so a generator in another language needs no closures. (#10)
+- fix: a serialised predicate treats an empty string as missing, as the rest of the package does, and comparing against `null` asks whether a cell is empty. (#10)
+- fix: every serialised descriptor validates its keys, so a misspelled one fails instead of silently changing the table. (#10)
+- fix: a style can select a spanner by the label its specification gave it. (#10)
+
 - fix: `columns-move()` reports a hidden or stub column as such rather than as unknown, and resolves once the table knows its columns, so hiding or promoting the anchor no longer changes whether the move succeeds depending on which line was written first. (#8)
 
 - docs: the reference documents every exported function, read from the source and held to it by `tests/unit/test-exports.typ`. (#7)
