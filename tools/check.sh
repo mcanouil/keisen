@@ -145,6 +145,12 @@ if ! tools/probe.sh; then
   failures=$((failures + 1))
 fi
 
+# A number reads the same way in every script, and nothing inside a document
+# can assert that: this compares the two renders.
+if ! tools/direction-check.sh; then
+  failures=$((failures + 1))
+fi
+
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
 

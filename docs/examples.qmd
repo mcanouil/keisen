@@ -257,3 +257,20 @@ Revenue rose through the year #nanoplot-line(series, width: 4em), reading
 The second line is the point: the plots carry no size of their own, so `set text(size: ..)` moves them with everything else.
 
 `format-nanoplot` takes any `(numbers, domain: none, width: .., height: ..) => content`, so a renderer written in the document works exactly as well as the three that ship.
+
+## Right to left
+
+Nothing in the table is written for one direction.
+Cells align to `start` and `end` rather than to a side, so a table under `#set text(dir: rtl)` mirrors with the text.
+
+```typst
+#set text(dir: rtl)
+```
+
+![The same table twice: first in left-to-right text with the stub first and amounts on the right, then in right-to-left text with the columns in the opposite order, the stub last, text against the right edge and amounts against the left, still lined up on their decimal separators.](assets/examples/direction.png)
+
+The columns run the other way and the stub sits last, because Typst lays a table out along the writing direction.
+Inferred alignment follows: text goes to the start of its cell and numbers to the end, whichever side those are on.
+
+A number is the exception, and deliberately so.
+Its digits, separator and any exponent are pinned left to right, since a number reads the same way in every script.

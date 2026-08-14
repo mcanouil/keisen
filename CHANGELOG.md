@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- fix: a formatted number is pinned left to right, so a table under `#set text(dir: rtl)` renders `1 256.750` rather than laying its integer, separator and fraction out backwards. (#27)
+- test: the same table is rendered in both directions, and the alignment contract is asserted where it is decided, so the choice of `start` and `end` over `left` and `right` is verified rather than assumed. (#27)
+- docs: the examples page shows a right-to-left table and says which parts mirror and which do not. (#27)
+
 - build: `tools/package.sh`, `tools/stage-readme.sh` and `tools/dry-release.sh` stage the payload a release publishes and compile the suite and the documentation's listings against an installed copy of it, so an import that only works from this working tree is caught before it ships. (#26)
 - fix: the nanoplot listing in the documentation defines the series it plots, so it compiles as written rather than reporting an unknown variable. (#26)
 - build: `tools/version-check.sh` holds `typst.toml`, `CITATION.cff` and `CHANGELOG.md` to the same version, and runs inside `tools/check.sh`. (#26)

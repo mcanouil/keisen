@@ -42,6 +42,9 @@ Anything about how the table looks goes in `tests/probe/`.
 Each probe compiles to SVG and asserts what the render must contain, through `// expect-svg:` and `// reject-svg:` comments.
 See [`tests/probe/README.md`](tests/probe/README.md); the rule that matters is to break the thing a new probe watches and confirm it fails, because a probe that cannot fail reads as coverage.
 
+Anything that must read the same in both writing directions goes in `tests/direction/`, rendered twice and compared glyph by glyph.
+See [`tests/direction/README.md`](tests/direction/README.md).
+
 ## House rules
 
 - The package imports no third-party package.

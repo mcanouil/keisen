@@ -43,14 +43,19 @@
   let exponent = if value.exponent == none { [] } else { value.exponent }
   let trail = if value.suffix == none { [] } else { value.suffix }
 
+  // The slots are absolute, not direction-relative, and the run is pinned to
+  // ltr: a number reads left to right in every script, including the
+  // right-to-left ones. Without the pin, right-to-left text lays these boxes
+  // out in reverse and 1256.750 renders as 750.256 1.
+  //
   // Written as a sequence rather than a `+` chain: a leading `+` on a new line
   // parses as a unary operator on content.
-  {
+  text(dir: ltr, {
     box(width: metrics.lead, align(right, lead))
     box(width: metrics.integer, align(right, [#(value.integer)]))
     box(width: metrics.separator, align(center, [#(value.separator)]))
     box(width: metrics.fraction, align(left, [#(value.fraction)]))
     box(width: metrics.exponent, align(left, exponent))
     box(width: metrics.trail, align(left, trail))
-  }
+  })
 }
