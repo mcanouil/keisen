@@ -46,7 +46,7 @@
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
 // overrides either, which is why the style dictionary is read last.
-#let _cell(properties, body, align: auto, colspan: 1, fill: none, stroke: none) = {
+#let _cell(properties, body, align: auto, colspan: 1, fill: none, stroke: (:)) = {
   table.cell(
     colspan: colspan,
     align: properties.at("align", default: align),
@@ -93,22 +93,29 @@
 
   // Data-driven colour resolves per column and merges under explicit styling,
   // so table-style always wins over a gradient.
-  let index = spec.colours.fold(build-index(spec), (index, directive) => {
-    let out = index
+  // Colours resolve among themselves first, last directive winning as
+  // everywhere else, and the explicit styles are laid over the result.
+  let colours = spec.colours.fold((:), (layer, directive) => {
+    let out = layer
     for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
       for (position, properties) in colour-styles(directive, spec.data, name) {
-        let key = "body|" + position + "|" + repr(name)
-        let explicit = out.at(key, default: (:))
-        // Deep-merge the text dictionary: a shallow merge would replace it
-        // wholesale and take the contrast fill with it, leaving black on black.
-        let merged = properties + explicit
-        if "text" in properties and "text" in explicit {
-          merged.insert("text", properties.text + explicit.text)
-        }
-        out.insert(key, merged)
+        out.insert("body|" + position + "|" + repr(name), properties)
       }
     }
     out
+  })
+
+  let index = colours.pairs().fold(build-index(spec), (styles, pair) => {
+    let (key, properties) = pair
+    let explicit = styles.at(key, default: (:))
+    // Deep-merge the text dictionary: a shallow merge would replace it wholesale
+    // and take the contrast fill with it, leaving black on black.
+    let merged = properties + explicit
+    if "text" in properties and "text" in explicit {
+      merged.insert("text", properties.text + explicit.text)
+    }
+    styles.insert(key, merged)
+    styles
   })
   let alignments = names.map(name => spec.align.at(
     name,
@@ -182,17 +189,29 @@
 
   let summary-row(entry, part, row-key) = {
     let cells = ()
-    let rule = (top: top-border(part))
+    let border = top-border(part)
+    let rule = if border == none { (:) } else { (top: border) }
+    let label = text(weight: setting("summary-weight"), [#entry.label])
     if has-stub {
       cells.push(_cell(
         style-for(index, part, row-key, none),
-        text(weight: setting("summary-weight"), [#entry.label]),
+        label,
         align: start,
         fill: setting("summary-fill"),
         stroke: rule,
       ))
     }
     for (position, name) in names.enumerate() {
+      if not has-stub and position == 0 {
+        cells.push(_cell(
+          style-for(index, part, row-key, name),
+          label,
+          align: start,
+          fill: setting("summary-fill"),
+          stroke: rule,
+        ))
+        continue
+      }
       cells.push(_cell(
         style-for(index, part, row-key, name),
         summarised(entry, name, metrics.at(position)),
@@ -204,7 +223,7 @@
     cells
   }
 
-  let titled(name, body, align: auto, stroke: none) = _cell(
+  let titled(name, body, align: auto, stroke: (:)) = _cell(
     style-for(index, "title", none, name),
     _marked(body, marks-for(footnotes, "title", none, name)),
     align: align,
@@ -212,16 +231,12 @@
     stroke: stroke,
   )
 
-  let outer-top = setting("table-border-top")
-  let outer-bottom = setting("table-border-bottom")
-
   let head = ()
   if spec.header.title != none {
     head.push(titled(
       "title",
       text(size: setting("header-title-size"), weight: setting("header-title-weight"), spec.header.title),
       align: setting("header-align"),
-      stroke: (top: outer-top),
     ))
   }
   if spec.header.subtitle != none {
@@ -229,10 +244,7 @@
       "subtitle",
       text(size: setting("header-subtitle-size"), spec.header.subtitle),
       align: setting("header-align"),
-      stroke: (
-        top: if spec.header.title == none { outer-top } else { none },
-        bottom: setting("header-border-bottom"),
-      ),
+      stroke: (bottom: setting("header-border-bottom")),
     ))
   }
 
@@ -255,10 +267,7 @@
         body,
         align: center,
         colspan: cell.span,
-        stroke: (
-          bottom: setting("spanner-border-bottom"),
-          top: if head.len() == 0 and entry.source == 0 { outer-top } else { none },
-        ),
+        stroke: (bottom: setting("spanner-border-bottom")),
       ))
     }
   }
@@ -268,11 +277,7 @@
   // rule, which belongs to whichever row happens to come first.
   let label-rules = (
     bottom: setting("column-labels-border-bottom"),
-    top: if head.len() == 0 and levels.len() == 0 {
-      setting("table-border-top")
-    } else {
-      setting("column-labels-border-top")
-    },
+    top: setting("column-labels-border-top"),
   )
 
   // The stubhead labels the stub column, and is empty unless the stub names it.
@@ -378,27 +383,29 @@
       style-for(index, "source-notes", position, none),
       text(size: setting("source-note-size"), _marked(note, marks-for(footnotes, "source-notes", position, none))),
       colspan: width,
-      stroke: (
-        top: if position == 0 { setting("footer-border-top") } else { none },
-        bottom: if position == spec.source-notes.len() - 1 and footnotes.len() == 0 {
-          outer-bottom
-        } else { none },
-      ),
+      stroke: (top: if position == 0 { setting("footer-border-top") } else { none }),
     ))
   }
-  // Marked notes print under the source notes, each behind its own mark.
-  let marked = footnotes.filter(footnote => footnote.mark != none)
-  for footnote in marked {
+
+  // Marked notes print under the source notes, each behind its own mark, then
+  // the unmarked ones, which explain the table rather than a cell.
+  for footnote in footnotes.filter(footnote => footnote.mark != none) {
     notes.push(_cell(
       (:),
       text(size: setting("footnote-size"), super(footnote.mark) + footnote.note),
       colspan: width,
-      stroke: (bottom: if footnote == marked.last() { outer-bottom } else { none }),
+      stroke: (top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
     ))
   }
   for footnote in footnotes.filter(footnote => footnote.mark == none) {
-    notes.push(full(text(size: setting("footnote-size"), footnote.note)))
+    notes.push(_cell(
+      (:),
+      text(size: setting("footnote-size"), footnote.note),
+      colspan: width,
+      stroke: (top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
+    ))
   }
+
 
   // A named width wins; everything else sizes itself, including the stub.
   let tracks = if has-stub { (spec.widths.at(spec.stub.rowname, default: auto),) } else { () }
@@ -416,11 +423,20 @@
   // unbreakable block is the only thing that stops Typst splitting rows.
   let wrap(body) = if setting("breakable") { body } else { block(breakable: false, body) }
 
+  // Rows the table will hold, so its own rules land on the first and the last
+  // whatever the parts turn out to be. A table with no notes used to lose its
+  // closing rule entirely, because the footer drew it.
+  let body-rows = plan.filter(entry => entry.part in ("group", "body", "summary", "grand-summary"))
+  let row-count = head.len() + levels.len() + 1 + body-rows.len() + notes.len()
+
   wrap(table(
     columns: tracks,
     inset: setting("cell-inset"),
     align: setting("table-align"),
-    stroke: none,
+    stroke: (x, y) => (
+      top: if y == 0 { setting("table-border-top") } else { none },
+      bottom: if y == row-count - 1 { setting("table-border-bottom") } else { none },
+    ),
     ..if head.len() > 0 {
       (table.header(level: 1, repeat: false, ..head),)
     } else { () },
