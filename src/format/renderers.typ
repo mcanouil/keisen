@@ -59,6 +59,10 @@
     box(
       width: width,
       height: height,
+      // A value outside the domain would otherwise be drawn outside the cell,
+      // across whatever sits beside it. An explicit domain is a choice to look
+      // at one window of the data, so what falls outside it is not drawn.
+      clip: true,
       // A single reading has no line to draw, so it draws as the point it is.
       if fractions.len() == 1 {
         _dot(fractions.first(), width, height, thickness, paint)
@@ -95,6 +99,10 @@
     box(
       width: width,
       height: height,
+      // A value outside the domain would otherwise be drawn outside the cell,
+      // across whatever sits beside it. An explicit domain is a choice to look
+      // at one window of the data, so what falls outside it is not drawn.
+      clip: true,
       // The line is drawn by the renderer above, in a box of the same size, so
       // the marks laid over it land on the same coordinates.
       place(top + left, nanoplot-line(
@@ -138,6 +146,10 @@
     box(
       width: width,
       height: height,
+      // A value outside the domain would otherwise be drawn outside the cell,
+      // across whatever sits beside it. An explicit domain is a choice to look
+      // at one window of the data, so what falls outside it is not drawn.
+      clip: true,
       // Every reading is zero, so every bar is, and there is no span to measure
       // against either.
       if span == 0 { [] } else {

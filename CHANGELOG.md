@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - fix: `format-nanoplot()` takes the shared domain from the column it formats, and no longer accepts `values`, which could be another column's readings entirely. (#16)
 - fix: a column of nanoplots is left out of a summary over every column, and naming one in `summary-rows()` is reported rather than answered with a blank cell. (#16)
 - fix: nothing under `src/` imports a third-party package, and `tools/import-boundary.sh` holds it to that. (#16)
+- fix: a nanoplot stays inside its cell when a reading falls outside an explicit `domain`, rather than being drawn across whatever sits beside it. (#16)
 
 - docs: `ARCHITECTURE.md` records the Typst constraints that shaped the package, each of which explains a decision that reads as arbitrary without it. (#13)
 
