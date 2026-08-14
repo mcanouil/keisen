@@ -3,6 +3,9 @@
 
 #import "../../lib.typ": *
 
+// The one document that must not fit its content: a page that grows to hold the
+// table never breaks, and breaking is what this test is for. tools/check.sh
+// knows this file by name for that reason.
 #set page(width: 11cm, height: 9cm, margin: 1cm)
 #set text(font: "Libertinus Serif", size: 9pt)
 

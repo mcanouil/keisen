@@ -49,6 +49,14 @@ See [`tests/probe/README.md`](tests/probe/README.md); the rule that matters is t
 - Commit messages follow Conventional Commits, subject line only, ideally under 50 characters.
 - Record user-facing changes under `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md).
 
+Set every test page to grow with what it holds, so a rendered image is the table rather than the table and a field of white:
+
+```typ
+#set page(width: auto, height: auto, margin: 0.5cm)
+```
+
+`tests/visual/breakable.typ` is the only exception, and the only one there can be: a page that grows never breaks, and breaking is what it tests.
+
 After changing a visual test, regenerate the images the documentation shows:
 
 ```bash
