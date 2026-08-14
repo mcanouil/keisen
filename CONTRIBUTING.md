@@ -52,3 +52,7 @@ tools/render-docs-assets.sh
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
+Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.
+
+[`.claude/keisen-design.md`](.claude/keisen-design.md) is the original design, kept as a record of intent.
+It predates the code and is history where the two disagree.
