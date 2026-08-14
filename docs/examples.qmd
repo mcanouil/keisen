@@ -251,6 +251,10 @@ The renderers are drawn with native Typst primitives and come out of the package
 Because every coordinate is a fraction of the box, an `em` size needs no absolute resolution and no minimum canvas, which is what lets a nanoplot be the size a nanoplot is meant to be.
 
 ```typst
+#import "@preview/keisen:0.1.0": nanoplot-bar, nanoplot-line, nanoplot-points
+
+#let series = (3.0, 3.4, 3.1, 4.2, 4.0, 4.9)
+
 Revenue rose through the year #nanoplot-line(series, width: 4em), reading
 #nanoplot-points(series, width: 4em) by quarter and
 #nanoplot-bar(series, width: 4em) by volume, all at #raw("0.8em").
