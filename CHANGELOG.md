@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `format-date()` takes a `datetime` or an ISO-8601 string, which is how a date arrives from a file, and refuses one that names no day rather than panicking inside `datetime`. (#19)
+- feat: `format-markup()` evaluates a cell holding Typst markup as text, which is how a generator carries emphasis it cannot express as content. (#19)
+
 - feat: `format-currency()` writes money, following the currency for its symbol, its decimals, and whether the symbol leads or trails. (#18)
 - feat: `format-scientific()` writes powers of ten, counting the exponent off the digits so it holds for magnitudes `decimal` cannot. (#18)
 - feat: `format-bytes()` writes sizes in binary or decimal prefixes, saying which convention it counted in. (#18)

@@ -33,6 +33,8 @@
 #import "src/format/number.typ": format, format-integer, format-number
 #import "src/format/currency.typ": format-currency
 #import "src/format/bytes.typ": format-bytes
+#import "src/format/date.typ": format-date
+#import "src/format/markup.typ": format-markup
 #import "src/format/scientific.typ": format-scientific
 #import "src/format/percent.typ": format-percent
 #import "src/format/nanoplot.typ": format-nanoplot
