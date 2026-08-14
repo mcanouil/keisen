@@ -192,10 +192,13 @@
     let border = top-border(part)
     let rule = if border == none { (:) } else { (top: border) }
     let label = text(weight: setting("summary-weight"), [#entry.label])
+    // A summary cell takes its marks like any other: the label cell through the
+    // stub address, the rest by column.
+    let marked(body, column) = _marked(body, marks-for(footnotes, part, row-key, column))
     if has-stub {
       cells.push(_cell(
         style-for(index, part, row-key, none),
-        label,
+        marked(label, none),
         align: start,
         fill: setting("summary-fill"),
         stroke: rule,
@@ -205,16 +208,23 @@
       if not has-stub and position == 0 {
         cells.push(_cell(
           style-for(index, part, row-key, name),
-          label,
+          marked(label, name),
           align: start,
           fill: setting("summary-fill"),
           stroke: rule,
         ))
         continue
       }
+      let properties = style-for(index, part, row-key, name)
+      // The padding boxes are measured in the surrounding text style, so a cell
+      // whose style changes the text keeps the column alignment instead: a box
+      // measured for another size is too narrow, and the number wraps inside it.
+      // Body cells have always done this; a summary cell could not be styled at
+      // all until cells-summary existed, which is what exposed the difference.
+      let metric = if "text" in properties { none } else { metrics.at(position) }
       cells.push(_cell(
-        style-for(index, part, row-key, name),
-        summarised(entry, name, metrics.at(position)),
+        properties,
+        marked(summarised(entry, name, metric), name),
         align: alignments.at(position),
         fill: setting("summary-fill"),
         stroke: rule,

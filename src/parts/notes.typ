@@ -26,6 +26,8 @@
   "row-groups",
   "stub",
   "body",
+  "summary",
+  "grand-summary",
   "source-notes",
 )
 

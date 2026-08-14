@@ -10,6 +10,7 @@
 ///! notes, and `none` where the part has one row.
 
 #import "format/apply.typ": matches-column, matches-row
+#import "parts/summaries.typ": directives-for, summary-labels
 #import "utils/errors.typ": fail
 
 #let cells-body(columns: auto, rows: auto) = (
@@ -52,6 +53,21 @@
   parts: if type(parts) == array { parts } else { (parts,) },
 )
 
+#let cells-summary(groups: auto, columns: auto, rows: auto) = (
+  kind: "location",
+  part: "summary",
+  groups: groups,
+  columns: columns,
+  rows: rows,
+)
+
+#let cells-grand-summary(columns: auto, rows: auto) = (
+  kind: "location",
+  part: "grand-summary",
+  columns: columns,
+  rows: rows,
+)
+
 #let cells-source-notes(notes: auto) = (
   kind: "location",
   part: "source-notes",
@@ -77,6 +93,50 @@
   } else {
     selector == label
   }
+}
+
+// A summary row answers to the label that names it and to its position within
+// the group, because both are how a reader says which row they mean: "the
+// subtotal", or "the second one".
+#let _matches-summary(selector, position, label) = {
+  if selector == auto {
+    true
+  } else if type(selector) == int {
+    position == selector
+  } else if type(selector) == str {
+    label == selector
+  } else if type(selector) == array {
+    selector.any(candidate => _matches-summary(candidate, position, label))
+  } else if type(selector) == function {
+    selector(label)
+  } else {
+    fail(
+      "cells-summary",
+      "rows selector is not a summary row",
+      value: selector,
+      hint: "Give auto, a label, a position, an array of either, or a predicate over the label.",
+    )
+  }
+}
+
+// Every cell of a summary row: the visible columns, and the stub cell that
+// carries the row's own label. Without a stub that label sits in the first
+// visible column, which is already addressed by name.
+//
+// `columns: none` is the label cell alone, which is how a note is put on the
+// row once rather than on every cell of it.
+#let _summary-cells(location, spec, part, key) = {
+  if location.columns == none {
+    if spec.stub.rowname != none { return (_address(part, row: key),) }
+    if spec.columns.len() == 0 { return () }
+    return (_address(part, row: key, column: spec.columns.first()),)
+  }
+  let columns = spec.columns.filter(name => matches-column(location.columns, name))
+  let cells = columns.map(name => _address(part, row: key, column: name))
+  if spec.stub.rowname != none and location.columns == auto {
+    cells.push(_address(part, row: key))
+  }
+  cells
 }
 
 #let _expand-one(location, spec) = {
@@ -107,6 +167,27 @@
     spec.spanners
       .filter(spanner => _matches-label(location.spanners, spanner.label))
       .map(spanner => _address("column-spanners", row: spanner.level, column: spanner.label))
+  } else if part == "summary" {
+    spec
+      .groups
+      .enumerate()
+      .filter(((index, group)) => _matches-label(location.groups, group.label))
+      .map(((index, group)) => summary-labels(directives-for(spec.summaries, group.label))
+        .enumerate()
+        .filter(((position, label)) => _matches-summary(location.rows, position, label))
+        .map(((position, label)) => _summary-cells(
+          location,
+          spec,
+          "summary",
+          (group: index, row: position),
+        )))
+      .flatten()
+  } else if part == "grand-summary" {
+    summary-labels(spec.grand-summaries)
+      .enumerate()
+      .filter(((position, label)) => _matches-summary(location.rows, position, label))
+      .map(((position, label)) => _summary-cells(location, spec, "grand-summary", position))
+      .flatten()
   } else if part == "title" {
     location.parts.map(name => _address("title", column: name))
   } else if part == "source-notes" {
