@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `format-currency()` writes money, following the currency for its symbol, its decimals, and whether the symbol leads or trails. (#18)
+- feat: `format-scientific()` writes powers of ten, counting the exponent off the digits so it holds for magnitudes `decimal` cannot. (#18)
+- feat: `format-bytes()` writes sizes in binary or decimal prefixes, saying which convention it counted in. (#18)
+- fix: the exponent slot is measured and padded like every other, so a column of powers lines up on its multiplication sign. (#18)
+- fix: a byte size whose rounding carries into the next unit takes that unit, so 1048575 reads as `1.0 MiB` rather than `1 024.0 KiB`. (#18)
+- fix: a formatter reports failures under the name the caller wrote rather than under `format-number`. (#18)
+
 - feat: `cells-summary()` and `cells-grand-summary()` address summary rows, so a subtotal can be styled or footnoted; the renderer looked those styles up and nothing produced their addresses. (#17)
 - feat: a summary row answers to the label that names it as well as to its position, and `columns: none` is its label cell, so a note goes on the row once rather than on every cell of it. (#17)
 - fix: footnote marks reach summary cells and are numbered in the order a reader meets them, after the body rows and before the notes. (#17)

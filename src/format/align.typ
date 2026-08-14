@@ -27,6 +27,7 @@
     integer: widest(value => [#(value.integer)]),
     separator: widest(value => [#(value.separator)]),
     fraction: widest(value => [#(value.fraction)]),
+    exponent: widest(value => if value.exponent == none { [] } else { value.exponent }),
     trail: widest(value => if value.suffix == none { [] } else { value.suffix }),
   )
 }
@@ -39,6 +40,7 @@
   if type(value) != dictionary or value.at("kind", default: none) != "number" { return value }
 
   let lead = [#(value.sign)] + if value.prefix == none { [] } else { value.prefix }
+  let exponent = if value.exponent == none { [] } else { value.exponent }
   let trail = if value.suffix == none { [] } else { value.suffix }
 
   // Written as a sequence rather than a `+` chain: a leading `+` on a new line
@@ -48,6 +50,7 @@
     box(width: metrics.integer, align(right, [#(value.integer)]))
     box(width: metrics.separator, align(center, [#(value.separator)]))
     box(width: metrics.fraction, align(left, [#(value.fraction)]))
+    box(width: metrics.exponent, align(left, exponent))
     box(width: metrics.trail, align(left, trail))
   }
 }

@@ -105,10 +105,14 @@
 }
 
 #let format-value(value, options) = {
+  // Every formatter in the family lands here, so the scope travels with the
+  // options: a currency column that holds a word should say so as
+  // format-currency rather than as something the caller never wrote.
+  let scope = options.at("scope", default: "format-number")
   let number = to-decimal(value)
   if number == none {
     fail(
-      "format-number",
+      scope,
       "value is not a finite number",
       value: value,
       hint: "Only finite numbers are formatted here; use format() for anything else.",
@@ -159,7 +163,7 @@
     integer: group-digits(integer, options.grouping, options.group-separator),
     separator: if shown > 0 { options.decimal-separator } else { "" },
     fraction: fraction,
-    exponent: none,
+    exponent: options.at("exponent", default: none),
     suffix: options.at("suffix", default: none),
   )
 }
@@ -188,13 +192,19 @@
   negative-zero: false,
   prefix: none,
   suffix: none,
+  exponent: none,
+  // Named by whichever formatter in the family called, so a failure reports the
+  // function the caller actually wrote.
+  scope: "format-number",
 ) = format(
   columns,
   value => format-value(
     value,
     (
+      scope: scope,
       prefix: prefix,
       suffix: suffix,
+      exponent: exponent,
       decimals: decimals,
       significant: significant,
       grouping: grouping,
@@ -220,5 +230,5 @@
     "decimals and significant do not apply to integers",
     hint: "Use format-number when a fractional part is wanted.",
   )
-  format-number(columns, rows: rows, decimals: 0, ..options)
+  format-number(columns, rows: rows, decimals: 0, scope: "format-integer", ..options)
 }

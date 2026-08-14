@@ -95,6 +95,21 @@ A subtotal is addressed like any other cell, through `cells-summary` and `cells-
 `columns: none` is that label cell alone, which is how the note lands on the row once instead of on each of its cells.
 A summary row answers to its label as readily as to its position, so `rows: "Subtotal"` says what `rows: 0` says.
 
+## Money, magnitudes, and sizes
+
+Each of these fills a slot the alignment stage reserves, so the columns line up on what matters: prices under their symbols, exponents under their multiplication signs, units under units.
+
+```typst
+  format-currency("price", currency: "EUR"),
+  format-scientific("charge", decimals: 2),
+  format-bytes("firmware"),
+```
+
+![A bill of materials with prices carrying a euro sign at the left of the column and their decimals aligned, charges in scientific notation with the multiplication signs in a vertical line, and firmware sizes in bytes, kibibytes, mebibytes and gibibytes with the units aligned. Below it the same table with the yen symbol trailing each price, exponents written in e notation, and sizes in decimal prefixes.](assets/examples/formatters.png)
+
+The second table is the same figures said differently: `position: end` for the currencies written that way, `exponent: "e"` for output rather than typesetting, and `base: 1000` for the people who sell disks.
+A yen figure carries no decimals, because the currency has no minor unit and two places would invent a precision it does not circulate in.
+
 ## Styling by what the data says
 
 A cell is highlighted because of its value, not its position.

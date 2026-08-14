@@ -63,7 +63,7 @@ Parts
 : A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order.
 
 Formatters
-: Numbers, integers, and percentages so far, computed in Typst's `decimal` type rather than in floats, plus `format()` for anything else. Currency, dates, scientific notation, byte sizes, and markup are still to come.
+: Numbers, integers, percentages, currency, scientific notation, and byte sizes, computed in Typst's `decimal` type rather than in floats, plus `format()` for anything else. Dates and markup are still to come.
 
 Locations
 : Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is the fourth cell of the ninth row.

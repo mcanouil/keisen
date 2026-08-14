@@ -31,6 +31,9 @@
   cells-source-notes, cells-stub, cells-stubhead, cells-summary, cells-title,
 )
 #import "src/format/number.typ": format, format-integer, format-number
+#import "src/format/currency.typ": format-currency
+#import "src/format/bytes.typ": format-bytes
+#import "src/format/scientific.typ": format-scientific
 #import "src/format/percent.typ": format-percent
 #import "src/format/nanoplot.typ": format-nanoplot
 #import "src/format/renderers.typ": nanoplot-bar, nanoplot-line, nanoplot-points
