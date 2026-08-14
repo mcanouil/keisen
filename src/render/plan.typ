@@ -44,6 +44,16 @@
   }
 
   let stripe = 0
+
+  // Declared groups need not cover the data, so whatever no group claims leads
+  // the body as a nameless block, exactly as an ungrouped table does. Derived
+  // groups cover every row by construction, so this is empty for them.
+  let claimed = blocks.flatten()
+  for position in range(spec.data.len()).filter(position => position not in claimed) {
+    plan.push(entry("body", source: position, stripe: calc.odd(stripe)))
+    stripe += 1
+  }
+
   for (index, positions) in blocks.enumerate() {
     // Level 3: the group label, which repeats until the next group retires it,
     // so a group spanning a page break reprints its name.

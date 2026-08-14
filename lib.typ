@@ -15,7 +15,7 @@
 #import "src/theme/presets.typ": theme-booktabs, theme-compact, theme-default, theme-minimal
 #import "src/theme/options.typ": table-options
 #import "src/parts/header.typ": table-header
-#import "src/parts/stub.typ": table-stub
+#import "src/parts/stub.typ": table-row-group, table-stub
 #import "src/parts/summaries.typ": (
   aggregate-count, aggregate-max, aggregate-mean, aggregate-median, aggregate-min,
   aggregate-quantile, aggregate-standard-deviation, aggregate-sum, grand-summary-rows, summary-rows,
