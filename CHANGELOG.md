@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- test: render probes read the compiled output for the rules, fills, and contrast a theme promises, which compiling alone cannot see. (#22)
+
 - fix: the row plan carries the spanner rows it counted, so the header the renderer emits and the header the plan described cannot come from separate calls. (#21)
 - fix: `decimal-align` and `footnote-marks` are read through the option accessor, so changing a default changes what they do. (#21)
 

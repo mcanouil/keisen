@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Compiles every Typst unit test, visual test, and example from the project root.
 # Also enforces the import boundary: no @preview import anywhere under src,
-# and runs the expect-fail suite, where a document that compiles is the failure.
+# runs the expect-fail suite, where a document that compiles is the failure,
+# and the probes, which read the rendered output for what a theme promises.
 # Exits non-zero on the first failure across all targets.
 
 set -euo pipefail
@@ -97,6 +98,13 @@ expect_fail() {
 
 compile_glob "unit" "tests/unit/*.typ"
 expect_fail
+
+# Compiling proves a document compiles, not that it looks right. The probes read
+# the render for the marks a theme promises.
+if ! tools/probe.sh; then
+  failures=$((failures + 1))
+fi
+
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
 
