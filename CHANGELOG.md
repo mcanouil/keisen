@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- feat: `group-separator` and `decimal-separator` default to `auto` and are answered by the theme's `number-group-separator` and `number-decimal-separator`, so a French or German table sets its convention once rather than on every directive. (#31)
+- feat: `infinity:` writes an infinite value as content instead of refusing it, opaque to the decimal alignment of the column around it. (#31)
+- fix: a number directive is resolved against the theme wherever it formats a cell, so a summary row reads the same separators as the rows it totals. (#31)
+
 - feat: `format-cell()` formats a cell from the row it sits in, so a cell that depends on its neighbours can reach them; hidden columns and the reserved `_index` key included. (#30)
 - fix: a summary row is an aggregate with no row behind it, so a cell formatter never applies to one and the column falls back to whichever plain directive covers it. Naming one as a summary's own `format:` is refused rather than failing as a Typst type error. (#30)
 
