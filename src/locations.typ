@@ -29,6 +29,7 @@
   summary: "summary",
   grand-summary: "grand-summary",
   source-notes: "source-notes",
+  footnotes: "footnotes",
 )
 
 #let cells-body(columns: auto, rows: auto) = (
@@ -89,6 +90,16 @@
 #let cells-source-notes(notes: auto) = (
   kind: "location",
   part: PARTS.source-notes,
+  notes: notes,
+)
+
+// Row 0 is the first note under the table. The footer prints the marked notes
+// before the unmarked ones, each group in the order it was written, so this is
+// the row a reader can count off the page rather than the position of the
+// directive that made it.
+#let cells-footnotes(notes: auto) = (
+  kind: "location",
+  part: PARTS.footnotes,
   notes: notes,
 )
 
@@ -213,6 +224,21 @@
       .enumerate()
       .filter(((index, note)) => matches-row(location.notes, (_index: index)))
       .map(((index, note)) => _address(PARTS.source-notes, row: index))
+  } else if part == PARTS.footnotes {
+    // How many rows the footer prints is settled by mark assignment, which
+    // reads every other location to number the marks in reading order. It
+    // therefore arrives on the spec rather than being derived here: deriving it
+    // would mean numbering the marks from inside the numbering.
+    if "footnote-rows" not in spec {
+      fail(
+        "cells-footnotes",
+        "the footnote rows are not addressable yet",
+        hint: "A footnote cannot mark a footnote row; style them with table-style instead.",
+      )
+    }
+    range(spec.footnote-rows)
+      .filter(position => matches-row(location.notes, (_index: position)))
+      .map(position => _address(PARTS.footnotes, row: position))
   } else {
     fail("locations", "unknown location part", value: part)
   }
