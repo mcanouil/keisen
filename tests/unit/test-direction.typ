@@ -41,14 +41,17 @@
   )
 }
 
-// --- a number is pinned left-to-right ---
+// --- a padded number carries settings of its own ---
 
 // The slots are absolute: the integer hugs the separator from the left in
 // every script. Without a direction of its own, the run inherits the
 // paragraph's, and 1256.75 renders as 75.256 1 in right-to-left text.
 //
-// The pin is a set rule, so the padded cell is a styled element wrapping the
-// boxes rather than the bare sequence of them.
+// This says only that some set rule wraps the boxes, because that is all a
+// document can see: a set rule leaves an opaque `styles` value, so nothing
+// here can read the direction back out. What the direction actually is, is
+// tested by rendering: tools/direction-check.sh compiles the same table both
+// ways and compares the glyph order.
 #let slots = (
   kind: "number",
   sign: "",
@@ -65,7 +68,7 @@
   assert.eq(
     repr(padded.func()),
     "styled",
-    message: "a padded number must carry its own direction, not inherit the paragraph's",
+    message: "a padded number must carry settings of its own, which is where its direction is pinned",
   )
 }
 
