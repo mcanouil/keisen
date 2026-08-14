@@ -53,6 +53,42 @@ Entry points trace the same path:
 - **No speculative failure.**
   Typst has no `try`, so every conversion is pre-checked and every failure is reported through [`src/utils/errors.typ`](src/utils/errors.typ).
 
+## Typst constraints that shaped this
+
+Each of these was found by hitting it, and each explains a decision that would
+otherwise look arbitrary.
+
+- **There is no `try`.**
+  Nothing fallible may be attempted speculatively, so every conversion is
+  pre-checked. It is also why failures are tested by compiling documents that
+  must not compile, under `tests/expect-fail/`.
+- **A cell stroke of `none` suppresses the table's own stroke; an empty
+  dictionary inherits it.**
+  Moving every rule to cell level therefore disarmed the outer rules, and no
+  table without notes drew its closing rule until the table took them back.
+- **`str(decimal)` writes U+2212 MINUS SIGN, not an ASCII hyphen.**
+  Slicing the sign off a formatted decimal breaks on a character boundary, so
+  the magnitude is taken with `calc.abs` instead.
+- **Closures fail on arity mismatch.**
+  Predicates and formatters take exactly one argument; row position travels on
+  the reserved `_index` key rather than as a second parameter.
+- **A positional parameter cannot carry a default.**
+  `columns` is required throughout the format family, and "every column" is
+  written explicitly as `auto`.
+- **A package specification cannot carry a subpath.**
+  `@preview/keisen:x.y.z/src/...` is not valid syntax, so the integration module
+  is reachable only from a clone. This is unresolved and blocks a release.
+- **Named arguments are identifiers.**
+  Option names are written unquoted, `table-options(row-striping: true)`.
+- **`measure` assumes infinite space and ignores column tracks** (typst/typst#3943).
+  Decimal alignment therefore measures formatted text fragments, never cells.
+- **Multiple headers carry levels, and a lower level retires the ones above it.**
+  That is what makes a row group reprint its label across a page break, and it
+  is why the grand summary is wrapped in a non-repeating header of its own.
+- **Packages declare no dependencies.**
+  Imports resolve per file at compile time, which is what makes an optional
+  integration module possible at all.
+
 ## Error conventions
 
 Never inline a panic string.
