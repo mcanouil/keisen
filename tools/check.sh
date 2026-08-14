@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Compiles every Typst unit test, visual test, and example from the project root.
 # Also enforces the import boundary: no @preview import anywhere under src,
-# runs the expect-fail suite, where a document that compiles is the failure,
-# and the probes, which read the rendered output for what a theme promises.
+# holds the version to the same value everywhere it is written, runs the
+# expect-fail suite, where a document that compiles is the failure, and the
+# probes, which read the rendered output for what a theme promises.
 # Exits non-zero on the first failure across all targets.
 
 set -euo pipefail
@@ -40,6 +41,10 @@ compile_glob() {
 }
 
 if ! tools/import-boundary.sh; then
+  failures=$((failures + 1))
+fi
+
+if ! tools/version-check.sh; then
   failures=$((failures + 1))
 fi
 

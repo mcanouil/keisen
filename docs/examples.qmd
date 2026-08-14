@@ -220,6 +220,12 @@ In-cell plots are drawn by whichever renderer is passed, and the domain is share
 ```typst
 #import "@preview/keisen:0.1.0": *
 
+#let trends = (
+  (1.0, 1.2, 1.1, 1.4, 1.8, 2.1),
+  (2.0, 1.8, 1.6, 1.5, 1.2, 0.9),
+  (1.5, 1.5, 1.6, 1.5, 1.7, 1.6),
+)
+
 #display-table(
   (asset: ("Equities", "Bonds", "Cash"), trend: trends, volume: trends, weight: (0.62, 0.31, 0.07)),
   table-header(title: [Portfolio], subtitle: [Twelve-month trends]),

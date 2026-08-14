@@ -21,6 +21,8 @@ on:
       - "examples/**"
       - "tools/**"
       - "typst.toml"
+      - "docs/*.qmd"
+      - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
       - ".github/workflows/checks.yml"
@@ -35,6 +37,8 @@ on:
       - "examples/**"
       - "tools/**"
       - "typst.toml"
+      - "docs/*.qmd"
+      - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
       - ".github/workflows/checks.yml"
@@ -79,6 +83,46 @@ jobs:
       # SVG for strokes. Installing the font would change no result.
       - name: Run the checks
         run: tools/check.sh
+
+  package:
+    name: Compile from the staged package
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft != true }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Read Typst version from typst.toml
+        id: typst-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
+          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: ${{ steps.typst-version.outputs.version }}
+
+      # A module that no package specification can reach compiles from the
+      # working tree and fails for everyone who installs it, which is how an
+      # unreachable nanoplot module reached the documentation. Staging and
+      # importing through @preview is the only check that sees it, and the
+      # documentation's own listings are where that import is printed.
+      #
+      # The same script the author runs, pointed at the runner's temporary
+      # directory instead of a home one. Its manifest lint is skipped here,
+      # since typst-package-check is not installed on the runner.
+      - name: Rehearse the release
+        shell: bash
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}
+          STAGE_ROOT: ${{ runner.temp }}/stage
+        run: tools/dry-release.sh
 
   lint:
     name: Lint the shell scripts
