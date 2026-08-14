@@ -28,6 +28,9 @@ tools/check.sh
 That compiles every unit test, visual test, and example, and enforces the import boundary.
 A failing `#assert` is a compile failure, which is exactly how the tests report.
 
+The same script runs on every pull request, through `.github/workflows/checks.yml`, alongside `shellcheck` and `shfmt` over the scripts.
+Run it locally first: a run that only tells you what your own machine would have is a run nobody needed.
+
 Write the test first.
 Unit tests live in `tests/unit/` as `.typ` files of `#assert.eq` calls, and visual tests live in `tests/visual/` as documents to inspect.
 
