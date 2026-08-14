@@ -41,4 +41,10 @@ Unit tests live in `tests/unit/` as `.typ` files of `#assert.eq` calls, and visu
 - Commit messages follow Conventional Commits, subject line only, ideally under 50 characters.
 - Record user-facing changes under `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md).
 
+After changing a visual test, regenerate the images the documentation shows:
+
+```bash
+tools/render-docs-assets.sh
+```
+
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.

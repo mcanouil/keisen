@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- docs: the reference documents every exported function, read from the source and held to it by `tests/unit/test-exports.typ`. (#6)
-- docs: the examples page shows five tables, each beside the source that produced it, rendered from the visual tests. (#6)
-- fix: the facade no longer re-exports internal helpers; a wildcard import brings in the grammar alone. (#6)
+- docs: the reference documents every exported function, read from the source and held to it by `tests/unit/test-exports.typ`. (#7)
+- docs: the examples page shows five tables, each beside the source that produced it, rendered from the visual tests. (#7)
+- fix: the facade marks its internal helpers with a leading underscore, and a test holds the rest of the surface to the documented grammar. (#7)
+- fix: `header-align`, `column-labels-border-top`, `column-labels-border-bottom`, `stub-weight`, and `row-group-repeat` are read by the renderer instead of being accepted and ignored, and the three options that nothing could read are gone. (#7)
 
 - feat: `table-options()` and the `theme-default`, `theme-booktabs`, `theme-compact`, and `theme-minimal` presets set borders, fills, striping, insets, and sizes. (#5)
 - feat: `format-nanoplot()` draws in-cell plots through any renderer, sharing one domain down the column so cells can be compared. (#5)

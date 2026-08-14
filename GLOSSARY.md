@@ -33,4 +33,4 @@ Doc-only: this file documents names already in the code, it does not change any.
 
 - Public names use full words: `format-number`, not `fmt-num`.
 - British spelling throughout: `colour`, `summarise`, `normalise`.
-- Internal helpers are `_`-prefixed and never exported from `lib.typ`.
+- Internal helpers are `_`-prefixed. Typst has no privacy, so the prefix marks them as internal rather than hiding them: a wildcard import of `lib.typ` still binds them.

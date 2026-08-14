@@ -17,7 +17,6 @@
   "breakable": true,
   "infer-alignment": true,
   "decimal-align": true,
-  "accessibility-extras": false,
   // Header
   "header-title-size": 1.1em,
   "header-title-weight": "bold",
@@ -51,9 +50,6 @@
   "footnote-size": 0.8em,
   "source-note-size": 0.8em,
   "footer-border-top": none,
-  // Numbers
-  "number-decimal-separator": ".",
-  "number-group-separator": sym.space.thin,
 )
 
 #let table-options(..keys) = {

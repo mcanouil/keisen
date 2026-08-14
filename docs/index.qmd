@@ -19,26 +19,32 @@ _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
 ## Quick look
 
+This is `tests/visual/grouped.typ`, and the image below is its output.
+
 ```typst
 #import "@preview/keisen:0.1.0": *
 
 #display-table(
-  sales,
-  table-header(title: [Regional sales]),
+  (
+    product: ("Bolt", "Nut", "Beam", "Plate"),
+    region: ("North", "North", "South", "South"),
+    units: (1250, 860, 430, 2100),
+    revenue: (18750.5, 12900.25, 21500, 31500.75),
+  ),
+  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
   table-stub(rowname: "product", group: "region", label: [Product]),
   columns-label(units: [Units], revenue: [Revenue]),
+  table-spanner([Performance], ("units", "revenue")),
   format-integer("units"),
   format-number("revenue", decimals: 2),
-  summary-rows(functions: (Subtotal: aggregate-sum)),
-  table-style(
-    style(text: (fill: red)),
-    locations: cells-body(columns: "revenue", rows: row => row.revenue < 15000),
-  ),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
   table-source-note([Source: internal ledger.]),
+  table-options(row-striping: true),
 )
 ```
 
-![A sales table grouped by region with subtotals, a grand total, and one revenue figure in red.](assets/examples/grouped.png)
+![A sales table titled Regional sales, its Units and Revenue columns under a Performance spanner, rows grouped by region with a bold Subtotal closing each group, a bold Total closing the table, alternate rows shaded, and a source note in the footer.](assets/examples/grouped.png)
 
 The [Examples](examples.qmd) page shows this and four more, each beside the source that produced it.
 

@@ -25,6 +25,18 @@
   assert(name in exported, message: "missing from lib.typ: " + name)
 }
 
-#for name in exported.filter(name => not name.starts-with("_")) {
-  assert(name in public, message: "internal helper leaked from lib.typ: " + name)
+// The internal aliases are listed rather than exempted by their prefix: an
+// exemption for every underscore name would let a genuine leak through as long
+// as it happened to be named like an alias.
+#let internal = ("_assemble", "_build-spec", "_check")
+
+#for name in exported {
+  assert(
+    name in public or name in internal,
+    message: "internal helper leaked from lib.typ: " + name,
+  )
+}
+
+#for name in internal {
+  assert(name in exported, message: "internal alias no longer bound: " + name)
 }

@@ -2,10 +2,12 @@
 ///!
 ///! Every user-facing function is re-exported here.
 ///!
-///! A wildcard import re-exports every module-level binding, so the helpers
-///! this file needs for itself are aliased with a leading underscore. Nothing
-///! reaches a user's scope that is not part of the grammar, and
-///! tests/unit/test-exports.typ holds the list to that.
+///! Typst has no privacy: a wildcard import re-exports every module-level
+///! binding, including the helpers this file needs for itself. Those are
+///! aliased with a leading underscore to mark them as internal, which is a
+///! convention rather than an enforcement: `_build-spec` does reach a user's
+///! scope, it merely announces that it is not for them.
+///! tests/unit/test-exports.typ holds the rest of the surface to the grammar.
 
 #import "src/spec.typ": build-spec as _build-spec
 #import "src/render/assemble.typ": assemble as _assemble
@@ -54,7 +56,7 @@
       "display-table",
       "spec is not a display-table specification",
       value: spec,
-      hint: "Build it with build-spec, or pass data and directives instead.",
+      hint: "Pass data and directives instead, or a specification in the serialised form.",
     )
     spec
   } else {
