@@ -215,9 +215,16 @@
         ))
         continue
       }
+      let properties = style-for(index, part, row-key, name)
+      // The padding boxes are measured in the surrounding text style, so a cell
+      // whose style changes the text keeps the column alignment instead: a box
+      // measured for another size is too narrow, and the number wraps inside it.
+      // Body cells have always done this; a summary cell could not be styled at
+      // all until cells-summary existed, which is what exposed the difference.
+      let metric = if "text" in properties { none } else { metrics.at(position) }
       cells.push(_cell(
-        style-for(index, part, row-key, name),
-        marked(summarised(entry, name, metrics.at(position)), name),
+        properties,
+        marked(summarised(entry, name, metric), name),
         align: alignments.at(position),
         fill: setting("summary-fill"),
         stroke: rule,

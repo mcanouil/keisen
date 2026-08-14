@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - feat: `cells-summary()` and `cells-grand-summary()` address summary rows, so a subtotal can be styled or footnoted; the renderer looked those styles up and nothing produced their addresses. (#17)
 - feat: a summary row answers to the label that names it as well as to its position, and `columns: none` is its label cell, so a note goes on the row once rather than on every cell of it. (#17)
 - fix: footnote marks reach summary cells and are numbered in the order a reader meets them, after the body rows and before the notes. (#17)
+- fix: a summary cell whose style changes the text keeps the column alignment rather than wrapping inside padding measured for another size, as body cells already did. (#17)
 
 - feat: nanoplots are drawn with native Typst primitives and exported from the package, so they work when it is installed rather than only from a clone. (#16)
 - feat: a nanoplot may be as small as the text around it; the renderers need no minimum canvas, and a sparkline sits inline at `0.8em`. (#16)

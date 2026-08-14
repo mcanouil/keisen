@@ -34,6 +34,10 @@
     locations: cells-summary(groups: "North", columns: none),
   ),
   table-footnote([Audited.], locations: cells-grand-summary(columns: "revenue")),
+  // A style that changes the text makes the column's padding boxes the wrong
+  // size, so this cell takes the column alignment instead of the padding. Set
+  // at the same size it would otherwise be, so the total still reads as a total.
+  table-style(style(text: (size: 1.2em)), locations: cells-grand-summary(columns: "units")),
   table-source-note([Source: internal ledger.]),
   theme: theme-booktabs(),
 )
