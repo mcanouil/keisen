@@ -110,6 +110,20 @@ Each of these fills a slot the alignment stage reserves, so the columns line up 
 The second table is the same figures said differently: `position: end` for the currencies written that way, `exponent: "e"` for output rather than typesetting, and `base: 1000` for the people who sell disks.
 A yen figure carries no decimals, because the currency has no minor unit and two places would invent a precision it does not circulate in.
 
+### Dates and markup
+
+Neither produces alignment slots: a date has no separator to line up on, and a cell of markup is whatever it evaluates to, so both follow the column alignment like any other text.
+
+```typst
+  format-date("published", pattern: "[day] [month repr:long] [year]"),
+  format-markup("summary"),
+```
+
+![A release history table with versions, publication dates written as day, month name and year, and summaries in which some words are bold, some italic, and one is set in a monospaced face.](assets/examples/dates-markup.png)
+
+The three dates were written three different ways in the data: an ISO date, an ISO timestamp, and a `datetime` the document built.
+The summaries are Typst markup carried as text, which is what a generator emits when a cell has emphasis it cannot express as content.
+
 ## Styling by what the data says
 
 A cell is highlighted because of its value, not its position.

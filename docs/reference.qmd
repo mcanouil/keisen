@@ -84,6 +84,8 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `symbol: auto`, `position: start`, `space: auto`. |
 | `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`. |
 | `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`. |
+| `format-date(columns, ..)` | `pattern: "[year]-[month]-[day]"`. Takes a `datetime` or an ISO-8601 string. |
+| `format-markup(columns, ..)` | Evaluates a string of Typst markup. No arguments of its own. |
 | `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
 | `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
 | `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
@@ -103,6 +105,12 @@ Rounding that carries into the next power moves the exponent with it, so nothing
 
 `format-bytes` counts in 1024s by default and says so with the binary prefixes; `base: 1000` gives the decimal ones.
 Bytes themselves are whole, so the smallest unit carries no fractional part.
+
+`format-date` takes a `datetime` or an ISO-8601 string, since that is how a date arrives from a file: `2026-08-14`, `2026-08-14T09:30:00`, or the space-separated spelling exports write, with or without seconds and with or without a trailing `Z`.
+A date that does not exist is refused by pre-check rather than handed to `datetime`, which would panic in a grammar the reader did not write.
+`pattern` is Typst's own, so anything `datetime.display` accepts works, and Typst reports a pattern it does not.
+
+`format-date` and `format-markup` both produce opaque content, so neither is decimal-aligned: there is no separator in a date to line up on, and a cell of markup is whatever it evaluates to.
 
 ### Nanoplots
 

@@ -1,0 +1,12 @@
+// format-markup evaluates a string as Typst. A number is not markup, and
+// evaluating it would be a guess about what the caller meant.
+// expect: format-markup: value must be a string of Typst markup, or content
+
+#import "../../lib.typ": *
+
+#set page(width: auto, height: auto, margin: 0.5cm)
+
+#display-table(
+  (note: ("*bold*", 42)),
+  format-markup("note"),
+)
