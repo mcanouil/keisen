@@ -25,7 +25,7 @@
 #assert.eq(spec.groups.last().rows, (2,))
 
 // The plan interleaves each group label with its rows.
-#let plan = build-plan(spec)
+#let plan = build-plan(spec).rows
 #assert.eq(
   plan.map(entry => entry.part),
   ("labels", "group", "body", "body", "group", "body"),
@@ -42,7 +42,7 @@
 // Without a group column there are no group rows.
 #let ungrouped = build-spec(data, (table-stub(rowname: "product"),), (:))
 #assert.eq(ungrouped.groups, ())
-#assert.eq(build-plan(ungrouped).map(entry => entry.part), ("labels", "body", "body", "body"))
+#assert.eq(build-plan(ungrouped).rows.map(entry => entry.part), ("labels", "body", "body", "body"))
 
 // Indentation levels come from a column of integers.
 #let indented = build-spec(

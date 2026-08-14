@@ -42,6 +42,29 @@ if ! tools/import-boundary.sh; then
   failures=$((failures + 1))
 fi
 
+# A module holding only its header comment describes structure the package does
+# not have. Scaffolding is fine until it outlives the milestone that wanted it.
+empty_modules() {
+  local offenders=()
+  for f in src/**/*.typ src/*.typ; do
+    if ! grep -qvE '^\s*(//.*)?$' "${f}"; then
+      offenders+=("${f}")
+    fi
+  done
+
+  if [[ ${#offenders[@]} -gt 0 ]]; then
+    printf 'empty modules: a file under src holds no code\n' >&2
+    printf '  %s\n' "${offenders[@]}" >&2
+    failures=$((failures + 1))
+    return
+  fi
+
+  printf 'modules:  ok\n'
+}
+
+shopt -s globstar
+empty_modules
+
 # Typst has no try, so a panic cannot be asserted from inside a document. These
 # documents are expected to fail, and each names the message it should produce.
 expect_fail() {

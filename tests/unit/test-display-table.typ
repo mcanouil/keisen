@@ -4,7 +4,7 @@
   columns-hide, columns-label, display-table, format-integer, format-number, table-header,
   table-source-note, theme-default,
 )
-#import "../../src/render/assemble.typ": infer-alignment, slots-to-content
+#import "../../src/render/layout.typ": infer-alignment, slots-to-content
 
 // --- alignment inference ---
 
