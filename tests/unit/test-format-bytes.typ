@@ -43,6 +43,23 @@
 #assert.eq(slots(format-bytes("size"), calc.pow(1024, 6)).suffix, sym.space.nobreak + [PiB])
 #assert.eq(slots(format-bytes("size"), calc.pow(1024, 6)).integer, "1" + sym.space.thin + "024")
 
+// Rounding can carry into the next unit. 1048575 bytes is 1023.999… KiB, which
+// rounds to 1024.0 KiB, and 1024 of a unit is what the next prefix exists to
+// say. The unit is chosen before the rounding that decides this, so it is
+// chosen again afterwards.
+#assert.eq(slots(format-bytes("size"), 1048575).integer, "1")
+#assert.eq(slots(format-bytes("size"), 1048575).suffix, sym.space.nobreak + [MiB])
+#assert.eq(slots(format-bytes("size", base: 1000), 999999).integer, "1")
+#assert.eq(slots(format-bytes("size", base: 1000), 999999).suffix, sym.space.nobreak + [MB])
+
+// The carry needs a larger unit to carry into; at the top the number grows.
+#assert.eq(slots(format-bytes("size"), calc.pow(1024, 6)).suffix, sym.space.nobreak + [PiB])
+#assert.eq(slots(format-bytes("size"), calc.pow(1024, 6)).integer, "1" + sym.space.thin + "024")
+
+// Below the base the count is exact, so nothing carries and nothing rounds.
+#assert.eq(slots(format-bytes("size"), 1023).integer, "1" + sym.space.thin + "023")
+#assert.eq(slots(format-bytes("size"), 1023).suffix, sym.space.nobreak + [B])
+
 // A size is a magnitude, so the unit is chosen by how big it is and the sign
 // rides along.
 #let negative = slots(format-bytes("size"), -2048)

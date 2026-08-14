@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - feat: `format-scientific()` writes powers of ten, counting the exponent off the digits so it holds for magnitudes `decimal` cannot. (#18)
 - feat: `format-bytes()` writes sizes in binary or decimal prefixes, saying which convention it counted in. (#18)
 - fix: the exponent slot is measured and padded like every other, so a column of powers lines up on its multiplication sign. (#18)
+- fix: a byte size whose rounding carries into the next unit takes that unit, so 1048575 reads as `1.0 MiB` rather than `1 024.0 KiB`. (#18)
 - fix: a formatter reports failures under the name the caller wrote rather than under `format-number`. (#18)
 
 - feat: `cells-summary()` and `cells-grand-summary()` address summary rows, so a subtotal can be styled or footnoted; the renderer looked those styles up and nothing produced their addresses. (#17)

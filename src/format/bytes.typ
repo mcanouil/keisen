@@ -31,15 +31,24 @@
     index += 1
   }
 
-  format-value(
-    if number < decimal(0) { -scaled } else { scaled },
-    options
-      + (
-        // Whole bytes: a fractional byte is not a quantity anyone has.
-        decimals: if index == 0 { 0 } else { options.decimals },
-        suffix: sym.space.nobreak + units.at(index),
-      ),
+  // Whole bytes: a fractional byte is not a quantity anyone has.
+  let places(at) = if at == 0 { 0 } else { options.decimals }
+
+  let render(at, magnitude) = format-value(
+    if number < decimal(0) { -magnitude } else { magnitude },
+    options + (decimals: places(at), suffix: sym.space.nobreak + units.at(at)),
   )
+
+  let slots = render(index, scaled)
+
+  // Rounding can carry into the next unit: 1048575 bytes is 1023.999… KiB, and
+  // 1024.0 KiB is a size the next prefix exists to say. The unit is chosen
+  // before the rounding that decides this, so it is chosen again afterwards.
+  if index < units.len() - 1 and slots.integer.replace(options.group-separator, "") == str(options.base) {
+    return render(index + 1, scaled / step)
+  }
+
+  slots
 }
 
 #let format-bytes(
