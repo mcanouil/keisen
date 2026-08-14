@@ -69,13 +69,21 @@ empty_modules
 # A document rendered into the documentation should be the table, not the table
 # and a field of white, so every test page grows to fit what it holds.
 #
-# tests/visual/breakable.typ is the exception, and the only one there can be: a
-# page that grows to hold the table never breaks, and breaking is what it tests.
+# The width is required of every page, with no exception. The height is required
+# too, except of tests/visual/breakable.typ: a page that grows to hold the table
+# never breaks, and breaking is what it tests, so its height alone stays fixed.
 fitted_pages() {
   local offenders=()
   for f in tests/**/*.typ examples/*.typ; do
+    grep -q 'set page(' "${f}" || continue
+
+    if ! grep -q 'set page(width: auto' "${f}"; then
+      offenders+=("${f}")
+      continue
+    fi
+
     [[ "${f}" == "tests/visual/breakable.typ" ]] && continue
-    if grep -q 'set page(' "${f}" && ! grep -q 'set page(width: auto, height: auto' "${f}"; then
+    if ! grep -q 'set page(width: auto, height: auto' "${f}"; then
       offenders+=("${f}")
     fi
   done
