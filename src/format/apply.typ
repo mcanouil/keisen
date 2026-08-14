@@ -7,6 +7,7 @@
 
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../utils/errors.typ": fail-type
+#import "nanoplot.typ": nanoplot-cell, shared-domain
 
 #let matches-column(selector, name) = {
   if selector == auto {
@@ -53,7 +54,29 @@
   chosen
 }
 
+// Which columns hold nanoplots, so the parts that aggregate can leave them out:
+// a series of readings has no total, no mean, and no minimum.
+#let nanoplot-columns(formats, columns) = {
+  columns.filter(name => formats.any(directive => (
+    "nanoplot" in directive and matches-column(directive.columns, name)
+  )))
+}
+
+// A nanoplot is the one formatter whose output depends on the rest of the
+// column, so its cell function is built here, where the column is: the domain
+// spans the values below rather than arriving as an argument nobody can check.
+#let _formatter(directive, values) = {
+  if "nanoplot" not in directive { return directive.function }
+  nanoplot-cell(directive.nanoplot, shared-domain(values, given: directive.nanoplot.domain))
+}
+
 #let apply-formats(rows, formats, name, substitutions: ()) = {
+  let values = rows.map(row => row.at(name, default: none))
+  // Which directives name this column does not vary by row, and a nanoplot's
+  // domain does not vary by cell, so both are settled once for the column.
+  let applicable = formats.filter(directive => matches-column(directive.columns, name))
+  let formatters = applicable.map(directive => _formatter(directive, values))
+
   rows.map(row => {
     let value = row.at(name, default: none)
 
@@ -61,11 +84,9 @@
     if substitution != none { return substitution.replacement }
 
     let chosen = none
-    for directive in formats {
-      if matches-column(directive.columns, name) and matches-row(directive.rows, row) {
-        chosen = directive
-      }
+    for (position, directive) in applicable.enumerate() {
+      if matches-row(directive.rows, row) { chosen = position }
     }
-    if chosen == none { value } else { (chosen.function)(value) }
+    if chosen == none { value } else { (formatters.at(chosen))(value) }
   })
 }

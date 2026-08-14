@@ -37,8 +37,8 @@ A file in that directory which compiles is a test failure.
 
 ## House rules
 
-- The core imports no third-party package.
-  Only files under `src/integrations/` may, and `tools/import-boundary.sh` enforces it.
+- The package imports no third-party package.
+  Nothing under `src/` may, and `tools/import-boundary.sh` enforces it.
 - Public names use full words, British spelling, and no abbreviations.
 - Every failure goes through `src/utils/errors.typ`; no inline panic strings.
 - Nothing fallible is attempted speculatively, because Typst has no `try`.

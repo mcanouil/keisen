@@ -8,7 +8,7 @@
 #import "data.typ": column-names, group-rows, normalise
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
-#import "format/apply.typ": matches-column
+#import "format/apply.typ": matches-column, nanoplot-columns
 #import "spec/resolve.typ": apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
@@ -71,6 +71,22 @@
         "indent level in row " + str(row._index) + " is not a whole number of steps",
         value: depth,
         hint: "An indent column holds non-negative integers.",
+      )
+    }
+  }
+
+  // A nanoplot column is left out of a summary that takes every column, since
+  // series of readings have no total. Naming one is a different thing: it says
+  // the reader expected an aggregate that cannot exist, so it is refused rather
+  // than answered with a blank cell.
+  let plots = nanoplot-columns(spec.formats, spec.columns)
+  for directive in spec.summaries + spec.grand-summaries {
+    if directive.columns == auto { continue }
+    for name in plots.filter(name => matches-column(directive.columns, name)) {
+      fail(
+        "summary-rows",
+        "column " + name + " holds nanoplots and cannot be summarised",
+        hint: "Name the other columns: aggregating series of readings has no meaning.",
       )
     }
   }

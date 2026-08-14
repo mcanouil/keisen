@@ -81,7 +81,7 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator`, `decimal-separator: "."`, `scale: 1`, `sign: false`, `rounding: "half-up"`, `negative-zero: false`, `prefix`, `suffix`. |
 | `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
 | `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
-| `format-nanoplot(columns, ..)` | `plot`, `values`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
+| `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. |
 | `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
 | `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
 
@@ -90,6 +90,27 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`; `"half-even"` is implemented in the package for anyone expecting R's behaviour.
 Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
+
+### Nanoplots
+
+A nanoplot cell holds an array of readings, and `format-nanoplot` draws it through the function given as `plot`.
+The domain spans every reading in the column, taken from the column itself, so the cells can be compared; that is the whole point, since sparklines scaled per cell say nothing.
+`domain: (low, high)` overrides it for a column read against a scale that is not its own.
+
+Three renderers ship, each drawn with native Typst primitives and each usable as `plot`.
+
+| Function | Notable arguments |
+| --- | --- |
+| `nanoplot-line(numbers, ..)` | `domain: none`, `width: 4em`, `height: 0.8em`, `stroke: auto`, `thickness: 0.6pt`. A sparkline. |
+| `nanoplot-points(numbers, ..)` | The same, plus `radius: 1pt`. A sparkline with its readings marked. |
+| `nanoplot-bar(numbers, ..)` | `domain: none`, `width: 4em`, `height: 0.8em`, `fill: auto`, `gap: 30%`. Bars, measured from zero. |
+
+: Nanoplot renderers {.striped .hover tbl-colwidths="[35,65]"}
+
+`stroke: auto` and `fill: auto` follow the surrounding text colour, so a plot in a styled cell is drawn in that cell's ink.
+Bars are measured from zero rather than from the domain's low, because a bar drawn from 5 to 10 makes a small difference look like the whole quantity; the line renderers scale to the domain instead, since a trend is about shape rather than magnitude.
+
+A renderer is any `(numbers, domain: none, width: .., height: ..) => content`, so one written in a document works exactly as well as these.
 
 ## Locations
 
@@ -181,4 +202,4 @@ A serialised specification is turned back into ordinary directives and folded th
 
 - Summary rows require groups, from `table-stub(group: ..)`; use `grand-summary-rows` for a table without them.
 - A combined column is not yet available; `columns-combine` is planned.
-- The `gribouille` nanoplot renderers need about `3em` of height, because gribouille refuses a canvas below half a centimetre. `format-nanoplot` accepts any renderer, so a smaller one drawn with native primitives is possible.
+- A column of nanoplots cannot be summarised: a series of readings has nothing to aggregate, and saying so is an error rather than a plot of a total.

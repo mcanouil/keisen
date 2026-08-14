@@ -19,11 +19,15 @@ for f in tests/visual/*.typ; do
   # Clear this test's previous output first: a stale page from an earlier run
   # would be counted below, and would go on being served by the site showing
   # output no code produces.
-  rm -f "${OUT_DIR}/${name}".png "${OUT_DIR}/${name}"-*.png
+  #
+  # The page suffix is matched as digits, not as anything: a plain -* would make
+  # "nanoplots" claim the output of "nanoplots-inline", deleting it and counting
+  # its pages as its own.
+  rm -f "${OUT_DIR}/${name}".png "${OUT_DIR}/${name}"-[0-9]*.png
   # A document of several pages needs a page-number template in the path.
   typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/${name}-{p}.png" --format png --ppi "${PPI}"
 
-  pages="$(find "${OUT_DIR}" -name "${name}-*.png" | wc -l | tr -d ' ')"
+  pages="$(find "${OUT_DIR}" -name "${name}-[0-9]*.png" | wc -l | tr -d ' ')"
 
   # A single-page document reads better without a page number in its name.
   if [[ "${pages}" == "1" ]]; then
