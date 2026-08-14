@@ -32,6 +32,53 @@
   check-column(spec.columns, "columns-move", name)
 }
 
+// Where a combined column goes, resolved once every directive has landed.
+//
+// Deciding this inside the fold read whichever columns happened to be present
+// at that moment, so hiding a source before the combine put the result at the
+// end of the table and hiding it afterwards did not. Directive order is free
+// everywhere else, and this is the same fix `apply-moves` exists to be.
+#let apply-combines(spec) = {
+  let out = spec
+
+  // Position in the data as it arrived, which no directive changes. A column
+  // built by an earlier combine sits where its own first source sat, so a chain
+  // of combines resolves in the order a reader would draw them.
+  let order = (:)
+  for (index, name) in out.data-columns.enumerate() { order.insert(name, index) }
+  for directive in out.combines {
+    let sources = if type(directive.from) == array { directive.from } else { () }
+    if sources.len() > 0 and directive.into not in order and sources.first() in order {
+      order.insert(directive.into, order.at(sources.first()))
+    }
+  }
+
+  for directive in out.combines {
+    let sources = if type(directive.from) == array { directive.from } else { () }
+    let hidden = if directive.hide-sources { sources } else { () }
+    let kept = out.columns.filter(name => name not in hidden)
+
+    out.columns = if directive.into in kept { kept } else if directive.into not in order {
+      kept
+    } else {
+      // Counted over the columns that survive, against the order the data had:
+      // the result takes the place of the first of its sources whether or not
+      // that source is still shown.
+      let anchor = order.at(directive.into)
+      let at = kept.filter(name => order.at(name, default: order.len()) < anchor).len()
+      kept.slice(0, at) + (directive.into,) + kept.slice(at)
+    }
+
+    // Hidden sources stay readable by predicates and formatters. A name already
+    // hidden is not hidden twice.
+    for name in hidden {
+      if name != directive.into and name not in out.hidden { out.hidden.push(name) }
+    }
+  }
+
+  out
+}
+
 #let apply-moves(spec) = {
   let columns = spec.columns
 
@@ -348,6 +395,34 @@
   )
 }
 
+// A combine pattern arrives as a template, because JSON cannot carry a closure.
+// Positions count from one in `from` order, which is how a person writing the
+// generator would number them.
+//
+// The returned function takes a sink rather than fixed parameters: Typst
+// closures fail on arity mismatch, and the arity here is whatever `from` turned
+// out to be.
+#let _template(text) = (..parts) => {
+  let values = parts.pos()
+  let out = []
+  let at = 0
+  for found in text.matches(regex("\{(\d+)\}")) {
+    out += [#text.slice(at, found.start)]
+    let position = int(found.captures.first())
+    if position < 1 or position > values.len() {
+      fail(
+        "combine",
+        "pattern names source " + str(position),
+        value: text,
+        hint: "Sources count from 1 in from order, and this combine has " + str(values.len()) + ".",
+      )
+    }
+    out += values.at(position - 1)
+    at = found.end
+  }
+  out + [#text.slice(at)]
+}
+
 #let SERIALISED-KEYS = (
   "kind",
   "data",
@@ -355,6 +430,7 @@
   "stub",
   "labels",
   "hidden",
+  "combines",
   "spanners",
   "formats",
   "substitutions",
@@ -413,6 +489,28 @@
   let hidden = serialised.at("hidden", default: ())
   let hidden = if type(hidden) == str { (hidden,) } else { hidden }
   if hidden.len() > 0 { directives.push((kind: "hide", columns: hidden)) }
+
+  for descriptor in serialised.at("combines", default: ()) {
+    _keys(descriptor, ("into", "from", "pattern", "label", "hide-sources"), "combine")
+    for key in ("into", "from", "pattern") {
+      if key not in descriptor {
+        fail(
+          "combine",
+          "missing " + key,
+          value: descriptor,
+          hint: "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
+        )
+      }
+    }
+    directives.push((
+      kind: "combine",
+      into: descriptor.into,
+      from: descriptor.from,
+      pattern: _template(descriptor.pattern),
+      label: _content(descriptor.at("label", default: auto)),
+      hide-sources: descriptor.at("hide-sources", default: true),
+    ))
+  }
 
   for spanner in serialised.at("spanners", default: ()) {
     _keys(spanner, ("label", "columns", "level"), "spanner")

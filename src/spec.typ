@@ -9,7 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column, nanoplot-columns
-#import "spec/resolve.typ": apply-moves
+#import "spec/resolve.typ": apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
@@ -30,6 +30,7 @@
   groups: (),
   spanners: (),
   moves: (),
+  combines: (),
   formats: (),
   styles: (),
   substitutions: (),
@@ -50,6 +51,43 @@
   // The stub names data columns, which exist whether or not they are rendered;
   // everything else names columns the table knows about.
   for name in stub-columns { check-column(spec.data-columns, "table-stub", name) }
+
+  // Combines are checked before the hidden columns, because they hide their own
+  // sources: an unknown source reported as a columns-hide typo would name a
+  // directive the caller never wrote.
+  for directive in spec.combines {
+    check(
+      type(directive.from) == array and directive.from.len() > 0,
+      "columns-combine",
+      "from must name the columns to combine",
+      value: directive.from,
+      hint: "Give an array of column names, in the order the pattern reads them.",
+    )
+    check(
+      type(directive.pattern) == function,
+      "columns-combine",
+      "pattern must be a function of the source columns",
+      value: directive.pattern,
+      hint: "Write (estimate, error) => [#estimate (#error)], one parameter per source.",
+    )
+    for name in directive.from { check-column(spec.data-columns, "columns-combine", name) }
+    // Checked before the message below is built: `check` evaluates its problem
+    // eagerly, so concatenating an `into` that is not a string would fail as a
+    // Typst type error rather than in this package's grammar.
+    check(
+      type(directive.into) == str,
+      "columns-combine",
+      "into must be the name of the column to build",
+      value: directive.into,
+      hint: "Give a column name as a string.",
+    )
+    check(
+      directive.into in directive.from or directive.into not in spec.data-columns,
+      "columns-combine",
+      "into names an existing column, " + directive.into,
+      hint: "Give the combined column a name of its own, or combine into one of its sources.",
+    )
+  }
 
   // A hidden column that does not exist is a typo, and leaving it unchecked
   // would whitelist the same typo for every other directive.
@@ -75,18 +113,30 @@
     }
   }
 
-  // A nanoplot column is left out of a summary that takes every column, since
-  // series of readings have no total. Naming one is a different thing: it says
-  // the reader expected an aggregate that cannot exist, so it is refused rather
-  // than answered with a blank cell.
-  let plots = nanoplot-columns(spec.formats, spec.columns)
+  // A nanoplot column holds series rather than quantities, and a combined
+  // column holds content built from columns that are no longer shown. Neither
+  // has a total, so a summary over every column leaves both out. Naming one is
+  // a different thing: it says the reader expected an aggregate that cannot
+  // exist, so it is refused rather than answered with a blank cell.
+  let unsummarisable = (
+    nanoplot-columns(spec.formats, spec.columns).map(name => (
+      name: name,
+      why: "holds nanoplots",
+      hint: "Name the other columns: aggregating series of readings has no meaning.",
+    ))
+      + spec.combines.map(directive => (
+        name: directive.into,
+        why: "is combined from other columns",
+        hint: "Summarise its sources instead; a combined column holds content, not quantities.",
+      ))
+  )
   for directive in spec.summaries + spec.grand-summaries {
     if directive.columns == auto { continue }
-    for name in plots.filter(name => matches-column(directive.columns, name)) {
+    for column in unsummarisable.filter(entry => matches-column(directive.columns, entry.name)) {
       fail(
         "summary-rows",
-        "column " + name + " holds nanoplots and cannot be summarised",
-        hint: "Name the other columns: aggregating series of readings has no meaning.",
+        "column " + column.name + " " + column.why + " and cannot be summarised",
+        hint: column.hint,
       )
     }
   }
@@ -145,6 +195,12 @@
     } else if directive.kind == "hide" {
       spec.hidden = spec.hidden + directive.columns
       spec.columns = spec.columns.filter(name => name not in directive.columns)
+    } else if directive.kind == "combine" {
+      // Recorded rather than applied, exactly as a move is: where the combined
+      // column goes depends on which columns the table ends up with, so it is
+      // resolved once the fold is done and reads the same wherever it is written.
+      spec.combines.push(directive)
+      if directive.label != auto { spec.labels.insert(directive.into, directive.label) }
     } else if directive.kind == "spanner" {
       spec.spanners.push(directive)
     } else if directive.kind == "move" {
@@ -203,7 +259,7 @@
   // the table will actually render in. Validation then runs once, before
   // grouping, which would otherwise die inside the data layer rather than
   // naming the offending directive.
-  let validated = validate-spanners(_validate(apply-moves(spec)))
+  let validated = validate-spanners(_validate(apply-moves(apply-combines(spec))))
   validated.groups = group-rows(validated.data, validated.stub.group)
   validated
 }

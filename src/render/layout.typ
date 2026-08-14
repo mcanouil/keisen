@@ -5,7 +5,7 @@
 ///! cells together; nothing here knows what a `table.cell` is.
 
 #import "../format/align.typ": align-slots, column-metrics
-#import "../format/apply.typ": matches-column
+#import "../format/apply.typ": apply-formats, matches-column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
 
@@ -60,6 +60,33 @@
     return pieces.join()
   }
   [#value]
+}
+
+// The formatted cells of every visible column, in column order.
+//
+// A combined column has no data of its own: its cells are built by handing the
+// pattern the formatted content of its sources. That is why combine sits after
+// format in the pipeline, and why a combined column is opaque afterwards: the
+// pattern returns content, so there are no slots left to line up on.
+#let column-cells(spec) = {
+  let formatted(name) = apply-formats(
+    spec.data,
+    spec.formats,
+    name,
+    substitutions: spec.substitutions,
+  )
+
+  spec.columns.map(name => {
+    let combine = spec.combines.filter(directive => directive.into == name)
+    if combine.len() == 0 { return formatted(name) }
+
+    // The last directive wins, as everywhere else.
+    let directive = combine.last()
+    let sources = directive.from.map(formatted)
+    range(spec.data.len()).map(position => (directive.pattern)(
+      ..sources.map(cells => slots-to-content(cells.at(position))),
+    ))
+  })
 }
 
 // A summary cell formats through the same path as the body cells above it,

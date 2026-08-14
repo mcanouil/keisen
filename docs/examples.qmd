@@ -95,6 +95,27 @@ A subtotal is addressed like any other cell, through `cells-summary` and `cells-
 `columns: none` is that label cell alone, which is how the note lands on the row once instead of on each of its cells.
 A summary row answers to its label as readily as to its position, so `rows: "Subtotal"` says what `rows: 0` says.
 
+## One column from several
+
+An estimate beside its error, and an interval from its bounds, each read as one column because that is how a reader reads them.
+
+```typst
+  format-number("estimate", decimals: 2),
+  format-number("error", decimals: 3),
+  columns-combine(
+    "effect",
+    ("estimate", "error"),
+    (value, margin) => [#value #h(0.2em) (#margin)],
+    label: [Effect (SE)],
+  ),
+  columns-combine("interval", ("lower", "upper"), (low, high) => [#low #sym.dash.en #high], label: [95% CI]),
+```
+
+![An association table with a gene column, an effect column holding each estimate followed by its standard error in brackets, a confidence interval column holding two bounds joined by a dash, and a p column in scientific notation.](assets/examples/combined.png)
+
+The estimate keeps two decimals and the error three, because the pattern receives the formatted content of its sources rather than their raw values.
+That is why `combine` sits after `format` in the pipeline, and it is also the price: a combined column carries content, so it is opaque afterwards, aligned to the start and outside any summary.
+
 ## Money, magnitudes, and sizes
 
 Each of these fills a slot the alignment stage reserves, so the columns line up on what matters: prices under their symbols, exponents under their multiplication signs, units under units.
