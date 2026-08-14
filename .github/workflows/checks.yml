@@ -80,6 +80,51 @@ jobs:
       - name: Run the checks
         run: tools/check.sh
 
+  package:
+    name: Compile from the staged package
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.draft != true }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Read Typst version from typst.toml
+        id: typst-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
+          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: ${{ steps.typst-version.outputs.version }}
+
+      # A module that no package specification can reach compiles from the
+      # working tree and fails for everyone who installs it, which is how an
+      # unreachable nanoplot module reached the documentation. Staging and
+      # importing through @preview is the only check that sees it.
+      #
+      # tools/dry-release.sh does the whole rehearsal and stays local, because
+      # it installs into the user's Typst data directory and its manifest lint
+      # fetches URLs.
+      - name: Stage the package and import it
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml)"
+          stage="${RUNNER_TEMP}/typst/packages/preview/keisen/${version}"
+          tools/package.sh stage "${stage}"
+
+          smoke="${RUNNER_TEMP}/smoke.typ"
+          sed -E "s|\"\.\./\.\./lib\.typ\"|\"@preview/keisen:${version}\"|" \
+            tests/visual/formatters.typ >"${smoke}"
+          XDG_DATA_HOME="${RUNNER_TEMP}" typst compile "${smoke}" "${RUNNER_TEMP}/smoke.pdf"
+
   lint:
     name: Lint the shell scripts
     runs-on: ubuntu-latest

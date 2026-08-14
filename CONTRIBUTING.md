@@ -66,5 +66,17 @@ After changing a visual test, regenerate the images the documentation shows:
 tools/render-docs-assets.sh
 ```
 
+## Rehearsing a release
+
+```bash
+tools/dry-release.sh
+```
+
+That stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
+It publishes nothing.
+
+Run it after touching `lib.typ`, the `exclude` list in `typst.toml`, or any listing in `docs/`.
+A module the working tree can import is not necessarily a module a package specification can reach, and compiling from an installed copy is the only check that tells the difference.
+
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
 Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.
