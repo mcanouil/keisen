@@ -1,0 +1,37 @@
+---
+title: "Entry point"
+subtitle: "The one function a document calls, and the three selectors every directive takes."
+description: "display-table, the shape of the data it accepts, the order directives apply in, and the column, row, and group selectors."
+---
+
+## Entry point
+
+```typst
+display-table(
+  data,                    // first positional: rows or columns
+  ..directives,            // any number of directives, applied in order
+  theme: theme-default(),  // option dictionary
+  spec: none,              // a built specification, rendered instead
+)
+```
+
+`data` is either an array of dictionaries, one per row, or a dictionary of equal-length arrays, one per column.
+Every row gains a reserved `_index` key holding its position in the input, which is what row predicates read.
+
+Directives are plain dictionaries applied in the order written.
+For a given cell and property the last matching directive wins, so "format the column, then override a few rows" reads the way it is written.
+
+## Selectors
+
+Three arguments recur throughout, and all three accept the same shapes.
+
+| Argument | Accepts |
+| --- | --- |
+| `columns` | `auto`, a name, an array of names, or a predicate `name => bool`. |
+| `rows` | `auto`, an index, an array of indices, or a predicate `row => bool`. |
+| `groups` | `auto`, a label, an array of labels, or a predicate `label => bool`. |
+
+: Selector shapes {.striped .hover tbl-colwidths="[20,80]"}
+
+Every predicate takes exactly one argument.
+Typst closures fail on arity mismatch, and `row => row.margin < 0.05` is what people write, so row position travels on `row._index` rather than as a second parameter.

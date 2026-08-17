@@ -1,0 +1,50 @@
+---
+title: "Set a table right to left"
+subtitle: "The same table, mirrored with the writing direction."
+description: "Keisen aligns cells to start and end rather than to a side, so a table under a right-to-left text direction mirrors with the text."
+---
+
+Nothing in the table is written for one direction.
+Cells align to `start` and `end` rather than to a side, so the same table built once and set twice mirrors with the text around it.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#let readings = (
+  station: ("Alpha", "Beta", "Gamma"),
+  region: ("North", "North", "South"),
+  amount: (1256.75, 8.5, 340.125),
+  share: (0.62, 0.31, 0.07),
+)
+
+#let build = display-table.with(
+  readings,
+  table-header(title: [Readings], subtitle: [Two directions, one table]),
+  table-stub(rowname: "station", group: "region", label: [Station]),
+  columns-label(amount: [Amount], share: [Share]),
+  format-number("amount", decimals: 3),
+  format-percent("share", decimals: 1),
+  summary-rows(functions: (Total: aggregate-sum), columns: ("amount",)),
+  table-source-note([Source: station log.]),
+)
+
+Left to right.
+
+#build()
+
+#v(1em)
+
+#set text(dir: rtl)
+
+Right to left.
+
+#build()
+```
+
+![The same table twice: first in left-to-right text with the stub first and amounts on the right, then in right-to-left text with the columns in the opposite order, the stub last, text against the right edge and amounts against the left, still lined up on their decimal separators.](../assets/examples/direction.png)
+
+The columns run the other way and the stub sits last, because Typst lays a table out along the writing direction.
+Inferred alignment follows: text goes to the start of its cell and numbers to the end, whichever side those are on.
+
+A number is the exception, and deliberately so.
+Its digits, separator and any exponent are pinned left to right, since a number reads the same way in every script.

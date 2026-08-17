@@ -1,0 +1,41 @@
+# The Examples section's own sidebar, pulled in by `metadata-files` in
+# _quarto.yml and selected by examples/_metadata.yml.
+#
+# Every label names an outcome rather than the directives that reach it, so a
+# reader scanning the list finds their own case rather than a part of the
+# package they have not met yet. One outcome is one page.
+#
+# examples/index.qmd is absent on purpose: it is the navbar's "Examples" item.
+# Labels are plain text, for the reason recorded in _sidebar-reference.yml.
+website:
+  sidebar:
+    - id: examples
+      # Floating, for the reason recorded in _sidebar-reference.yml.
+      style: floating
+      search: false
+      collapse-level: 2
+      contents:
+        - section: "Examples"
+          contents:
+            - href: examples/total-by-group.qmd
+              text: "Total a table by group"
+            - href: examples/highlight-a-total.qmd
+              text: "Draw attention to a total"
+            - href: examples/declare-your-own-groups.qmd
+              text: "Group rows the data does not group"
+            - href: examples/estimate-with-its-error.qmd
+              text: "Report an estimate with its error"
+            - href: examples/values-in-their-own-notation.qmd
+              text: "Write values in their own notation"
+            - href: examples/numbers-the-local-way.qmd
+              text: "Write numbers the local way"
+            - href: examples/mark-a-failing-cell.qmd
+              text: "Mark a cell that fails a threshold"
+            - href: examples/table-across-pages.qmd
+              text: "Carry a table across pages"
+            - href: examples/trend-inside-a-cell.qmd
+              text: "Show a trend inside a cell"
+            - href: examples/plot-in-a-sentence.qmd
+              text: "Set a plot in a sentence"
+            - href: examples/right-to-left.qmd
+              text: "Set a table right to left"

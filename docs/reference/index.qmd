@@ -1,0 +1,30 @@
+---
+title: "Reference"
+subtitle: "Every function Keisen exports, with its arguments and defaults."
+description: "The complete Keisen API: the entry point, the table parts, the formatters, the locations, the aggregations, and the theme options."
+---
+
+Everything in this section is read from the source.
+`tests/unit/test-exports.typ` holds `lib.typ` to a list of public names, so an accidental export cannot slip in, though nothing yet checks that list against these pages.
+
+Keisen has no release yet, so import `lib.typ` from a clone rather than from Typst Universe.
+Everything a document needs comes out of that one file, the nanoplot renderers included, because a Typst package specification cannot carry a subpath: `@preview/keisen:0.1.0/src/...` is not valid syntax, so a module reachable only from a clone would be reachable by nobody who installs the package.
+
+## The pages
+
+- [Entry point](display-table.qmd) for `display-table` and the three selectors every directive takes.
+- [Table parts](table-parts.qmd) for the header, the stub, row groups, spanners, notes, styles, and options.
+- [Columns](columns.qmd) for labelling, aligning, sizing, hiding, moving, and combining columns.
+- [Formatters](formatters.qmd) for turning a value into the notation it is read in.
+- [Nanoplots](nanoplots.qmd) for the in-cell renderers and the domain they share.
+- [Locations](locations.qmd) for addressing cells by what the data says.
+- [Aggregations](aggregations.qmd) for summary rows and the functions that fill them.
+- [Themes and options](themes.qmd) for the four presets and every option key.
+- [Serialised specifications](serialised.qmd) for reaching the pipeline from another language.
+- [Figures and Quarto](figures.qmd) for wrapping a table in a float.
+
+## Limitations
+
+- Summary rows require groups, from `table-stub(group: ..)` or from `table-row-group`; use `grand-summary-rows` for a table without them. Rows outside every declared group are summarised by the grand summary alone.
+- Neither a nanoplot column nor a combined column can be summarised: a series of readings has nothing to aggregate, and a combined column holds content rather than quantities. Naming either in `summary-rows` is an error rather than a blank cell.
+- A combined column is opaque, so it is not decimal-aligned and infers start alignment.

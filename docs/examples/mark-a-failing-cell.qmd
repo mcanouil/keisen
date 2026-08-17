@@ -1,0 +1,47 @@
+---
+title: "Mark a cell that fails a threshold"
+subtitle: "Highlighted because of its value, not because of its position."
+description: "Style a cell from a row predicate, shade a column from its own values, replace what is missing, and number the footnote marks in reading order."
+---
+
+A margin below five per cent should stand out wherever it lands.
+`cells-body` takes a row predicate, so the rule is written as the condition itself rather than as the coordinates of whichever cell happens to meet it today.
+
+This is the thing show rules cannot do: they select by element type in document order and never see the row behind a cell.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    product: ("Bolt", "Nut", "Beam", "Plate"),
+    region: ("North", "North", "South", "South"),
+    units: (1250, 860, 430, 2100),
+    margin: (0.182, 0.031, 0.094, none),
+  ),
+  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
+  table-stub(rowname: "product", group: "region", label: [Product]),
+  columns-label(units: [Units], margin: [Margin]),
+  table-spanner([Performance], ("units", "margin")),
+  format-integer("units"),
+  format-percent("margin", decimals: 1),
+  substitute-missing("margin", replacement: [--]),
+  data-colour(("#f7fbff", "#08519c"), columns: "units"),
+  table-style(
+    style(text: (fill: rgb("#b2182b"), weight: "bold")),
+    locations: cells-body(columns: "margin", rows: row => row.margin != none and row.margin < 0.05),
+  ),
+  table-footnote([Excludes intra-group sales.], locations: cells-column-labels(columns: "units")),
+  table-footnote([Margin was not reported.], locations: cells-body(columns: "margin", rows: 3)),
+  table-source-note([Source: internal ledger.]),
+)
+```
+
+![The same sales table with the units column shaded from pale to deep blue, one margin in bold red, a dash where a margin is missing, and two numbered footnotes.](../assets/examples/styled.png)
+
+The predicate tests `row.margin != none` before comparing it, because one product reported no margin at all and a comparison against nothing would fail rather than be false.
+
+Three things then happened without being asked for.
+The dark blue fills carry white text, chosen per cell from the background's relative luminance.
+The missing margin was replaced before it reached the formatter, which would otherwise have refused it.
+The marks are numbered in the order a reader meets them, so the column label takes 1 and the body cell takes 2, whichever order they were written in.

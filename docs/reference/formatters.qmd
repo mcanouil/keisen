@@ -1,0 +1,59 @@
+---
+title: "Formatters"
+subtitle: "Turning a value into the notation it is read in."
+description: "Keisen's formatters: numbers, integers, percentages, currency, scientific notation, byte sizes, dates, markup, and substitutions."
+---
+
+Each takes `columns` as a required first positional argument and `rows` as a named one.
+`columns` is required rather than defaulted because a Typst positional parameter cannot carry a default, so "every column" is written explicitly as `auto`.
+
+| Function | Notable arguments |
+| --- | --- |
+| `format(columns, function, rows: auto)` | Any `value => content`. The escape hatch the others are built on. |
+| `format-cell(columns, function, rows: auto)` | Any `row => content`. Receives the whole input row, hidden columns and `_index` included, for a cell that depends on its neighbours. |
+| `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator: auto`, `decimal-separator: auto`, `scale: 1`, `sign: false`, `rounding: auto`, `negative-zero: false`, `infinity: none`, `prefix`, `suffix`. |
+| `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
+| `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
+| `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `symbol: auto`, `position: start`, `space: auto`. |
+| `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
+| `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`, `group-separator: auto`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
+| `format-date(columns, ..)` | `pattern: "[year]-[month]-[day]"`. Takes a `datetime` or an ISO-8601 string. |
+| `format-markup(columns, ..)` | Evaluates a string of Typst markup. No arguments of its own. |
+| `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. See [Nanoplots](nanoplots.qmd). |
+| `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
+| `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
+
+: Value formatting {.striped .hover tbl-colwidths="[35,65]"}
+
+A separator left at `auto` is the theme's, through `number-group-separator` and `number-decimal-separator`, so a French or German table sets its convention once with `table-options` rather than on every directive.
+An argument written on the directive wins over the theme, as everywhere else.
+
+Only finite numbers are formatted, and an infinite value is an error unless `infinity:` says what to write for one.
+What it writes is opaque content, so it takes no part in the decimal alignment of the column around it.
+A column holding an infinity cannot be summarised either: aggregations work in `decimal`, which has no infinity, so a total would silently be the total of the other rows.
+`columns: auto` leaves such a column out, as it does a nanoplot column, and naming it in `summary-rows` is an error.
+
+All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
+`rounding: "half-up"` matches `calc.round`, and `"half-even"` is implemented in the package for anyone expecting R's behaviour.
+`rounding: auto` takes whichever the theme names in `number-rounding`, which is `"half-up"` unless a theme says otherwise.
+Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
+
+`format-cell` is the only formatter that reads the row rather than the value, and it is worth reaching for last: `columns-combine` covers the common case of building one cell from named neighbours, and reads better where it fits.
+A summary row is an aggregate of a column with no row behind it, so a cell formatter never applies to one; the summary falls back to whichever plain directive covers the column, and naming one as a summary's own `format:` is an error.
+A serialised specification cannot name it either, since its argument is a closure.
+
+`format-currency` knows EUR, GBP, USD, JPY, and CHF, and writes any other currency as its code, since there are more currencies than anyone should hard-code.
+`decimals: auto` follows the currency, so a yen figure carries none.
+`symbol: auto` and `space: auto` follow it too: the symbol leads against its number, or trails behind a non-breaking space, as each convention writes it.
+
+`format-scientific` counts the exponent off the digits and cuts the mantissa from them rather than computing either, so it keeps the digits the value had and works on magnitudes `decimal` cannot hold, which is what the notation is for.
+Rounding that carries into the next power moves the exponent with it, so nothing renders as `10.0 × 10³`.
+
+`format-bytes` counts in 1024s by default and says so with the binary prefixes; `base: 1000` gives the decimal ones.
+Bytes themselves are whole, so the smallest unit carries no fractional part.
+
+`format-date` takes a `datetime` or an ISO-8601 string, since that is how a date arrives from a file: `2026-08-14`, `2026-08-14T09:30:00`, or the space-separated spelling exports write, with or without seconds and with or without a trailing `Z`.
+A date that does not exist is refused by pre-check rather than handed to `datetime`, which would panic in a grammar the reader did not write.
+`pattern` is Typst's own, so anything `datetime.display` accepts works, and Typst reports a pattern it does not.
+
+`format-date` and `format-markup` both produce opaque content, so neither is decimal-aligned: there is no separator in a date to line up on, and a cell of markup is whatever it evaluates to.

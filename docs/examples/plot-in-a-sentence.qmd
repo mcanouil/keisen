@@ -1,0 +1,30 @@
+---
+title: "Set a plot in a sentence"
+subtitle: "A sparkline among the words, at the height of the text."
+description: "The nanoplot renderers are ordinary Typst functions, so they run inline in prose and follow the surrounding text size."
+---
+
+The renderers are not tied to a table.
+Each is an ordinary function returning content, so one sits in a line of prose as readily as in a cell.
+
+```typst
+#import "@preview/keisen:0.1.0": nanoplot-bar, nanoplot-line, nanoplot-points
+
+#let series = (3.0, 3.4, 3.1, 4.2, 4.0, 4.9)
+
+Revenue rose through the year #nanoplot-line(series, width: 4em), reading
+#nanoplot-points(series, width: 4em) by quarter and
+#nanoplot-bar(series, width: 4em) by volume, all at #raw("0.8em").
+
+#set text(size: 16pt)
+At a larger text size the plots follow it: #nanoplot-line(series, width: 4em).
+```
+
+![A line of prose with a sparkline, a marked sparkline, and a bar plot set inline among the words at the height of the text, and below it the same sparkline at a larger text size, drawn correspondingly larger.](../assets/examples/nanoplots-inline.png)
+
+The second line is the point: the plots carry no size of their own, so `set text(size: ..)` moves them with everything else.
+
+Every coordinate is a fraction of the box, so an `em` size needs no absolute resolution and no minimum canvas, which is what lets a nanoplot be the size a nanoplot is meant to be.
+`stroke: auto` and `fill: auto` follow the surrounding text colour, so a plot inside a styled run is drawn in that run's ink.
+
+The renderers are drawn with native Typst primitives and come out of the package like everything else, so nothing else is fetched to draw them.

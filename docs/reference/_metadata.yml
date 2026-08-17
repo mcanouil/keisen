@@ -1,0 +1,5 @@
+# Every page in this directory takes the Reference sidebar, named by the id
+# _sidebar-reference.yml declares. Quarto matches a page to a sidebar by finding
+# its href in one, and the section's index page is in no sidebar by design, so
+# the choice is made here rather than inferred.
+sidebar: reference

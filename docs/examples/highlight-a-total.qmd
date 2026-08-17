@@ -1,0 +1,48 @@
+---
+title: "Draw attention to a total"
+subtitle: "Shading a subtotal row, colouring a grand total, and marking either with a note."
+description: "Address summary rows with cells-summary and cells-grand-summary to shade, colour, and footnote the totals a table computes."
+---
+
+A subtotal is addressed like any other cell, through `cells-summary` and `cells-grand-summary`, so a total can be shaded, recoloured, or footnoted without anyone counting rows.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    region: ("North", "North", "South", "South"),
+    product: ("Bolt", "Nut", "Beam", "Plate"),
+    units: (1250, 860, 430, 2100),
+    revenue: (18750.5, 12900.25, 21500, 31500.75),
+  ),
+  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
+  table-stub(rowname: "product", group: "region", label: [Product]),
+  columns-label(units: [Units], revenue: [Revenue]),
+  format-integer("units"),
+  format-number("revenue", decimals: 2),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
+  table-style(style(fill: luma(235)), locations: cells-summary()),
+  table-style(
+    style(text: (fill: rgb("#08519c"))),
+    locations: cells-grand-summary(columns: "revenue"),
+  ),
+  table-footnote(
+    [Subtotals exclude intra-group sales.],
+    locations: cells-summary(groups: "North", columns: none),
+  ),
+  table-footnote([Audited.], locations: cells-grand-summary(columns: "revenue")),
+  table-style(style(text: (size: 1.2em)), locations: cells-grand-summary(columns: "units")),
+  table-source-note([Source: internal ledger.]),
+  theme: theme-booktabs(),
+)
+```
+
+![A sales table where both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two.](../assets/examples/summaries.png)
+
+`cells-summary()` with no arguments takes the whole row, its label cell included.
+`columns: none` is that label cell alone, which is how the note lands on the row once instead of on each of its cells.
+
+A summary row answers to its label as readily as to its position, so `rows: "Subtotal"` says what `rows: 0` says.
+The label is the better of the two: it survives a row being added above it.

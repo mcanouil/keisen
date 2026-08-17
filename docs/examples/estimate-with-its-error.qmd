@@ -1,0 +1,52 @@
+---
+title: "Report an estimate with its error"
+subtitle: "Two columns read as one, because that is how a reader reads them."
+description: "Use columns-combine to print an estimate beside its standard error and an interval from its bounds, each as a single column."
+---
+
+An estimate and its standard error are one number to a reader, and so are the two bounds of an interval.
+`columns-combine` builds one column from several, through a pattern that takes one argument per source.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    gene: ("BRCA1", "TP53", "PTEN", "APC"),
+    estimate: (1.234, -0.567, 0.089, 2.401),
+    error: (0.021, 0.043, 0.112, 0.008),
+    lower: (1.193, -0.651, -0.130, 2.385),
+    upper: (1.275, -0.483, 0.308, 2.417),
+    p: (0.0000012, 0.031, 0.42, 0.0000000004),
+  ),
+  table-header(title: [Association results], subtitle: [Effect per copy of the minor allele]),
+  table-stub(rowname: "gene", label: [Gene]),
+  format-number("estimate", decimals: 2),
+  format-number("error", decimals: 3),
+  format-number(("lower", "upper"), decimals: 2),
+  format-scientific("p", decimals: 1),
+  columns-combine(
+    "effect",
+    ("estimate", "error"),
+    (value, margin) => [#value #h(0.2em) (#margin)],
+    label: [Effect (SE)],
+  ),
+  columns-combine(
+    "interval",
+    ("lower", "upper"),
+    (low, high) => [#low #sym.dash.en #high],
+    label: [95% CI],
+  ),
+  columns-label(p: [_p_]),
+  table-source-note([Source: association study.]),
+  theme: theme-booktabs(),
+)
+```
+
+![An association table with a gene column, an effect column holding each estimate followed by its standard error in brackets, a confidence interval column holding two bounds joined by a dash, and a p column in scientific notation.](../assets/examples/combined.png)
+
+The estimate keeps two decimals and the error three, because the pattern receives the formatted content of its sources rather than their raw values.
+That is why `combine` sits after `format` in the pipeline.
+
+It is also the price.
+A combined column carries content, so it is opaque afterwards: aligned to the start unless `columns-align` says otherwise, not lined up on a decimal separator, and outside any summary.
