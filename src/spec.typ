@@ -14,6 +14,30 @@
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
+// Every directive kind the fold below handles, named once so the hint it prints
+// cannot fall behind the branches it describes. It listed thirteen while the
+// fold handled seventeen, and omitted width, align, options and summary.
+#let HANDLED-KINDS = (
+  "header",
+  "stub",
+  "row-group",
+  "labels",
+  "hide",
+  "combine",
+  "spanner",
+  "move",
+  "format",
+  "style",
+  "substitute",
+  "colour",
+  "footnote",
+  "options",
+  "width",
+  "align",
+  "summary",
+  "source-note",
+)
+
 #let _empty = (
   kind: "display-table",
   // Set by build-spec alone, so the entry point can tell a resolved
@@ -349,7 +373,7 @@
         "display-table",
         "unknown directive",
         value: directive.kind,
-        hint: "This version handles header, stub, row-group, labels, hide, move, spanner, format, style, substitute, colour, footnote, and source-note.",
+        hint: "This version handles " + HANDLED-KINDS.join(", ") + ".",
       )
     }
   }
