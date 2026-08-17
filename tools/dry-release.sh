@@ -5,7 +5,8 @@
 # Stages the payload tools/package.sh produces, installs it under Typst's data
 # directory as @preview/keisen:<version> through a symlink, compiles the whole
 # suite and the documentation's listings against that installed copy, then
-# removes the symlink.
+# removes the symlink. It closes by recording the benchmark timing, which the
+# design asks for once per release.
 #
 # The point is the import. A module that cannot be reached from a package
 # specification compiles perfectly from this working tree and fails for
@@ -165,5 +166,11 @@ if command -v typst-package-check >/dev/null 2>&1; then
 else
   printf 'typst-package-check not installed; skipping manifest lint.\n'
 fi
+
+# The design asks for the 2000-row timing to be recorded per release, and this
+# is the script a release is rehearsed with. It records rather than judges, so
+# it fails only on a table that no longer compiles or no longer terminates.
+printf '\n'
+tools/benchmark.sh
 
 printf '\nDry-run OK for keisen:%s\n' "${VERSION}"

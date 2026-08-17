@@ -84,6 +84,10 @@ tools/render-docs-assets.sh
 tools/dry-release.sh
 ```
 
+That closes by recording the benchmark timing: a 2000-row, 10-column table with styles and formats, which is the table the style index exists for.
+It records rather than judges, since the noise on a wall-clock ratio is as wide as the signal, so read the numbers and compare them with the last release.
+Run it alone with `tools/benchmark.sh`.
+
 That stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
 It publishes nothing.
 
