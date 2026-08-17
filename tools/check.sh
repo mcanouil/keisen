@@ -2,9 +2,15 @@
 # Compiles every Typst unit test, visual test, and example from the project root.
 # Also enforces the import boundary: no @preview import anywhere under src,
 # holds the version to the same value everywhere it is written, runs the
-# expect-fail suite, where a document that compiles is the failure, and the
-# probes, which read the rendered output for what a theme promises.
+# expect-fail suite, where a document that compiles is the failure, the probes,
+# which read the rendered output for what a theme promises, the accessibility
+# fixtures, which read the PDF structure tree for header cells, and the Quarto
+# fixtures, which render the package the way most R and Python users reach it.
 # Exits non-zero on the first failure across all targets.
+#
+# Quarto is required. The check that needs it fails and says so when it is
+# absent, rather than skipping: a suite that reports success without running a
+# check reports coverage it does not have.
 
 set -euo pipefail
 
@@ -151,8 +157,20 @@ if ! tools/direction-check.sh; then
   failures=$((failures + 1))
 fi
 
+# A column label is a header cell to a screen reader or it is not, and no
+# document can read its own tags back: this reads the PDF structure tree.
+if ! tools/accessibility-check.sh; then
+  failures=$((failures + 1))
+fi
+
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
+
+# Last, because it is the only check that leaves this repository: it renders a
+# table through Quarto, which is how most R and Python users reach the package.
+if ! tools/quarto-check.sh; then
+  failures=$((failures + 1))
+fi
 
 if [[ ${failures} -gt 0 ]]; then
   printf '\n%d failure(s) out of %d compile(s).\n' "${failures}" "${total}" >&2

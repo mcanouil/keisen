@@ -17,7 +17,10 @@ A bug report must include the Typst version, the Keisen version, and a minimal d
 
 ## Working on the source
 
-Requirements: Typst 0.15.0 or later, Bash, and `shellcheck` plus `shfmt` if you touch the scripts.
+Requirements: Typst 0.15.0 or later, Bash 5 or later, [Quarto](https://quarto.org), and `shellcheck` plus `shfmt` if you touch the scripts.
+
+Quarto is not optional.
+`tools/check.sh` renders a table through it, and that check fails and says so when Quarto is absent rather than skipping, because a suite that reports success without running a check reports coverage it does not have.
 
 Run everything before you commit:
 
@@ -44,6 +47,12 @@ See [`tests/probe/README.md`](tests/probe/README.md); the rule that matters is t
 
 Anything that must read the same in both writing directions goes in `tests/direction/`, rendered twice and compared glyph by glyph.
 See [`tests/direction/README.md`](tests/direction/README.md).
+
+Anything a screen reader must be able to tell apart goes in `tests/accessibility/`, compiled to PDF/UA-1 and counted in the structure tree through `// expect-tag:` comments.
+See [`tests/accessibility/README.md`](tests/accessibility/README.md).
+
+Anything about how the package behaves under Quarto goes in `tests/quarto/`, rendered to Typst and asserted through `<!-- expect-typ: -->` and `<!-- expect-pdf: -->` comments.
+See [`tests/quarto/README.md`](tests/quarto/README.md).
 
 ## House rules
 
@@ -74,6 +83,10 @@ tools/render-docs-assets.sh
 ```bash
 tools/dry-release.sh
 ```
+
+That closes by recording the benchmark timing: a 2000-row, 10-column table with styles and formats, which is the table the style index exists for.
+It records rather than judges, since the noise on a wall-clock ratio is as wide as the signal, so read the numbers and compare them with the last release.
+Run it alone with `tools/benchmark.sh`.
 
 That stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
 It publishes nothing.
