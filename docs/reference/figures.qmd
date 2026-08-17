@@ -1,0 +1,49 @@
+---
+title: "Figures and Quarto"
+subtitle: "Wrapping a table in a float, and the show rule a long one needs."
+description: "How to put a Keisen table inside a Typst figure, why a figure stops it breaking, and how to emit one under Quarto."
+---
+
+`display-table` returns a table, never a figure.
+Wrapping is the caller's job, which leaves numbering, captions, and cross-references with whoever owns the document.
+
+```typst
+#figure(
+  display-table(sales, table-stub(rowname: "product")),
+  caption: [Regional sales for the year.],
+  kind: table,
+) <tbl-sales>
+```
+
+**A figure does not break across pages.**
+`breakable: true` is the default here, and it has no effect inside a figure until this is in force:
+
+```typst
+#show figure: set block(breakable: true)
+```
+
+This is the first thing anyone hits with a long table: the table stops breaking the moment it is wrapped, and nothing about the wrapping says so.
+Typst also places figure captions below by default, so a table caption usually wants moving to the top with a show rule.
+
+`table-header` and a figure caption are alternatives, not partners.
+An in-table title is the `gt` house style; a caption is numbered and can be referenced.
+Using both prints the title twice.
+
+Under Quarto, emit the table alone and let Quarto own the float:
+
+````markdown
+::: {#tbl-sales}
+
+```{=typst}
+#display-table(sales, table-stub(rowname: "product"))
+```
+
+Regional sales for the year.
+
+:::
+````
+
+Hand-rolling `#figure` inside a raw Typst block fights Quarto's cross-reference system, which is what the enclosing div is for.
+
+A very wide table is the caller's problem too, solved with `rotate(reflow: true)` around it or a flipped page.
+The package assumes nothing about page geometry, so it survives either.

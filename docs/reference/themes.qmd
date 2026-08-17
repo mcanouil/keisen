@@ -1,0 +1,36 @@
+---
+title: "Themes and options"
+subtitle: "Four presets that are option dictionaries, and every key they hold."
+description: "Keisen's themes, the table-options call that merges into them, and the full list of option keys by part."
+---
+
+`theme-default()`, `theme-booktabs()`, `theme-compact()`, and `theme-minimal()` each return an option dictionary, so a preset and a `table-options()` call are the same kind of thing and compose by merging.
+Striping is `row-striping: true` on any of them, and the academic three-line style is `theme-booktabs()` plus options; a theme that differs by one boolean is not a theme.
+
+Option names are Typst identifiers, so they are written unquoted: `table-options(row-striping: true)`.
+An unknown key is an error rather than a silent no-op, and `tests/unit/test-options-read.typ` holds every declared key to being read by something, so a key that accepts a value and changes nothing cannot ship.
+
+| Group | Keys |
+| --- | --- |
+| Table | `table-font`, `table-font-size`, `table-align`, `table-width`, `table-border-top`, `table-border-bottom`, `breakable`, `infer-alignment`, `decimal-align`, `column-border`, `row-border` |
+| Header | `header-title-size`, `header-title-weight`, `header-subtitle-size`, `header-align`, `header-border-bottom` |
+| Column labels | `column-labels-align`, `column-labels-weight`, `column-labels-size`, `column-labels-border-top`, `column-labels-border-bottom`, `spanner-border-bottom` |
+| Stub and groups | `stub-weight`, `stub-indent-step`, `row-group-weight`, `row-group-fill`, `row-group-border-top`, `row-group-repeat` |
+| Body | `row-striping`, `row-striping-fill`, `cell-inset`, `cell-vertical-align`, `body-border-top`, `body-border-bottom` |
+| Summaries | `summary-weight`, `summary-fill`, `summary-border-top`, `grand-summary-border-top` |
+| Formatter defaults | `number-group-separator`, `number-decimal-separator`, `number-rounding` |
+| Footer | `footer-align`, `footnote-marks`, `footnote-size`, `source-note-size`, `footer-border-top` |
+
+: Theme options {.striped .hover tbl-colwidths="[25,75]"}
+
+`table-width` is `auto`, which lets the table size itself to its content.
+Given a width, the columns no `columns-width` names share whatever the named ones leave, since a track sized to its content would never fill the width.
+
+`column-border` and `row-border` are off by default, and rule the table as a grid rather than by part.
+`column-labels-align` and `cell-vertical-align` are `auto`, which follows the column and leaves the vertical placement to Typst.
+
+Rules on a shared edge do not add up: the line under the column labels is the line over the body, and the line over the footer is the line under it.
+A part draws its own edge, and that wins over the table's, so `body-border-top` shows only where `column-labels-border-bottom` is `none`, and `body-border-bottom` only where `footer-border-top` is.
+Where the body closes the table, `table-border-bottom` claims that edge first.
+
+`number-rounding` answers a `format-number(rounding: auto)`, as `number-group-separator` and `number-decimal-separator` answer the separators, so a document sets its rounding once rather than on every directive.

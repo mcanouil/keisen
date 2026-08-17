@@ -1,0 +1,20 @@
+---
+title: "Aggregations"
+subtitle: "Summary rows, and the functions that fill them."
+description: "summary-rows, grand-summary-rows, and Keisen's built-in aggregations."
+---
+
+`summary-rows(functions: (:), columns: auto, groups: auto, format: none)` closes each group; `grand-summary-rows(functions: (:), columns: auto, format: none)` closes the body.
+`functions` maps a label to an aggregation, and an aggregation is any `values => value`.
+
+| Function | Definition |
+| --- | --- |
+| `aggregate-sum`, `aggregate-min`, `aggregate-max` | Stay in decimal arithmetic, so a total is exact. |
+| `aggregate-mean`, `aggregate-median` | Convert to float, since division must. |
+| `aggregate-count` | Counts values that are present, of any type. |
+| `aggregate-standard-deviation` | The sample definition, with `n - 1` in the denominator. |
+| `aggregate-quantile(probability)` | Linear interpolation between order statistics, matching R's type 7 default. |
+
+: Built-in aggregations {.striped .hover tbl-colwidths="[40,60]"}
+
+Aggregations run on raw values before formatting, so a summary cell formats through whichever directive covers its column, or through its own `format:`.

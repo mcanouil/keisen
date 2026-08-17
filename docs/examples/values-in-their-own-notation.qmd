@@ -1,0 +1,86 @@
+---
+title: "Write values in their own notation"
+subtitle: "Money, magnitudes, sizes, dates, and markup."
+description: "Format a column as currency, scientific notation, byte sizes, dates, or Typst markup, and see which of them line up on a shared slot."
+---
+
+A price is not a number with a symbol stuck on it, and neither is a payload size.
+Each formatter writes the value the way its notation is read, and the first three fill a slot the alignment stage reserves, so the columns line up on what matters: prices under their symbols, exponents under their multiplication signs, units under units.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    component: ("Sensor", "Controller", "Housing", "Cabling"),
+    price: (1250.5, 89.99, 12500, 7.5),
+    charge: (0.0000000016, 1.6e-19, 250000, 9990),
+    firmware: (512, 2048, 1073741824, 1536000),
+  ),
+  table-header(title: [Bill of materials], subtitle: [Unit costs and payload sizes]),
+  table-stub(rowname: "component", label: [Component]),
+  columns-label(price: [Price], charge: [Charge], firmware: [Firmware]),
+  format-currency("price", currency: "EUR"),
+  format-scientific("charge", decimals: 2),
+  format-bytes("firmware"),
+  table-source-note([Source: supplier quotations.]),
+  theme: theme-booktabs(),
+)
+
+#v(1em)
+
+The same figures with the symbol trailing, the exponent written as an e, and
+sizes counted in thousands rather than in 1024s.
+
+#display-table(
+  (
+    component: ("Sensor", "Controller", "Housing", "Cabling"),
+    price: (1250.5, 89.99, 12500, 7.5),
+    charge: (0.0000000016, 1.6e-19, 250000, 9990),
+    firmware: (512, 2048, 1073741824, 1536000),
+  ),
+  table-stub(rowname: "component", label: [Component]),
+  columns-label(price: [Price], charge: [Charge], firmware: [Firmware]),
+  format-currency("price", currency: "JPY", position: end),
+  format-scientific("charge", exponent: "e"),
+  format-bytes("firmware", base: 1000),
+  theme: theme-booktabs(),
+)
+```
+
+![A bill of materials with prices carrying a euro sign at the left of the column and their decimals aligned, charges in scientific notation with the multiplication signs in a vertical line, and firmware sizes in bytes, kibibytes, mebibytes and gibibytes with the units aligned. Below it the same table with the yen symbol trailing each price, exponents written in e notation, and sizes in decimal prefixes.](../assets/examples/formatters.png)
+
+The second table is the same figures said differently: `position: end` for the currencies written that way, `exponent: "e"` for output rather than typesetting, and `base: 1000` for the people who sell disks.
+A yen figure carries no decimals, because the currency has no minor unit and two places would invent a precision it does not circulate in.
+
+## Dates and markup
+
+Neither produces alignment slots: a date has no separator to line up on, and a cell of markup is whatever it evaluates to, so both follow the column alignment like any other text.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    release: ("0.1.0", "0.2.0", "0.3.0"),
+    published: ("2026-03-01", "2026-06-17T09:30:00", datetime(year: 2026, month: 8, day: 14)),
+    summary: (
+      "First release, *unstable*.",
+      "Adds `format-currency` and friends.",
+      "_Nanoplots_ drawn natively.",
+    ),
+  ),
+  table-header(title: [Release history]),
+  table-stub(rowname: "release", label: [Version]),
+  columns-label(published: [Published], summary: [Summary]),
+  format-date("published", pattern: "[day] [month repr:long] [year]"),
+  format-markup("summary"),
+  table-source-note([Source: the changelog.]),
+  theme: theme-booktabs(),
+)
+```
+
+![A release history table with versions, publication dates written as day, month name and year, and summaries in which some words are bold, some italic, and one is set in a monospaced face.](../assets/examples/dates-markup.png)
+
+The three dates were written three different ways in the data: an ISO date, an ISO timestamp, and a `datetime` the document built.
+The summaries are Typst markup carried as text, which is what a generator emits when a cell has emphasis it cannot express as content.

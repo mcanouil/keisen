@@ -23,9 +23,17 @@
 }
 
 // The reference is written by hand from the source, so every name the subset
-// resolves has to appear on the page. A formatter added to the table and not to
-// the page is a formatter nobody can find.
-#let reference = read("../../docs/reference.qmd")
+// resolves has to appear in it. A formatter added to the table and not to the
+// reference is a formatter nobody can find.
+//
+// The reference is a section rather than a page, so the three pages that carry
+// these vocabularies are read together. A page added beside them documents
+// something this test says nothing about, and needs no entry here.
+#let reference = (
+  read("../../docs/reference/formatters.qmd")
+    + read("../../docs/reference/aggregations.qmd")
+    + read("../../docs/reference/serialised.qmd")
+)
 
 #for name in FORMATTERS.keys() {
   assert(

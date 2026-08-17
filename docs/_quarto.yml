@@ -36,14 +36,24 @@ website:
   image: /assets/social/og-image.png
   image-alt: "GitHub's repository card for mcanouil/keisen: the repository name and its one-line description beside the owner's avatar, over the contributor, issue, star, and fork counts."
   page-navigation: true
+  # A section is a set of pages, so a reader reaching the end of one wants the
+  # next rather than the sidebar they came from, and a reader at the foot of a
+  # long reference page wants the top.
+  back-to-top-navigation: true
   # No `search` block: atelier already puts the search in the navbar, as an
-  # overlay opened from a button. The sidebar below therefore carries no search
-  # field of its own, so the site offers one way in rather than two.
+  # overlay opened from a button. The sidebars therefore carry no search field of
+  # their own, so the site offers one way in rather than two.
   #
-  # The two levels of navigation divide by kind, not by depth. The navbar
-  # carries the site-level entry points and the tools; the sidebar carries the
-  # documentation itself, and is where a new page goes. Repeating a page in both
-  # only makes the reader wonder which one is which.
+  # The two levels of navigation divide by kind, not by depth. The navbar names
+  # the sections and carries the tools; each section's own sidebar carries the
+  # pages inside it, and is where a new page goes. Repeating a page in both only
+  # makes the reader wonder which one is which, so a section's index page is a
+  # navbar item and appears in no sidebar.
+  #
+  # The sidebars themselves are declared one file per section, in
+  # _sidebar-reference.yml and _sidebar-examples.yml, and pulled in through
+  # `metadata-files` below. A page joins a section by naming that sidebar's id in
+  # the section's _metadata.yml.
   navbar:
     pinned: true
     # Labels are plain text. An iconify shortcode does expand here, unlike in a
@@ -52,6 +62,10 @@ website:
     left:
       - href: index.qmd
         text: "Home"
+      - href: reference/index.qmd
+        text: "Reference"
+      - href: examples/index.qmd
+        text: "Examples"
       - href: changelog.qmd
         text: "Changelog"
     # The gitlink widget replaces this item wholesale, so the `text` and `icon`
@@ -60,24 +74,6 @@ website:
       - href: "#gitlink-widget"
         text: "GitHub"
         icon: github
-  sidebar:
-    # Floating rather than docked: the navbar already paints a band across the
-    # top, and a docked sidebar under it walls the page in on two sides. Atelier
-    # repaints a docked sidebar from the chrome palette and leaves a floating one
-    # on the page ground, which is what keeps the two from competing.
-    style: floating
-    search: false
-    collapse-level: 2
-    # Plain labels, no icons: Quarto expands no shortcode in a sidebar item's
-    # text, and the raw web component leaks out of the sidebar into the
-    # breadcrumbs, which reuse the same string.
-    contents:
-      - section: "Documentation"
-        contents:
-          - href: reference.qmd
-            text: "Reference"
-          - href: examples.qmd
-            text: "Examples"
   page-footer:
     left: |
       Powered by [{{< iconify simple-icons:quarto aria-hidden='true' >}} Quarto](https://quarto.org).
@@ -85,6 +81,13 @@ website:
       &copy; []{#current-year} [Mickaël Canouil](https://mickael.canouil.fr). [{{< iconify octicon:heart-fill-16 aria-hidden='true' >}} Sponsor](https://github.com/sponsors/mcanouil?o=esb).
     right: |
       Licence: [MIT](https://github.com/mcanouil/keisen?tab=MIT-1-ov-file#readme).
+
+# One sidebar per section, each in a file of its own. Quarto merges these into
+# the configuration above, which is the only way to declare more than one
+# sidebar; a second `website.sidebar` block here would replace the first.
+metadata-files:
+  - _sidebar-reference.yml
+  - _sidebar-examples.yml
 
 filters:
   - code-window

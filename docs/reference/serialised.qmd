@@ -1,0 +1,81 @@
+---
+title: "Serialised specifications"
+subtitle: "Reaching the pipeline from a generator in another language."
+description: "display-table(spec:), the JSON subset it accepts, and the keys a serialised Keisen specification can carry."
+---
+
+`display-table(spec: ..)` renders a specification instead of data and directives, which is how a generator in another language reaches this pipeline without emitting table markup.
+A specification that arrives as data, from `json()` or from a tool, cannot carry closures, so it names what it wants:
+
+```json
+{
+  "kind": "display-table",
+  "data": [{"product": "Bolt", "region": "North", "units": 1250, "margin": 0.182}],
+  "header": {"title": "Regional sales"},
+  "stub": {"rowname": "product", "group": "region"},
+  "formats": [{"name": "format-integer", "columns": "units"}],
+  "summaries": [{"name": "aggregate-sum", "label": "Subtotal", "columns": ["units"]}],
+  "styles": [
+    {
+      "style": {"text": {"weight": "bold"}},
+      "part": "body",
+      "columns": "margin",
+      "rows": {"column": "margin", "op": "<", "value": 0.05}
+    }
+  ]
+}
+```
+
+Formatters and aggregations are named from the built-ins, and row predicates are comparisons with `op` in `<`, `<=`, `>`, `>=`, `==`, `!=`, composed with `and`, `or`, and `not`.
+Comparing against `null` asks whether the cell is empty, which is the only way JSON has to spell absence.
+Every key is checked, inside a descriptor as well as at the top level, so a misspelled `columns` fails rather than quietly widening what it applies to.
+That is the whole subset: no arithmetic, no function calls, no set tests.
+Anything more expressive belongs in a Typst specification, which keeps the schema from drifting into an expression language.
+
+A combine pattern arrives the same way, as a template rather than a closure: `"{1} ({2})"`, numbering the sources from one in `from` order.
+
+## What the subset reaches
+
+| Key | Holds |
+| --- | --- |
+| `kind` | `"display-table"`. |
+| `data` | Rows or columns, as `display-table` takes them. |
+| `header` | `title` and `subtitle`. |
+| `stub` | `rowname`, `group`, `label`, `indent`. |
+| `row-groups` | Descriptors of `label` and `rows`. |
+| `labels` | Column name to label. |
+| `hidden` | A column name or an array of them. |
+| `combines` | `into`, `from`, `pattern`, `label`, `hide-sources`. |
+| `moves` | `columns`, and one of `before` or `after`. |
+| `spanners` | `label`, `columns`, `level`. |
+| `widths` | Column name to a width written as a string. |
+| `alignments` | Descriptors of `alignment` and `columns`. |
+| `formats` | Descriptors naming a formatter, with its own options. |
+| `substitutions` | `test`, `columns`, `rows`, `replacement`. |
+| `colours` | `palette`, `columns`, `rows`, `domain`, `target`, `missing`, `reverse`. |
+| `summaries` | `name`, `label`, `columns`, `groups`. |
+| `grand-summaries` | The same, over the whole body. |
+| `styles` | A `style` dictionary and the location keys below. |
+| `footnotes` | `note`, `locations`, `mark`. |
+| `source-notes` | An array of strings. |
+| `options` | Theme options, merged over the theme the caller gave. |
+
+: Serialised keys {.striped .hover tbl-colwidths="[25,75]"}
+
+A location is written with `part`, `columns`, `rows`, `groups`, `spanners`, `notes` and `parts`, and a style and a footnote address cells the same way.
+
+Eight formatters are nameable: `format-number`, `format-integer`, `format-percent`, `format-currency`, `format-scientific`, `format-bytes`, `format-date` and `format-markup`.
+Three are not, and are absent by nature rather than by omission: `format`, `format-cell` and `format-nanoplot` are each given a function, and JSON has no way to write one.
+
+Seven aggregations are nameable: `aggregate-sum`, `aggregate-mean`, `aggregate-median`, `aggregate-min`, `aggregate-max`, `aggregate-count` and `aggregate-standard-deviation`.
+`aggregate-quantile` is not: it takes a probability and returns the aggregation, so naming it would mean calling it.
+
+A width is a string carrying a number and one of `pt`, `mm`, `cm`, `in`, `em`, `fr` or `%`, or `"auto"`.
+A bare number is refused rather than given a unit nobody wrote.
+An alignment is one of `start`, `end`, `center`, `left` or `right`.
+A colour is a hex string, wherever one is wanted: a palette stop, a fill, a text fill, or the colour a missing value takes.
+
+`tests/unit/test-serialised-surface.typ` holds this page to the tables the resolver reads, so a name added to one and not the other fails the suite.
+
+A serialised specification is turned back into ordinary directives and folded through the same path as a hand-written table, so the two cannot diverge: one pipeline, entered two ways.
+`examples/serialised.typ` renders `examples/table-spec.json` and compiles with the test suite.

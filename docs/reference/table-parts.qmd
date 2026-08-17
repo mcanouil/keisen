@@ -1,0 +1,26 @@
+---
+title: "Table parts"
+subtitle: "The header, the stub, row groups, spanners, notes, styles, and options."
+description: "Keisen's table-part directives: table-header, table-stub, table-row-group, table-spanner, table-source-note, table-footnote, table-style, and table-options."
+---
+
+| Function | Effect |
+| --- | --- |
+| `table-header(title: none, subtitle: none)` | The title block above the column labels. |
+| `table-stub(rowname: none, group: none, label: none, indent: none)` | Promotes a column to row names, optionally another to group labels, and a column of integers to indentation levels. |
+| `table-row-group(label, rows)` | Declares a group over data with no group column. `rows` is the ordinary row selector. |
+| `table-spanner(label, columns, level: 1)` | Labels a run of adjacent columns. Higher levels stack above lower ones. |
+| `table-source-note(note)` | An unmarked note in the footer. |
+| `table-footnote(note, locations: none, mark: auto)` | A marked note. Without locations it is an unmarked footer note. |
+| `table-style(properties, locations: none)` | Applies a style to the cells a location names. |
+| `table-options(..keys)` | Merges option keys into the theme. |
+
+: Table parts {.striped .hover tbl-colwidths="[45,55]"}
+
+Row groups render as level-3 native subheaders, so a group spanning a page break reprints its label.
+
+Groups come from the data, through `table-stub(group: ..)`, or from the document, through `table-row-group`, and using both is an error rather than a rule nobody wrote down.
+Declared groups need not cover the data: rows no group claims lead the body as a nameless block, exactly as an ungrouped table does.
+Later groups win on overlap, so a second group correcting the first leaves it with the rows it still owns, and a group left with none of its own is dropped rather than printed as a label over nothing.
+A row index outside the data is an error; a predicate that matches no row is not, since a table built from filtered data legitimately has fewer rows on some renderings than on others.
+A specification built elsewhere cannot declare groups this way, and names its group column on the stub instead.

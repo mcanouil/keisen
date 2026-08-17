@@ -46,12 +46,12 @@ This is `tests/visual/grouped.typ`, and the image below is its output.
 
 ![A sales table titled Regional sales, its Units and Revenue columns under a Performance spanner, rows grouped by region with a bold Subtotal closing each group, a bold Total closing the table, alternate rows shaded, and a source note in the footer.](assets/examples/grouped.png)
 
-The [Examples](examples.qmd) page shows this and four more, each beside the source that produced it.
+The [Examples](examples/index.qmd) section carries a page for each thing a reader might be trying to do, every one beside the source that produced it.
 
 ## Status
 
 Keisen is in early development and has no release yet, so it is used from a clone rather than from Typst Universe.
-The API is settling milestone by milestone, and the [Reference](reference.qmd) is written from the source rather than from memory, though nothing yet checks the page against the code automatically.
+The API is settling milestone by milestone, and the [Reference](reference/index.qmd) is written from the source rather than from memory, though nothing yet checks the pages against the code automatically.
 
 Follow along in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
@@ -60,7 +60,7 @@ Follow along in the [issue tracker](https://github.com/{{< var repository.slug >
 Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it:
 
 Parts
-: A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order.
+: A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order. Groups come from a column of the data, or from the document where the data has none.
 
 Formatters
 : Numbers, integers, percentages, currency, scientific notation, byte sizes, dates, and markup held as text. Every figure is computed in Typst's `decimal` type rather than in floats, and `format()` takes anything the family does not.
@@ -81,7 +81,7 @@ Row groups are rendered as native repeating subheaders, which means a group that
 
 ## Links
 
-- [Reference](reference.qmd) for the full reference.
-- [Examples](examples.qmd) for worked examples.
+- [Reference](reference/index.qmd) for every function, its arguments, and its defaults.
+- [Examples](examples/index.qmd) for a worked table per outcome.
 - [Changelog](changelog.qmd) for what each release changed.
 - [Source and issues](https://github.com/{{< var repository.slug >}}) on GitHub.

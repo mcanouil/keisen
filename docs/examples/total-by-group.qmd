@@ -1,0 +1,42 @@
+---
+title: "Total a table by group"
+subtitle: "A subtotal closing each block, and a grand total closing the table."
+description: "Group rows by a column, label the groups, and close each one with a subtotal before a grand total closes the body."
+---
+
+The data carries a column saying which block each row belongs to.
+A stub turns one column into row names and that one into groups, then `summary-rows` closes each group and `grand-summary-rows` closes the body.
+
+```typst
+#import "@preview/keisen:0.1.0": *
+
+#display-table(
+  (
+    product: ("Bolt", "Nut", "Beam", "Plate"),
+    region: ("North", "North", "South", "South"),
+    units: (1250, 860, 430, 2100),
+    revenue: (18750.5, 12900.25, 21500, 31500.75),
+  ),
+  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
+  table-stub(rowname: "product", group: "region", label: [Product]),
+  columns-label(units: [Units], revenue: [Revenue]),
+  table-spanner([Performance], ("units", "revenue")),
+  format-integer("units"),
+  format-number("revenue", decimals: 2),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
+  table-source-note([Source: internal ledger.]),
+  table-options(row-striping: true),
+)
+```
+
+![A sales table grouped by region, each group closed by a bold subtotal row, with a grand total below and alternate rows shaded.](../assets/examples/grouped.png)
+
+`functions` maps the label the row will carry to the aggregation that fills it, so `(Subtotal: aggregate-sum)` names both at once.
+`aggregate-sum` stays in decimal arithmetic, so the totals are exact rather than nearly right.
+
+Striping counts body rows alone, so a group label never takes a stripe or shifts the phase.
+
+Summary rows need groups.
+A table with none is closed by `grand-summary-rows` on its own, and rows that no group claims are counted there rather than in a subtotal.
+Where the data has no column to group by, [declare the groups in the document](declare-your-own-groups.qmd).

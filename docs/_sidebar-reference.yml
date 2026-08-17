@@ -1,0 +1,46 @@
+# The Reference section's own sidebar, pulled in by `metadata-files` in
+# _quarto.yml and selected by reference/_metadata.yml. A section carries its own
+# sidebar so a reader inside it sees that section alone rather than the whole
+# site.
+#
+# reference/index.qmd is absent on purpose: it is the navbar's "Reference" item,
+# and a page repeated in both only makes the reader wonder which one is which.
+# The heading below is a label rather than a link, so it repeats no page.
+#
+# Labels are plain text. Quarto expands no shortcode in a sidebar item's text,
+# and the raw web component leaks out of the sidebar into the breadcrumbs, which
+# reuse the same string.
+website:
+  sidebar:
+    - id: reference
+      # Floating rather than docked: the navbar already paints a band across the
+      # top, and a docked sidebar under it walls the page in on two sides.
+      # Atelier repaints a docked sidebar from the chrome palette and leaves a
+      # floating one on the page ground, which is what keeps the two from
+      # competing.
+      style: floating
+      search: false
+      collapse-level: 2
+      contents:
+        - section: "Reference"
+          contents:
+            - href: reference/display-table.qmd
+              text: "Entry point"
+            - href: reference/table-parts.qmd
+              text: "Table parts"
+            - href: reference/columns.qmd
+              text: "Columns"
+            - href: reference/formatters.qmd
+              text: "Formatters"
+            - href: reference/nanoplots.qmd
+              text: "Nanoplots"
+            - href: reference/locations.qmd
+              text: "Locations"
+            - href: reference/aggregations.qmd
+              text: "Aggregations"
+            - href: reference/themes.qmd
+              text: "Themes and options"
+            - href: reference/serialised.qmd
+              text: "Serialised specifications"
+            - href: reference/figures.qmd
+              text: "Figures and Quarto"
