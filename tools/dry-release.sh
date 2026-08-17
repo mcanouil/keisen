@@ -88,8 +88,21 @@ done
 # printed. A listing that names the package is a whole document; the fragments
 # that show a directive or two are skipped by that same test.
 listings=0
-for qmd in docs/*.qmd; do
-  name="$(basename "${qmd%.qmd}")"
+# Every page of the site, at any depth. The documentation is laid out as a
+# section per topic, so a non-recursive glob would walk past every page that
+# carries a listing and report success having compiled none of them.
+#
+# Directories Quarto ignores are skipped: nothing under _site, _extensions or
+# _scripts is served, and a listing there would be checked twice or not at all.
+shopt -s globstar nullglob
+for qmd in docs/**/*.qmd; do
+  [[ "${qmd}" == */_* ]] && continue
+  # Named after the path rather than the file: docs/reference/index.qmd and
+  # docs/examples/index.qmd are both "index", and one would silently overwrite
+  # the other's smoke files.
+  name="${qmd#docs/}"
+  name="${name%.qmd}"
+  name="${name//\//-}"
   listings=$((listings + $(awk -v dir="${SMOKE_DIR}" -v name="${name}" '
     /^```typst$/ { inside = 1; body = ""; next }
     inside && /^```$/ {
