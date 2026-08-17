@@ -20,10 +20,22 @@
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
 // overrides either, which is why the style dictionary is read last.
-#let _cell(properties, body, align: auto, colspan: 1, fill: none, stroke: (:)) = {
+#let _table-cell(properties, body, align: auto, vertical: auto, colspan: 1, fill: none, stroke: (:)) = {
+  // An explicit style's alignment stands as written, its vertical part included.
+  // Otherwise the theme's vertical placement applies to whatever the column
+  // decided horizontally, which is why the two are added rather than replaced.
+  let placement = if "align" in properties {
+    properties.align
+  } else if vertical == auto {
+    align
+  } else if align == auto {
+    vertical
+  } else {
+    align + vertical
+  }
   table.cell(
     colspan: colspan,
-    align: properties.at("align", default: align),
+    align: placement,
     fill: properties.at("fill", default: fill),
     inset: properties.at("inset", default: auto),
     stroke: properties.at("stroke", default: stroke),
@@ -40,6 +52,9 @@
 
 #let assemble(spec) = context {
   let setting(name) = option(spec.options, name)
+  // Every cell takes the theme's vertical placement, so the option is read in
+  // one place rather than threaded through a dozen call sites.
+  let _cell(..args) = _table-cell(..args, vertical: setting("cell-vertical-align"))
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
@@ -102,6 +117,19 @@
   let alignments = alignments(spec)
   let metrics = metrics(spec, cells, summaries)
 
+  // A rule dictionary carrying only the edges that have a rule. `(top: none)`
+  // overrides the table's own stroke on that edge, so a part that names an edge
+  // it does not draw swallows whatever the table drew there; an absent key
+  // leaves it alone. This is the same trap a cell stroke of `none` set for the
+  // table borders.
+  let rules(..edges) = {
+    let out = (:)
+    for (edge, value) in edges.named() {
+      if value != none { out.insert(edge, value) }
+    }
+    out
+  }
+
   let top-border(part) = {
     if part == "group" { setting("row-group-border-top") }
     else if part == "summary" { setting("summary-border-top") }
@@ -117,8 +145,7 @@
 
   let summary-row(entry, part, row-key) = {
     let cells = ()
-    let border = top-border(part)
-    let rule = if border == none { (:) } else { (top: border) }
+    let rule = rules(top: top-border(part))
     let label = text(weight: setting("summary-weight"), [#entry.label])
     // A summary cell takes its marks like any other: the label cell through the
     // stub address, the rest by column.
@@ -182,7 +209,7 @@
       "subtitle",
       text(size: setting("header-subtitle-size"), spec.header.subtitle),
       align: setting("header-align"),
-      stroke: (bottom: setting("header-border-bottom")),
+      stroke: rules(bottom: setting("header-border-bottom")),
     ))
   }
 
@@ -205,7 +232,7 @@
         body,
         align: center,
         colspan: cell.span,
-        stroke: (bottom: setting("spanner-border-bottom")),
+        stroke: rules(bottom: setting("spanner-border-bottom")),
       ))
     }
   }
@@ -213,7 +240,7 @@
   // The label row carries the rules above and below the column labels. With no
   // title block and no spanners above it, it also carries the table's own top
   // rule, which belongs to whichever row happens to come first.
-  let label-rules = (
+  let label-rules = rules(
     bottom: setting("column-labels-border-bottom"),
     top: setting("column-labels-border-top"),
   )
@@ -242,7 +269,11 @@
         text(weight: setting("column-labels-weight"), size: setting("column-labels-size"), spec.labels.at(name, default: [#name])),
         marks-for(footnotes, PARTS.column-labels, none, name),
       ),
-      align: alignments.at(position),
+      align: if setting("column-labels-align") == auto {
+        alignments.at(position)
+      } else {
+        setting("column-labels-align")
+      },
       stroke: label-rules,
     ))
   }
@@ -265,7 +296,7 @@
           align: start,
           colspan: width,
           fill: setting("row-group-fill"),
-          stroke: (top: top-border("group")),
+          stroke: rules(top: top-border("group")),
         ),
       ))
     } else if entry.part == "summary" {
@@ -320,8 +351,9 @@
     notes.push(_cell(
       style-for(index, PARTS.source-notes, position, none),
       text(size: setting("source-note-size"), _marked(note, marks-for(footnotes, PARTS.source-notes, position, none))),
+      align: setting("footer-align"),
       colspan: width,
-      stroke: (top: if position == 0 { setting("footer-border-top") } else { none }),
+      stroke: rules(top: if position == 0 { setting("footer-border-top") } else { none }),
     ))
   }
 
@@ -336,16 +368,26 @@
     notes.push(_cell(
       style-for(index, PARTS.footnotes, footnote-row, none),
       text(size: setting("footnote-size"), body),
+      align: setting("footer-align"),
       colspan: width,
-      stroke: (top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
+      stroke: rules(top: if notes.len() == 0 { setting("footer-border-top") } else { none }),
     ))
     footnote-row += 1
   }
 
 
   // A named width wins; everything else sizes itself, including the stub.
-  let tracks = if has-stub { (spec.widths.at(spec.stub.rowname, default: auto),) } else { () }
-  for name in names { tracks.push(spec.widths.at(name, default: auto)) }
+  //
+  // Given a table width, the columns no columns-width names share what the named
+  // ones leave: an `auto` track sizes to its content and would never fill the
+  // width, so the table would sit inside a block wider than itself.
+  let sized = setting("table-width") != auto
+  let track(name) = {
+    let given = spec.widths.at(name, default: auto)
+    if given != auto { given } else if sized { 1fr } else { auto }
+  }
+  let tracks = if has-stub { (track(spec.stub.rowname),) } else { () }
+  for name in names { tracks.push(track(name)) }
 
   // Part borders are read off the row plan: the plan already knows which row
   // opens the body, closes a group, or begins the footer.
@@ -356,8 +398,12 @@
   )
 
   // A table that must stay whole is wrapped rather than left to the page: an
-  // unbreakable block is the only thing that stops Typst splitting rows.
-  let wrap(body) = if setting("breakable") { body } else { block(breakable: false, body) }
+  // unbreakable block is the only thing that stops Typst splitting rows. A table
+  // width is a block of its own, inside which the fractional tracks resolve.
+  let wrap(body) = {
+    let held = if sized { block(width: setting("table-width"), body) } else { body }
+    if setting("breakable") { held } else { block(breakable: false, held) }
+  }
 
   // Rows the table will hold, so its own rules land on the first and the last
   // whatever the parts turn out to be. A table with no notes used to lose its
@@ -365,13 +411,44 @@
   let body-rows = plan.filter(entry => entry.part in ("group", "body", "summary", "grand-summary"))
   let row-count = head.len() + levels.len() + 1 + body-rows.len() + notes.len()
 
+  // Part borders are read off the row plan: it already knows how many rows the
+  // title block and the header take, so the body opens under them and closes
+  // wherever the footer begins.
+  let body-opens = head.len() + levels.len() + 1
+  let body-closes = body-opens + body-rows.len() - 1
+
   wrap(table(
     columns: tracks,
     inset: setting("cell-inset"),
     align: setting("table-align"),
     stroke: (x, y) => (
-      top: if y == 0 { setting("table-border-top") } else { none },
-      bottom: if y == row-count - 1 { setting("table-border-bottom") } else { none },
+      top: if y == 0 {
+        setting("table-border-top")
+      } else if y == body-opens {
+        setting("body-border-top")
+      } else if y == body-closes + 1 {
+        // The rule closing the body is written as the top of whatever follows
+        // it. Written as a bottom it would meet the next row's own top on the
+        // same edge, and two table-level strokes of one thickness do not both
+        // draw there.
+        setting("body-border-bottom")
+      } else {
+        setting("row-border")
+      },
+      bottom: if y != row-count - 1 {
+        none
+      } else if setting("table-border-bottom") != none {
+        setting("table-border-bottom")
+      } else if y == body-closes {
+        // Nothing follows the body, so its closing rule is the table's own last
+        // edge, unless the table already draws one there.
+        setting("body-border-bottom")
+      } else {
+        none
+      },
+      // Between the columns rather than around the table, whose own edges are
+      // table-border-top and table-border-bottom.
+      left: if x == 0 { none } else { setting("column-border") },
     ),
     ..if head.len() > 0 {
       (table.header(level: 1, repeat: false, ..head),)

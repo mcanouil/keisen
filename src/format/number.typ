@@ -193,12 +193,13 @@
   scope: scope,
 )
 
-// A directive whose separators may be `auto`, meaning the theme decides.
+// A directive whose separators or rounding may be `auto`, meaning the theme
+// decides.
 //
 // The theme is not resolved until render time, so such a directive carries how
 // to build its formatter rather than the formatter itself: `build` takes the
-// theme's separators and returns the `value => slots` closure. This is the same
-// shape a nanoplot uses to reach the column it is drawn against.
+// theme's number conventions and returns the `value => slots` closure. This is
+// the same shape a nanoplot uses to reach the column it is drawn against.
 //
 // `function` is none deliberately. Every path that formats a cell resolves the
 // directive through `formatter-for` in src/format/apply.typ, and one that
@@ -243,7 +244,8 @@
   decimal-separator: auto,
   scale: 1,
   sign: false,
-  rounding: "half-up",
+  // `auto` means the theme decides, through number-rounding.
+  rounding: auto,
   negative-zero: false,
   prefix: none,
   suffix: none,
@@ -254,7 +256,7 @@
   scope: "format-number",
 ) = format-family(
   columns,
-  separators => value => format-value(
+  conventions => value => format-value(
     value,
     (
       scope: scope,
@@ -265,11 +267,11 @@
       decimals: decimals,
       significant: significant,
       grouping: grouping,
-      group-separator: if group-separator == auto { separators.group } else { group-separator },
-      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
+      group-separator: if group-separator == auto { conventions.group } else { group-separator },
+      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
       scale: scale,
       sign: sign,
-      rounding: rounding,
+      rounding: if rounding == auto { conventions.rounding } else { rounding },
       negative-zero: negative-zero,
     ),
   ),

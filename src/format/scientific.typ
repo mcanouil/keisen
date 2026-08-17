@@ -107,7 +107,8 @@
   exponent: "power",
   decimal-separator: auto,
   sign: false,
-  rounding: "half-up",
+  // `auto` means the theme decides, through number-rounding.
+  rounding: auto,
   negative-zero: false,
   infinity: none,
 ) = {
@@ -119,7 +120,7 @@
     columns,
     rows: rows,
     scope: "format-scientific",
-    separators => value => _slots(value, (
+    conventions => value => _slots(value, (
       scope: "format-scientific",
       notation: exponent,
       prefix: none,
@@ -131,10 +132,10 @@
       // group and no separator to choose.
       grouping: none,
       group-separator: "",
-      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
+      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
       scale: 1,
       sign: sign,
-      rounding: rounding,
+      rounding: if rounding == auto { conventions.rounding } else { rounding },
       negative-zero: negative-zero,
     )),
   )
