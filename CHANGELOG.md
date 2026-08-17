@@ -12,6 +12,12 @@
 - feat: `format-number`, `format-bytes` and `format-scientific` default to `rounding: auto`, which the theme answers through `number-rounding`. (#37)
 - fix: A part that names an edge it does not draw no longer takes the table's own rule with it, so a border under one part cannot remove the border above another. (#37)
 
+- feat: A serialised specification reaches six more directives: `row-groups`, `moves`, `widths`, `alignments`, `colours` and `footnotes`. (#39)
+- feat: A serialised specification names five more formatters: `format-currency`, `format-scientific`, `format-bytes`, `format-date` and `format-markup`. (#39)
+- feat: A serialised width is a string carrying a number and a unit, and an alignment names itself. A width with no unit is refused. (#39)
+- fix: An unknown directive lists every kind the package handles. The list named thirteen of seventeen. (#39)
+- docs: The reference names every serialised key, formatter and aggregation, and says which directives cannot be reached and why. (#39)
+
 ## 0.1.0 (2026-08-17)
 
 - feat: Initial release.
