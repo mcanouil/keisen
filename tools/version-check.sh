@@ -25,10 +25,19 @@ if [[ "${manifest}" != "${citation}" ]]; then
   exit 1
 fi
 
-# Either the version has a section of its own, or the changes are still being
-# gathered under Unreleased. Neither means the changelog was never touched.
-if ! grep -qE "^## \[(Unreleased|${manifest})\]" CHANGELOG.md; then
-  printf 'version: CHANGELOG.md holds no section for %s and none for Unreleased\n' "${manifest}" >&2
+# Either the version has a dated section of its own, or the changes are still
+# being gathered under Unreleased. Neither means the changelog was never
+# touched.
+#
+# The two accepted headings are the grammar docs/_scripts/pre-render.sh reads to
+# build the changelog page. It matches `## Unreleased` and `## X.Y.Z (date)`, and
+# nothing else, so a heading written any other way reaches the site as loose text
+# under no version at all. Checking the same grammar here is what keeps the two
+# from disagreeing in silence.
+escaped="${manifest//./\\.}"
+if ! grep -qE "^## (Unreleased|${escaped} \([0-9]{4}-[0-9]{2}-[0-9]{2}\))$" CHANGELOG.md; then
+  printf 'version: CHANGELOG.md holds no dated section for %s and none for Unreleased\n' "${manifest}" >&2
+  printf '  expected: "## %s (YYYY-MM-DD)" or "## Unreleased"\n' "${manifest}" >&2
   exit 1
 fi
 
