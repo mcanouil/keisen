@@ -1,18 +1,26 @@
 {
   "kind": "display-table",
   "data": [
-    {"product": "Bolt", "region": "North", "units": 1250, "margin": 0.182},
-    {"product": "Nut", "region": "North", "units": 860, "margin": 0.031},
-    {"product": "Beam", "region": "South", "units": 430, "margin": 0.094},
-    {"product": "Plate", "region": "South", "units": 2100, "margin": 0.140}
+    {"product": "Bolt", "region": "North", "units": 1250, "margin": 0.182, "value": 18400, "code": "B-1"},
+    {"product": "Nut", "region": "North", "units": 860, "margin": 0.031, "value": 4210, "code": "N-2"},
+    {"product": "Beam", "region": "South", "units": 430, "margin": 0.094, "value": 32750, "code": "B-3"},
+    {"product": "Plate", "region": "South", "units": 2100, "margin": 0.140, "value": 9600, "code": "P-4"}
   ],
   "header": {"title": "Regional sales", "subtitle": "Built outside Typst"},
   "stub": {"rowname": "product", "group": "region", "label": "Product"},
-  "labels": {"units": "Units", "margin": "Margin"},
+  "labels": {"units": "Units", "margin": "Margin", "value": "Value"},
+  "hidden": "code",
+  "moves": [{"columns": "margin", "after": "value"}],
+  "spanners": [{"label": "Figures", "columns": ["units", "value"]}],
+  "widths": {"margin": "2cm"},
+  "alignments": [{"alignment": "end", "columns": "margin"}],
   "formats": [
     {"name": "format-integer", "columns": "units"},
-    {"name": "format-percent", "columns": "margin", "decimals": 1}
+    {"name": "format-percent", "columns": "margin", "decimals": 1},
+    {"name": "format-currency", "columns": "value", "currency": "EUR", "position": "end"}
   ],
+  "substitutions": [{"test": "zero", "columns": "units", "replacement": "none"}],
+  "colours": [{"palette": ["#f7fbff", "#08519c"], "columns": "value"}],
   "summaries": [{"name": "aggregate-sum", "label": "Subtotal", "columns": ["units"]}],
   "grand-summaries": [{"name": "aggregate-sum", "label": "Total", "columns": ["units"]}],
   "styles": [
@@ -21,6 +29,12 @@
       "part": "body",
       "columns": "margin",
       "rows": {"column": "margin", "op": "<", "value": 0.05}
+    }
+  ],
+  "footnotes": [
+    {
+      "note": "Below the reporting threshold.",
+      "locations": {"part": "body", "columns": "margin", "rows": {"column": "margin", "op": "<", "value": 0.05}}
     }
   ],
   "source-notes": ["Source: a generator in another language."]

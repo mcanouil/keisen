@@ -134,18 +134,31 @@
 // literal specification, which keeps this from drifting into an expression
 // language nobody wanted to write.
 
+#import "../format/bytes.typ": format-bytes
+#import "../format/currency.typ": format-currency
+#import "../format/date.typ": format-date
+#import "../format/markup.typ": format-markup
 #import "../format/number.typ": format-integer, format-number
 #import "../format/percent.typ": format-percent
+#import "../format/scientific.typ": format-scientific
 #import "../parts/summaries.typ": (
   aggregate-count, aggregate-max, aggregate-mean, aggregate-median, aggregate-min,
   aggregate-standard-deviation, aggregate-sum,
 )
 #import "../utils/errors.typ": fail, fail-enum
 
+// Every formatter that takes no closure. `format`, `format-cell` and
+// `format-nanoplot` are absent by nature rather than by omission: each is given
+// a function, and JSON has no way to write one.
 #let FORMATTERS = (
   "format-number": format-number,
   "format-integer": format-integer,
   "format-percent": format-percent,
+  "format-currency": format-currency,
+  "format-scientific": format-scientific,
+  "format-bytes": format-bytes,
+  "format-date": format-date,
+  "format-markup": format-markup,
 )
 
 #let AGGREGATIONS = (
@@ -315,6 +328,61 @@
 
 #let _selector(value) = if value == none { auto } else { value }
 
+// Alignments are Typst values, so a serialised one arrives as the name it is
+// written under. Only the horizontal set: a column has no vertical alignment of
+// its own, and the theme carries cell-vertical-align.
+#let ALIGNMENTS = (
+  "start": start,
+  "end": end,
+  "center": center,
+  "left": left,
+  "right": right,
+)
+
+#let _alignment(value, scope) = {
+  if type(value) != str { return value }
+  if value not in ALIGNMENTS {
+    fail-enum(scope, "alignment", value, ALIGNMENTS.keys())
+  }
+  ALIGNMENTS.at(value)
+}
+
+// A width arrives as a string, since JSON has no length type. The number and the
+// unit are read apart, so an unknown unit is named rather than parsed into
+// silence, and a bare number is refused rather than guessed at.
+#let UNITS = (
+  "pt": 1pt,
+  "mm": 1mm,
+  "cm": 1cm,
+  "in": 1in,
+  "em": 1em,
+  "fr": 1fr,
+  "%": 1%,
+)
+
+#let _length(value, scope) = {
+  if value == none or value == "auto" { return auto }
+  if type(value) in (int, float) {
+    fail(
+      scope,
+      "a width needs a unit",
+      value: value,
+      hint: "Write it as a string, for example \"2cm\" or \"1fr\".",
+    )
+  }
+  if type(value) != str { return value }
+  let found = value.trim().match(regex("^(-?[0-9]*\\.?[0-9]+)(pt|mm|cm|in|em|fr|%)$"))
+  if found == none {
+    fail(
+      scope,
+      "not a width",
+      value: value,
+      hint: "Write a number and one of " + UNITS.keys().join(", ") + ", or \"auto\".",
+    )
+  }
+  float(found.captures.first()) * UNITS.at(found.captures.last())
+}
+
 #let FORMAT-OPTIONS = (
   "format-number": (
     "decimals",
@@ -328,9 +396,42 @@
     "negative-zero",
     "prefix",
     "suffix",
+    "infinity",
   ),
   "format-integer": ("grouping", "group-separator", "scale", "sign", "prefix", "suffix"),
   "format-percent": ("decimals", "scale", "symbol", "space"),
+  "format-currency": ("currency", "decimals", "symbol", "position", "space"),
+  "format-scientific": (
+    "decimals",
+    "exponent",
+    "decimal-separator",
+    "sign",
+    "rounding",
+    "negative-zero",
+    "infinity",
+  ),
+  "format-bytes": (
+    "base",
+    "decimals",
+    "grouping",
+    "group-separator",
+    "decimal-separator",
+    "sign",
+    "rounding",
+    "infinity",
+  ),
+  "format-date": ("pattern",),
+  "format-markup": (),
+)
+
+// Options whose Typst value is not a JSON scalar. Everything else passes
+// through as written.
+#let _OPTION-KINDS = (
+  "prefix": "content",
+  "suffix": "content",
+  "symbol": "content",
+  "infinity": "content",
+  "position": "alignment",
 )
 
 #let _format(descriptor) = {
@@ -340,9 +441,16 @@
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
     "format",
   )
-  let options = descriptor
-  for key in ("name", "columns", "rows") {
-    if key in options { let _ = options.remove(key) }
+  let options = (:)
+  for (key, value) in descriptor {
+    if key in ("name", "columns", "rows") { continue }
+    let kind = _OPTION-KINDS.at(key, default: none)
+    options.insert(
+      key,
+      if kind == "content" { _content(value) } else if kind == "alignment" {
+        _alignment(value, "format")
+      } else { value },
+    )
   }
   builder(
     _selector(descriptor.at("columns", default: auto)),
@@ -351,35 +459,37 @@
   )
 }
 
+// The keys a location descriptor may carry, named once: a style and a footnote
+// address cells the same way, and two lists would drift.
+#let LOCATION-KEYS = ("part", "columns", "rows", "groups", "spanners", "notes", "parts")
+
+#let _location(descriptor) = (
+  kind: "location",
+  part: descriptor.at("part", default: "body"),
+  columns: _selector(descriptor.at("columns", default: auto)),
+  rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
+  groups: _selector(descriptor.at("groups", default: auto)),
+  // Spanner labels are content once resolved, so a selector written as a
+  // string would never match the label it plainly names.
+  spanners: {
+    let given = _selector(descriptor.at("spanners", default: auto))
+    if given == auto { auto } else if type(given) == array {
+      given.map(_content)
+    } else { _content(given) }
+  },
+  notes: _selector(descriptor.at("notes", default: auto)),
+  parts: {
+    let given = descriptor.at("parts", default: ("title", "subtitle"))
+    if type(given) == array { given } else { (given,) }
+  },
+)
+
 #let _style(descriptor) = {
-  _keys(
-    descriptor,
-    ("style", "part", "columns", "rows", "groups", "spanners", "notes", "parts"),
-    "style",
-  )
+  _keys(descriptor, ("style",) + LOCATION-KEYS, "style")
   (
   kind: "style",
   style: _properties(descriptor.at("style", default: (:))),
-  locations: (
-    kind: "location",
-    part: descriptor.at("part", default: "body"),
-    columns: _selector(descriptor.at("columns", default: auto)),
-    rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
-    groups: _selector(descriptor.at("groups", default: auto)),
-    // Spanner labels are content once resolved, so a selector written as a
-    // string would never match the label it plainly names.
-    spanners: {
-      let given = _selector(descriptor.at("spanners", default: auto))
-      if given == auto { auto } else if type(given) == array {
-        given.map(_content)
-      } else { _content(given) }
-    },
-    notes: _selector(descriptor.at("notes", default: auto)),
-    parts: {
-      let given = descriptor.at("parts", default: ("title", "subtitle"))
-      if type(given) == array { given } else { (given,) }
-    },
-  ),
+  locations: _location(descriptor),
   )
 }
 
@@ -428,15 +538,21 @@
   "data",
   "header",
   "stub",
+  "row-groups",
   "labels",
   "hidden",
   "combines",
+  "moves",
   "spanners",
+  "widths",
+  "alignments",
   "formats",
   "substitutions",
+  "colours",
   "summaries",
   "grand-summaries",
   "styles",
+  "footnotes",
   "source-notes",
   "options",
 )
@@ -479,6 +595,25 @@
     ))
   }
 
+  for descriptor in serialised.at("row-groups", default: ()) {
+    _keys(descriptor, ("label", "rows"), "row-group")
+    for key in ("label", "rows") {
+      if key not in descriptor {
+        fail(
+          "row-group",
+          "missing " + key,
+          value: descriptor,
+          hint: "A declared group needs a label and the rows it claims.",
+        )
+      }
+    }
+    directives.push((
+      kind: "row-group",
+      label: _content(descriptor.label),
+      rows: resolve-predicate(descriptor.rows),
+    ))
+  }
+
   let labels = serialised.at("labels", default: (:))
   if labels.len() > 0 {
     let mapped = (:)
@@ -512,6 +647,17 @@
     ))
   }
 
+  for descriptor in serialised.at("moves", default: ()) {
+    _keys(descriptor, ("columns", "before", "after"), "move")
+    let columns = descriptor.at("columns", default: ())
+    directives.push((
+      kind: "move",
+      columns: if type(columns) == str { (columns,) } else { columns },
+      before: descriptor.at("before", default: none),
+      after: descriptor.at("after", default: none),
+    ))
+  }
+
   for spanner in serialised.at("spanners", default: ()) {
     _keys(spanner, ("label", "columns", "level"), "spanner")
     for key in ("label", "columns") {
@@ -524,6 +670,30 @@
       label: _content(spanner.label),
       columns: spanner.columns,
       level: spanner.at("level", default: 1),
+    ))
+  }
+
+  let widths = serialised.at("widths", default: (:))
+  if widths.len() > 0 {
+    let mapped = (:)
+    for (name, given) in widths { mapped.insert(name, _length(given, "width")) }
+    directives.push((kind: "width", widths: mapped))
+  }
+
+  for descriptor in serialised.at("alignments", default: ()) {
+    _keys(descriptor, ("alignment", "columns"), "align")
+    if "alignment" not in descriptor {
+      fail(
+        "align",
+        "no alignment given",
+        value: descriptor,
+        hint: "Name one of " + ALIGNMENTS.keys().join(", ") + ".",
+      )
+    }
+    directives.push((
+      kind: "align",
+      alignment: _alignment(descriptor.alignment, "align"),
+      columns: _selector(descriptor.at("columns", default: auto)),
     ))
   }
 
@@ -544,6 +714,41 @@
     ))
   }
 
+  for descriptor in serialised.at("colours", default: ()) {
+    _keys(
+      descriptor,
+      ("palette", "columns", "rows", "domain", "target", "missing", "reverse"),
+      "data-colour",
+    )
+    if "palette" not in descriptor {
+      fail(
+        "data-colour",
+        "no palette given",
+        value: descriptor,
+        hint: "Give one hex string, or an array of them for a gradient.",
+      )
+    }
+    // The palette itself needs no work here: data-colour already reads a hex
+    // string, which is the one spelling JSON has for a colour.
+    directives.push((
+      kind: "colour",
+      palette: {
+        let given = descriptor.palette
+        let stops = if type(given) == array { given } else { (given,) }
+        stops.map(stop => _colour(stop, "palette"))
+      },
+      columns: _selector(descriptor.at("columns", default: auto)),
+      rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
+      domain: _selector(descriptor.at("domain", default: auto)),
+      target: descriptor.at("target", default: "fill"),
+      missing: {
+        let given = descriptor.at("missing", default: none)
+        if given == none { none } else { _colour(given, "missing") }
+      },
+      reverse: descriptor.at("reverse", default: false),
+    ))
+  }
+
   for descriptor in serialised.at("summaries", default: ()) {
     directives.push(_summary(descriptor, "group"))
   }
@@ -552,6 +757,30 @@
   }
 
   for descriptor in serialised.at("styles", default: ()) { directives.push(_style(descriptor)) }
+
+  for descriptor in serialised.at("footnotes", default: ()) {
+    _keys(descriptor, ("note", "locations", "mark"), "footnote")
+    if "note" not in descriptor {
+      fail(
+        "footnote",
+        "no note given",
+        value: descriptor,
+        hint: "A footnote needs the text it prints.",
+      )
+    }
+    let given = descriptor.at("locations", default: none)
+    directives.push((
+      kind: "footnote",
+      note: _content(descriptor.note),
+      locations: if given == none { none } else if type(given) == array {
+        given.map(_location)
+      } else { _location(given) },
+      mark: {
+        let mark = descriptor.at("mark", default: none)
+        if mark == none { auto } else { _content(mark) }
+      },
+    ))
+  }
 
   for note in serialised.at("source-notes", default: ()) {
     directives.push((kind: "source-note", note: _content(note)))
