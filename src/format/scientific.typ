@@ -118,6 +118,7 @@
   format-family(
     columns,
     rows: rows,
+    scope: "format-scientific",
     separators => value => _slots(value, (
       scope: "format-scientific",
       notation: exponent,

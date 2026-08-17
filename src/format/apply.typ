@@ -38,6 +38,21 @@
   }
 }
 
+// What a selector spells out, as against what it filters for. A name that does
+// not resolve is a typo and is reported; `auto` and a predicate match nothing in
+// silence, since a table built from filtered data legitimately has fewer rows on
+// some renderings than on others. Every directive that names something draws the
+// line here, so the location DSL and the format directives cannot disagree.
+#let named(selector, kind) = {
+  if type(selector) == kind {
+    (selector,)
+  } else if type(selector) == array {
+    selector.filter(candidate => type(candidate) == kind)
+  } else {
+    ()
+  }
+}
+
 // The last matching directive wins for a given cell, which makes "format the
 // column, then override a few rows" read in the order it is written. Formatters
 // always see the raw value, never an already-formatted one, so replacing rather

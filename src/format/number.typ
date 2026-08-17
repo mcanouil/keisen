@@ -182,12 +182,15 @@
 // `columns` is a required positional argument throughout the format family:
 // Typst positional parameters cannot carry defaults, so "every column" is
 // written explicitly as `auto`.
-#let format(columns, function, rows: auto) = (
+#let format(columns, function, rows: auto, scope: "format") = (
   kind: "format",
   columns: columns,
   rows: rows,
   function: function,
   cell: false,
+  // The name the caller wrote, so a directive naming a column the table does
+  // not have reports under `format-date` rather than under `format`.
+  scope: scope,
 )
 
 // A directive whose separators may be `auto`, meaning the theme decides.
@@ -200,13 +203,14 @@
 // `function` is none deliberately. Every path that formats a cell resolves the
 // directive through `formatter-for` in src/format/apply.typ, and one that
 // forgot would rather fail than quietly pick a separator nobody asked for.
-#let format-family(columns, build, rows: auto) = (
+#let format-family(columns, build, rows: auto, scope: "format-number") = (
   kind: "format",
   columns: columns,
   rows: rows,
   function: none,
   family: build,
   cell: false,
+  scope: scope,
 )
 
 // The one formatter that reads the row rather than the value, for a cell whose
@@ -224,6 +228,7 @@
   rows: rows,
   function: function,
   cell: true,
+  scope: "format-cell",
 )
 
 #let format-number(
@@ -269,6 +274,7 @@
     ),
   ),
   rows: rows,
+  scope: scope,
 )
 
 // Forwarded options come after `decimals`, and a later named argument wins, so

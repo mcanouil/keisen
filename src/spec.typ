@@ -9,7 +9,7 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
-#import "format/apply.typ": matches-column, matches-row, nanoplot-columns
+#import "format/apply.typ": matches-column, matches-row, named, nanoplot-columns
 #import "spec/resolve.typ": apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
@@ -223,6 +223,24 @@
   for name in spec.labels.keys() { check-column(known, "columns-label", name) }
   for name in spec.widths.keys() { check-column(known, "columns-width", name) }
   for name in spec.align.keys() { check-column(known, "columns-align", name) }
+
+  // A directive naming a column the table does not have formats nothing and said
+  // nothing, which is the typo the three checks above already catch. Each is
+  // reported under the name the caller wrote, so `format-date` is named rather
+  // than the shared constructor behind it.
+  for directive in spec.formats {
+    for name in named(directive.columns, str) {
+      check-column(known, directive.at("scope", default: "format"), name)
+    }
+  }
+  for directive in spec.substitutions {
+    for name in named(directive.columns, str) {
+      check-column(known, "substitute-" + directive.test, name)
+    }
+  }
+  for directive in spec.colours {
+    for name in named(directive.columns, str) { check-column(known, "data-colour", name) }
+  }
 
   spec
 }
