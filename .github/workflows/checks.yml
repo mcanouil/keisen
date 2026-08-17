@@ -77,6 +77,13 @@ jobs:
         with:
           typst-version: ${{ steps.typst-version.outputs.version }}
 
+      # tools/quarto-check.sh renders a table through Quarto's Typst path, and
+      # fails rather than skips when Quarto is absent, so the suite needs it
+      # here. The script points Quarto at the Typst installed above, since the
+      # one Quarto carries is older than typst.toml requires.
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2.2.0
+
       # The runner does not carry Libertinus Serif, which the visual tests name.
       # Typst falls back with a warning rather than failing, and nothing here
       # asserts on a glyph: the suite compiles documents and greps the rendered

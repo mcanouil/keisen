@@ -1,0 +1,45 @@
+---
+title: "A Keisen table inside a Quarto float"
+format:
+  typst:
+    keep-typ: true
+---
+
+<!-- expect-typ: kind: "quarto-float-tbl" -->
+<!-- expect-typ: figure.caption( -->
+<!-- expect-typ: <tbl-sales> -->
+<!-- expect-typ: #ref(<tbl-sales> -->
+<!-- expect-pdf: /Table -->
+<!-- expect-pdf: /Caption -->
+
+This is the pattern `docs/reference/figures.qmd` documents in prose: the table alone inside a cross-referenced div, with Quarto owning the float, the number and the caption.
+
+The import resolves because `tools/quarto-check.sh` renders a staged copy of this file beside a link to the package, which makes `/lib.typ` the working tree.
+
+```{=typst}
+#import "/lib.typ": *
+#show figure: set block(breakable: true)
+```
+
+@tbl-sales reports the figures.
+
+::: {#tbl-sales}
+
+```{=typst}
+#display-table(
+  (
+    product: ("Bolt", "Nut", "Beam"),
+    units: (1250, 860, 430),
+    margin: (0.182, 0.031, 0.094),
+  ),
+  table-stub(rowname: "product", label: [Product]),
+  columns-label(units: [Units], margin: [Margin]),
+  format-integer("units"),
+  format-percent("margin", decimals: 1),
+  table-source-note([Source: internal ledger.]),
+)
+```
+
+Regional sales for the year.
+
+:::

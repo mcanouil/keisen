@@ -17,7 +17,10 @@ A bug report must include the Typst version, the Keisen version, and a minimal d
 
 ## Working on the source
 
-Requirements: Typst 0.15.0 or later, Bash, and `shellcheck` plus `shfmt` if you touch the scripts.
+Requirements: Typst 0.15.0 or later, Bash 5 or later, [Quarto](https://quarto.org), and `shellcheck` plus `shfmt` if you touch the scripts.
+
+Quarto is not optional.
+`tools/check.sh` renders a table through it, and that check fails and says so when Quarto is absent rather than skipping, because a suite that reports success without running a check reports coverage it does not have.
 
 Run everything before you commit:
 
@@ -47,6 +50,9 @@ See [`tests/direction/README.md`](tests/direction/README.md).
 
 Anything a screen reader must be able to tell apart goes in `tests/accessibility/`, compiled to PDF/UA-1 and counted in the structure tree through `// expect-tag:` comments.
 See [`tests/accessibility/README.md`](tests/accessibility/README.md).
+
+Anything about how the package behaves under Quarto goes in `tests/quarto/`, rendered to Typst and asserted through `<!-- expect-typ: -->` and `<!-- expect-pdf: -->` comments.
+See [`tests/quarto/README.md`](tests/quarto/README.md).
 
 ## House rules
 
