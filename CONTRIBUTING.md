@@ -45,6 +45,9 @@ See [`tests/probe/README.md`](tests/probe/README.md); the rule that matters is t
 Anything that must read the same in both writing directions goes in `tests/direction/`, rendered twice and compared glyph by glyph.
 See [`tests/direction/README.md`](tests/direction/README.md).
 
+Anything a screen reader must be able to tell apart goes in `tests/accessibility/`, compiled to PDF/UA-1 and counted in the structure tree through `// expect-tag:` comments.
+See [`tests/accessibility/README.md`](tests/accessibility/README.md).
+
 ## House rules
 
 - The package imports no third-party package.

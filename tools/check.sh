@@ -2,8 +2,9 @@
 # Compiles every Typst unit test, visual test, and example from the project root.
 # Also enforces the import boundary: no @preview import anywhere under src,
 # holds the version to the same value everywhere it is written, runs the
-# expect-fail suite, where a document that compiles is the failure, and the
-# probes, which read the rendered output for what a theme promises.
+# expect-fail suite, where a document that compiles is the failure, the probes,
+# which read the rendered output for what a theme promises, and the
+# accessibility fixtures, which read the PDF structure tree for header cells.
 # Exits non-zero on the first failure across all targets.
 
 set -euo pipefail
@@ -148,6 +149,12 @@ fi
 # A number reads the same way in every script, and nothing inside a document
 # can assert that: this compares the two renders.
 if ! tools/direction-check.sh; then
+  failures=$((failures + 1))
+fi
+
+# A column label is a header cell to a screen reader or it is not, and no
+# document can read its own tags back: this reads the PDF structure tree.
+if ! tools/accessibility-check.sh; then
   failures=$((failures + 1))
 fi
 
