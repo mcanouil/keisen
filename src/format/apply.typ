@@ -84,15 +84,17 @@
 // The formatter a directive stands for, given the theme it is rendered under.
 //
 // A number directive carries how to build its formatter rather than the
-// formatter itself, since `group-separator: auto` and `decimal-separator: auto`
-// are answered by "number-group-separator" and "number-decimal-separator" on the
-// theme, which does not exist when the directive is written. Body cells and
-// summary cells both come through here, so both read the same conventions.
+// formatter itself, since `group-separator: auto`, `decimal-separator: auto` and
+// `rounding: auto` are answered by "number-group-separator",
+// "number-decimal-separator" and "number-rounding" on the theme, which does not
+// exist when the directive is written. Body cells and summary cells both come
+// through here, so both read the same conventions.
 #let formatter-for(directive, options) = {
   if "family" not in directive { return directive.function }
   (directive.family)((
     group: option(options, "number-group-separator"),
     decimal: option(options, "number-decimal-separator"),
+    rounding: option(options, "number-rounding"),
   ))
 }
 

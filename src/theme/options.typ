@@ -12,11 +12,18 @@
   "table-font": none,
   "table-font-size": none,
   "table-align": start,
+  // `auto` lets the table size itself to its content. Given a width, the columns
+  // no columns-width names share whatever the named ones leave.
+  "table-width": auto,
   "table-border-top": none,
   "table-border-bottom": none,
   "breakable": true,
   "infer-alignment": true,
   "decimal-align": true,
+  // Vertical rules between columns and horizontal rules between rows, both off
+  // by default: a table reads better ruled by part than ruled as a grid.
+  "column-border": none,
+  "row-border": none,
   // Header
   "header-title-size": 1.1em,
   "header-title-weight": "bold",
@@ -24,6 +31,8 @@
   "header-align": start,
   "header-border-bottom": none,
   // Column labels
+  // `auto` follows the column beneath, which is what a label usually wants.
+  "column-labels-align": auto,
   "column-labels-weight": "bold",
   "column-labels-size": 1em,
   "column-labels-border-top": none,
@@ -40,6 +49,11 @@
   "row-striping": false,
   "row-striping-fill": luma(245),
   "cell-inset": 0.5em,
+  "body-border-top": none,
+  "body-border-bottom": none,
+  // `auto` leaves the vertical placement to Typst, which centres a cell against
+  // the tallest in its row.
+  "cell-vertical-align": auto,
   // Summaries
   "summary-weight": "bold",
   "summary-fill": none,
@@ -51,8 +65,10 @@
   // German table sets its convention once rather than on every directive.
   "number-group-separator": sym.space.thin,
   "number-decimal-separator": ".",
+  "number-rounding": "half-up",
 
   // Footer
+  "footer-align": start,
   "footnote-marks": "numbers",
   "footnote-size": 0.8em,
   "source-note-size": 0.8em,

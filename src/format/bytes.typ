@@ -60,7 +60,8 @@
   group-separator: auto,
   decimal-separator: auto,
   sign: false,
-  rounding: "half-up",
+  // `auto` means the theme decides, through number-rounding.
+  rounding: auto,
   infinity: none,
 ) = {
   if base not in (1000, 1024) {
@@ -71,7 +72,7 @@
     columns,
     rows: rows,
     scope: "format-bytes",
-    separators => value => _slots(value, (
+    conventions => value => _slots(value, (
       scope: "format-bytes",
       base: base,
       prefix: none,
@@ -81,11 +82,11 @@
       decimals: decimals,
       significant: none,
       grouping: grouping,
-      group-separator: if group-separator == auto { separators.group } else { group-separator },
-      decimal-separator: if decimal-separator == auto { separators.decimal } else { decimal-separator },
+      group-separator: if group-separator == auto { conventions.group } else { group-separator },
+      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
       scale: 1,
       sign: sign,
-      rounding: rounding,
+      rounding: if rounding == auto { conventions.rounding } else { rounding },
       negative-zero: false,
     )),
   )
