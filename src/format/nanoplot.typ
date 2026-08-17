@@ -69,6 +69,7 @@
     kind: "format",
     columns: columns,
     rows: rows,
+    scope: "format-nanoplot",
     nanoplot: (plot: plot, width: width, height: height, baseline: baseline, domain: domain),
     // A plot is drawn from the column's values, not from the row around them.
     cell: false,

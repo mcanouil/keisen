@@ -54,6 +54,7 @@
 #let format-date(columns, rows: auto, pattern: "[year]-[month]-[day]") = format(
   columns,
   rows: rows,
+  scope: "format-date",
   value => {
     if type(value) != datetime and type(value) != str {
       fail-type("format-date", "value", value, "a datetime or an ISO-8601 string")

@@ -9,9 +9,10 @@
 ///! stub cells, the group position for group labels, the note position for
 ///! notes, and `none` where the part has one row.
 
-#import "format/apply.typ": matches-column, matches-row
+#import "format/apply.typ": matches-column, matches-row, named
+#import "parts/stub.typ": stub-column-names
 #import "parts/summaries.typ": directives-for, summary-labels
-#import "utils/errors.typ": fail
+#import "utils/errors.typ": check, check-column, fail
 
 // The vocabulary of addressable parts, named once so the renderer and the
 // location DSL cannot drift apart. They were spelled independently as bare
@@ -66,7 +67,9 @@
 )
 
 // The title block holds two rows, addressed by name rather than by position.
-#let cells-title(parts: ("title", "subtitle")) = (
+#let TITLE-PARTS = ("title", "subtitle")
+
+#let cells-title(parts: TITLE-PARTS) = (
   kind: "location",
   part: PARTS.title,
   parts: if type(parts) == array { parts } else { (parts,) },
@@ -168,35 +171,146 @@
   cells
 }
 
+// A column that exists but sits elsewhere is not an unknown column, and saying
+// so would send the reader hunting for a typo that is not there. Same order and
+// same reasoning as `_check-visible` for columns-move.
+#let _check-columns(spec, scope, selector) = {
+  for name in named(selector, str) {
+    check(
+      name not in spec.hidden,
+      scope,
+      "column " + name + " is hidden",
+      hint: "Address a visible column, or drop the columns-hide.",
+    )
+    check(
+      name not in stub-column-names(spec.stub),
+      scope,
+      "column " + name + " is in the stub",
+      hint: "cells-stub() addresses the row names, and cells-stubhead() their label.",
+    )
+    check-column(spec.columns, scope, name)
+  }
+}
+
+#let _check-rows(spec, scope, selector) = {
+  for position in named(selector, int) {
+    check(
+      position >= 0 and position < spec.data.len(),
+      scope,
+      "row " + repr(position) + " is not in the data",
+      hint: "Rows are numbered from zero, and this table has "
+        + str(spec.data.len())
+        + " of them.",
+    )
+  }
+}
+
+#let _check-notes(scope, selector, count) = {
+  for position in named(selector, int) {
+    check(
+      position >= 0 and position < count,
+      scope,
+      "note " + repr(position) + " is not in the table",
+      hint: "Notes are numbered from zero, and this table has " + str(count) + " of them.",
+    )
+  }
+}
+
+// Group and spanner labels are matched rather than compared, because a numeric
+// selector names the group label it plainly means and a predicate names none of
+// them. Only what the selector spells out is checked.
+#let _check-labels(scope, selector, labels, what, render) = {
+  if selector == auto or type(selector) == function { return }
+  let candidates = if type(selector) == array { selector } else { (selector,) }
+  for candidate in candidates {
+    if type(candidate) == function { continue }
+    check(
+      labels.any(label => _matches-label(candidate, label)),
+      scope,
+      "unknown " + what + " " + repr(candidate),
+      hint: if labels.len() == 0 {
+        "The table has no " + what + "s."
+      } else {
+        "Known " + what + "s: " + labels.map(render).join(", ") + "."
+      },
+    )
+  }
+}
+
+// A summary row answers to its label and to its position within the group, so a
+// selector is checked against every row the summaries produce. `rows` is one
+// list of labels per group, and one list for a grand summary.
+#let _check-summary-rows(scope, selector, rows) = {
+  if selector == auto or type(selector) == function { return }
+  let candidates = if type(selector) == array { selector } else { (selector,) }
+  let known = rows.flatten().dedup()
+  for candidate in candidates {
+    if type(candidate) == function { continue }
+    check(
+      rows.any(labels => labels
+        .enumerate()
+        .any(((position, label)) => _matches-summary(candidate, position, label))),
+      scope,
+      "unknown summary row " + repr(candidate),
+      hint: if known.len() == 0 {
+        "The table has no summary rows."
+      } else {
+        "Known summary rows: " + known.join(", ") + "."
+      },
+    )
+  }
+}
+
+#let _group-labels(spec) = spec.groups.map(group => group.label)
+
 #let _expand-one(location, spec) = {
   let part = location.part
 
   if part == PARTS.body {
+    _check-columns(spec, "cells-body", location.columns)
+    _check-rows(spec, "cells-body", location.rows)
     let rows = spec.data.filter(row => matches-row(location.rows, row))
     let columns = spec.columns.filter(name => matches-column(location.columns, name))
     rows.map(row => columns.map(name => _address(PARTS.body, row: row._index, column: name))).flatten()
   } else if part == PARTS.stub {
+    _check-rows(spec, "cells-stub", location.rows)
     spec.data
       .filter(row => matches-row(location.rows, row))
       .map(row => _address(PARTS.stub, row: row._index))
   } else if part == PARTS.stubhead {
     (_address(PARTS.stubhead),)
   } else if part == PARTS.row-groups {
+    _check-labels("cells-row-groups", location.groups, _group-labels(spec), "group", label => label)
     spec
       .groups
       .enumerate()
       .filter(((index, group)) => _matches-label(location.groups, group.label))
       .map(((index, group)) => _address(PARTS.row-groups, row: index))
   } else if part == PARTS.column-labels {
+    _check-columns(spec, "cells-column-labels", location.columns)
     spec.columns
       .filter(name => matches-column(location.columns, name))
       .map(name => _address(PARTS.column-labels, column: name))
   } else if part == PARTS.column-spanners {
     // A spanner has no column of its own, so it is addressed by its label.
+    _check-labels(
+      "cells-column-spanners",
+      location.spanners,
+      spec.spanners.map(spanner => spanner.label),
+      "spanner",
+      repr,
+    )
     spec.spanners
       .filter(spanner => _matches-label(location.spanners, spanner.label))
       .map(spanner => _address(PARTS.column-spanners, row: spanner.level, column: spanner.label))
   } else if part == PARTS.summary {
+    _check-labels("cells-summary", location.groups, _group-labels(spec), "group", label => label)
+    if location.columns != none { _check-columns(spec, "cells-summary", location.columns) }
+    _check-summary-rows(
+      "cells-summary",
+      location.rows,
+      spec.groups.map(group => summary-labels(directives-for(spec.summaries, group.label))),
+    )
     spec
       .groups
       .enumerate()
@@ -212,14 +326,30 @@
         )))
       .flatten()
   } else if part == PARTS.grand-summary {
+    if location.columns != none { _check-columns(spec, "cells-grand-summary", location.columns) }
+    _check-summary-rows(
+      "cells-grand-summary",
+      location.rows,
+      (summary-labels(spec.grand-summaries),),
+    )
     summary-labels(spec.grand-summaries)
       .enumerate()
       .filter(((position, label)) => _matches-summary(location.rows, position, label))
       .map(((position, label)) => _summary-cells(location, spec, PARTS.grand-summary, position))
       .flatten()
   } else if part == PARTS.title {
+    for name in location.parts {
+      check(
+        name in TITLE-PARTS,
+        "cells-title",
+        "unknown title part",
+        value: name,
+        hint: "The title block holds " + TITLE-PARTS.map(repr).join(" and ") + ".",
+      )
+    }
     location.parts.map(name => _address(PARTS.title, column: name))
   } else if part == PARTS.source-notes {
+    _check-notes("cells-source-notes", location.notes, spec.source-notes.len())
     spec.source-notes
       .enumerate()
       .filter(((index, note)) => matches-row(location.notes, (_index: index)))
@@ -236,6 +366,7 @@
         hint: "A footnote cannot mark a footnote row; style them with table-style instead.",
       )
     }
+    _check-notes("cells-footnotes", location.notes, spec.footnote-rows)
     range(spec.footnote-rows)
       .filter(position => matches-row(location.notes, (_index: position)))
       .map(position => _address(PARTS.footnotes, row: position))

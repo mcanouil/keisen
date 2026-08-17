@@ -88,7 +88,10 @@
 #assert.eq(grand.len(), 3)
 #assert.eq(expand(cells-grand-summary(columns: "revenue"), spec).len(), 1)
 #assert.eq(expand(cells-grand-summary(rows: "Total"), spec).len(), 3)
-#assert.eq(expand(cells-grand-summary(rows: "Absent"), spec), ())
+// A label no summary carries is a typo and is reported; see
+// tests/expect-fail/location-unknown-summary-row.typ. A predicate is a filter,
+// so matching nothing stays silent.
+#assert.eq(expand(cells-grand-summary(rows: label => false), spec), ())
 
 // The addresses are worth nothing unless the index the renderer reads holds
 // them. These are the exact keys `assemble` looks up, so a location that

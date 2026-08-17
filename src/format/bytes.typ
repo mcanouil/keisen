@@ -70,6 +70,7 @@
   format-family(
     columns,
     rows: rows,
+    scope: "format-bytes",
     separators => value => _slots(value, (
       scope: "format-bytes",
       base: base,

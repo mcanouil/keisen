@@ -13,6 +13,7 @@
 #let format-markup(columns, rows: auto) = format(
   columns,
   rows: rows,
+  scope: "format-markup",
   value => {
     if type(value) == content { return value }
     if type(value) != str {

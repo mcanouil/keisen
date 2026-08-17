@@ -7,9 +7,11 @@
 // in. The second table styles the first row instead, so the two fills landing
 // on the same row would show as one colour missing.
 //
+// A row past the last one used to be styled in silence; it is now reported, and
+// tests/expect-fail/location-footnote-out-of-range.typ holds it.
+//
 // expect-svg: #ff0000
 // expect-svg: #0000ff
-// reject-svg: #00ff00
 
 #import "../../lib.typ": *
 
@@ -23,7 +25,6 @@
   table-footnote([Explains the table.]),
   table-footnote([Marks a cell.], locations: cells-body(rows: 0, columns: "units")),
   table-style(style(fill: rgb("#ff0000")), locations: cells-footnotes(notes: 1)),
-  table-style(style(fill: rgb("#00ff00")), locations: cells-footnotes(notes: 2)),
 )
 
 #display-table(

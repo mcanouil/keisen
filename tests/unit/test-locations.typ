@@ -49,8 +49,12 @@
   (1, 2),
 )
 
-// Hidden and stub columns are not body cells.
-#assert.eq(expand(cells-body(columns: "product"), spec), ())
+// A predicate is a filter, so matching nothing is silent: a table built from
+// filtered data legitimately has fewer rows on some renderings than on others.
+// A name is not a filter, and one that does not resolve is reported instead;
+// tests/expect-fail/ holds those, including the stub and hidden cases.
+#assert.eq(expand(cells-body(columns: name => name == "absent"), spec), ())
+#assert.eq(expand(cells-body(rows: row => false), spec), ())
 
 // --- the other parts ---
 
@@ -71,14 +75,14 @@
 // its own to be named by.
 #assert.eq(expand(cells-column-spanners(), spec).map(cell => cell.column), ([Figures],))
 #assert.eq(expand(cells-column-spanners(spanners: [Figures]), spec).len(), 1)
-#assert.eq(expand(cells-column-spanners(spanners: [Missing]), spec), ())
+#assert.eq(expand(cells-column-spanners(spanners: label => false), spec), ())
 
 #assert.eq(expand(cells-title(), spec).map(cell => cell.column), ("title", "subtitle"))
 #assert.eq(expand(cells-title(parts: "title"), spec).map(cell => cell.column), ("title",))
 
 #assert.eq(expand(cells-source-notes(), spec), ((part: "source-notes", row: 0, column: none),))
 #assert.eq(expand(cells-source-notes(notes: (0,)), spec).len(), 1)
-#assert.eq(expand(cells-source-notes(notes: 1), spec), ())
+#assert.eq(expand(cells-source-notes(notes: note => false), spec), ())
 
 // A group column of numbers is labelled by strings, so a numeric selector
 // matches the group it plainly means.
