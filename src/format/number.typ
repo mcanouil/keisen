@@ -100,6 +100,12 @@
   let integer = digits.first().trim("0", at: start)
   if integer != "" { return count - integer.len() }
   let fraction = if digits.len() > 1 { digits.at(1) } else { "" }
+  // Zero has no significant digit to place, and the arithmetic below would read
+  // its scale as leading zeros instead: `decimal("0.00")` writes two of them, so
+  // a zero from a string counted four places where a zero from an integer
+  // counted two. A decimal keeps the scale it was written with, and rounding
+  // does not always keep it, so the scale must not reach the count at all.
+  if fraction.trim("0") == "" { return count }
   let leading = fraction.len() - fraction.trim("0", at: start).len()
   leading + count
 }

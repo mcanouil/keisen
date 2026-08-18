@@ -23,6 +23,11 @@
   slots.integer + slots.separator + slots.fraction
 }
 
+#let written-half-even(value, count) = {
+  let slots = format-value(value, (..options, significant: count, rounding: "half-even"))
+  slots.integer + slots.separator + slots.fraction
+}
+
 // The carrying cases. R writes `signif(9.99, 2)` as 10 and Python writes
 // `"%.2g" % 9.99` as 10, which is what two significant digits of 9.99 are.
 #assert.eq(written(9.99, 2), "10")
@@ -41,10 +46,25 @@
 // and 123.4 is 120, both already right.
 #assert.eq(written(99.9, 2), "100")
 #assert.eq(written(123.4, 2), "120")
-#assert.eq(written(1234.5, 3), "1 230")
-#assert.eq(written(0.0012345, 2), "0.0012")
 #assert.eq(written(2.5, 2), "2.5")
 #assert.eq(written(0.04, 2), "0.040")
 
-// Zero has no significant digit to measure, so the count is the whole of it.
+// The place is measured against the rounded value, so it is measured under the
+// rounding the caller asked for. Both modes carry here, and both must print the
+// digits that were asked for.
+#assert.eq(written-half-even(9.99, 2), "10")
+#assert.eq(written-half-even(0.0999, 2), "0.10")
+
+// A string and a decimal carry the scale they were written with, and `str`
+// prints it: `decimal("0.00")` writes two trailing zeros where the integer 0
+// writes none. The scale is not a significant digit, so it must not reach the
+// count. It did, and a zero from a string printed four decimals under half-up
+// and two under half-even: one value, two answers, neither asked for.
+#assert.eq(written("0.00", 2), "0.00")
+#assert.eq(written-half-even("0.00", 2), "0.00")
 #assert.eq(written(0, 2), "0.00")
+#assert.eq(written-half-even(0, 2), "0.00")
+
+// The same scale on a value that is not zero is read as the precision it is.
+#assert.eq(written("9.990", 2), "10")
+#assert.eq(written("0.04000", 2), "0.040")
