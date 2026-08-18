@@ -3,7 +3,7 @@
 ///! Marks are local content, not Typst `footnote` elements, so they never
 ///! renumber the page footnotes a document may already have.
 
-#import "../locations.typ": expand
+#import "../locations.typ": PARTS, expand
 #import "../render/plan.typ": build-plan
 #import "../theme/options.typ": option
 #import "notes.typ": MARK-ORDER, numbering-of
@@ -27,9 +27,30 @@
   order
 }
 
+// Where a spanner sits on the page, as the row and column a cell address would
+// carry. A spanner address holds its level where a row goes and its label where
+// a column name goes, so neither reads as a position: levels render highest
+// first at `spanner-rows`, so the level had the order upside down, and the label
+// is never in the column list, so every spanner ranked alike and the order the
+// directives were written in decided between them.
+#let _spanner-position(address, spec, columns) = {
+  let spanner = spec.spanners.find(spanner => (
+    spanner.level == address.row and spanner.label == address.column
+  ))
+  if spanner == none { return (-address.row, -1) }
+  let covered = spanner.columns.map(name => columns.position(candidate => candidate == name))
+  let known = covered.filter(position => position != none)
+  (-address.row, if known.len() == 0 { -1 } else { calc.min(..known) })
+}
+
 #let _rank(address, spec, display, columns) = {
   let part = MARK-ORDER.position(name => name == address.part)
   let part-rank = if part == none { MARK-ORDER.len() } else { part }
+
+  if address.part == PARTS.column-spanners {
+    let (level, column) = _spanner-position(address, spec, columns)
+    return (part-rank, level, column)
+  }
 
   // Within a part, follow the rendered row, then the column left to right.
   let row = display.at(
@@ -101,12 +122,30 @@
 // note marking a row further down is numbered later, so printing the footer in
 // directive order would list mark 2 above mark 1, and cells-footnotes would
 // address rows a reader counting marks could not predict.
+// One row per mark, not one per directive. Two cells carrying the same caveat
+// share a mark, and the footer printed that mark twice, the second time out of
+// mark order. Keyed by the note and the mark asked for, exactly as the mark
+// itself is keyed above, so two notes reading the same under two marks the
+// caller wrote stay two rows.
+//
+// Unmarked notes explain the table rather than a cell and have no mark to
+// share, so each one written is a row printed.
+//
 // Parenthesised because a leading `+` on a new line parses as a unary operator
 // on the array below it rather than as concatenation.
-#let footer-notes(footnotes) = (
-  footnotes.filter(footnote => footnote.mark != none).sorted(key: footnote => footnote.position)
-    + footnotes.filter(footnote => footnote.mark == none)
-)
+#let footer-notes(footnotes) = {
+  let seen = (:)
+  let marked = ()
+  for footnote in footnotes.filter(footnote => footnote.mark != none).sorted(key: footnote => (
+    footnote.position
+  )) {
+    let key = repr(footnote.note) + "|" + repr(footnote.mark)
+    if key in seen { continue }
+    seen.insert(key, true)
+    marked.push(footnote)
+  }
+  marked + footnotes.filter(footnote => footnote.mark == none)
+}
 
 // Marks that belong on one cell, in the order they were numbered.
 #let marks-for(footnotes, part, row, column) = {

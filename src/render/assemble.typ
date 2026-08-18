@@ -100,7 +100,10 @@
   // How many rows the footer prints is what cells-footnotes addresses, and it is
   // known only once the marks are assigned, so the styles are indexed against a
   // spec that carries the answer.
-  let addressable = spec + (footnote-rows: footnotes.len())
+  // Rows printed, not directives written: two cells carrying the same caveat
+  // share a mark and one footer row, so counting the directives addressed a row
+  // that is not there.
+  let addressable = spec + (footnote-rows: footer-notes(footnotes).len())
 
   let index = colours.pairs().fold(build-index(addressable), (styles, pair) => {
     let (key, properties) = pair
