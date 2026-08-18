@@ -73,6 +73,8 @@ Seven aggregations are nameable: `aggregate-sum`, `aggregate-mean`, `aggregate-m
 A width is a string carrying a number and one of `pt`, `mm`, `cm`, `in`, `em`, `fr` or `%`, or `"auto"`.
 A bare number is refused rather than given a unit nobody wrote.
 An alignment is one of `start`, `end`, `center`, `left` or `right`.
+Its `columns` is a name, an array of names, or `null` for every column.
+JSON writes no predicate, so an array is the only way a generator names several columns, and every name in it is held to the table: one the table does not carry is reported rather than skipped.
 A colour is a hex string, wherever one is wanted: a palette stop, a fill, a text fill, or the colour a missing value takes.
 
 `tests/unit/test-serialised-surface.typ` holds this page to the tables the resolver reads, so a name added to one and not the other fails the suite.

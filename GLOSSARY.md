@@ -9,7 +9,7 @@ Doc-only: this file documents names already in the code, it does not change any.
 | --- | --- | --- |
 | header | title and subtitle block | Rendered as a level-1 native header, never repeated across pages. |
 | stubhead | the cell above the stub | Labels the stub column; empty by default. |
-| stub | row-name column | Always start-aligned, carries indentation levels. |
+| stub | row-name column | Start-aligned unless `columns-align` names it, carries indentation levels. |
 | spanner | label spanning adjacent columns | Extra header rows of `colspan` cells above the column labels. |
 | row group | labelled block of body rows | Rendered as a level-3 subheader so it repeats across page breaks. |
 | body | the data rows | The only rows counted for striping. |

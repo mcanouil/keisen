@@ -10,6 +10,7 @@
 ///! Ordering now happens here, once, after every directive has been recorded,
 ///! so a move sees the columns the table actually has.
 
+#import "../format/apply.typ": matches-column, named
 #import "../parts/stub.typ": stub-column-names
 #import "../parts/substitutions.typ": is-missing
 #import "../utils/errors.typ": check, check-column
@@ -73,6 +74,77 @@
     // hidden is not hidden twice.
     for name in hidden {
       if name != directive.into and name not in out.hidden { out.hidden.push(name) }
+    }
+  }
+
+  out
+}
+
+// A column that takes no alignment, said as such rather than as a typo.
+//
+// The stub is tested before the hidden columns, which reverses the order
+// `_check-visible` uses. It can afford either order because it refuses the stub
+// anyway; here the order shows, since `columns-hide` on a stub column is
+// silently ineffective and the stub still draws it. Reporting that column as
+// hidden would name one plainly on the page.
+#let _check-alignable(spec, name) = {
+  if name == spec.stub.rowname { return }
+
+  check(
+    name != spec.stub.group,
+    "columns-align",
+    "column " + name + " is the stub's group column",
+    hint: "Only the row-name column takes an alignment; a group column is drawn as a row label across the table.",
+  )
+  check(
+    name != spec.stub.indent,
+    "columns-align",
+    "column " + name + " is the stub's indent column",
+    hint: "Only the row-name column takes an alignment; an indent column sets the stub's indentation and is never drawn.",
+  )
+  check(
+    name not in spec.hidden,
+    "columns-align",
+    "column " + name + " is hidden",
+    hint: "Align a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.",
+  )
+  check-column(spec.columns, "columns-align", name)
+}
+
+// Which column each alignment lands on, resolved once the table knows which
+// columns it has.
+//
+// Deciding this inside the fold read whichever columns happened to be present
+// at that moment: a blanket alignment ran before `apply-combines` built the
+// combined column and so never reached it, and an array selector was filtered
+// against that same half-built list, which dropped a typo without a word.
+//
+// The recorded order is walked as written, because the last alignment for a
+// column wins. Resolving the blanket selectors in a pass of their own would let
+// one override a named alignment written after it.
+#let apply-alignments(spec) = {
+  let out = spec
+
+  for directive in out.alignments {
+    let spelled = type(directive.columns) in (str, array)
+    let names = if spelled {
+      named(directive.columns, str)
+    } else {
+      out.columns.filter(name => matches-column(directive.columns, name))
+    }
+
+    for name in names {
+      if spelled { _check-alignable(out, name) }
+      // Indentation is leading space before the row name, and any alignment
+      // other than start absorbs it, so every level would sit against the same
+      // edge and the hierarchy would be gone.
+      check(
+        name != out.stub.rowname or out.stub.indent == none or directive.alignment == start,
+        "columns-align",
+        "an indented stub is start-aligned",
+        hint: "The indent column sets the depth of each row name, which any other alignment would flatten.",
+      )
+      out.align.insert(name, directive.alignment)
     }
   }
 

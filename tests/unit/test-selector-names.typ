@@ -7,6 +7,7 @@
 
 #import "../../src/format/apply.typ": named
 #import "../../src/format/number.typ": format-number
+#import "../../src/parts/columns.typ": columns-align
 #import "../../src/spec.typ": build-spec
 
 #assert.eq(named("units", str), ("units",))
@@ -32,3 +33,19 @@
 // The directive carries the name the caller wrote, so an unknown column is
 // reported under that name rather than under the constructor behind it.
 #assert.eq(quiet.formats.first().scope, "format-number")
+
+// --- an alignment selector draws the same line ---
+
+#let aligned(directives) = build-spec((units: (1, 2), price: (3, 4)), directives, (:)).align
+
+// Every name an array spells out lands, so a typo among them is reported rather
+// than filtered away.
+#assert.eq(aligned((columns-align(end, columns: ("units", "price")),)), (units: end, price: end))
+#assert.eq(aligned((columns-align(end, columns: "units"),)), (units: end))
+
+// A predicate matching nothing aligns nothing, in silence.
+#assert.eq(aligned((columns-align(end, columns: name => false),)), (:))
+
+// A selector holding both kinds answers for the names alone, exactly as a
+// summary selector does: an index addresses a row, never a column.
+#assert.eq(aligned((columns-align(end, columns: ("units", 3)),)), (units: end))

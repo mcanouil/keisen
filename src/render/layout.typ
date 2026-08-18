@@ -36,12 +36,23 @@
   if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
 }
 
-#let alignments(spec) = {
+#let column-alignments(spec) = {
   let infer = option(spec.options, "infer-alignment")
   spec.columns.map(name => spec.align.at(
     name,
     default: if infer { infer-alignment(spec.data, name) } else { start },
   ))
+}
+
+// The stub is not in the column list, so it is read by name rather than by
+// position. Start is where a row name goes, and nothing is inferred: the stub
+// labels the rows rather than carrying data to line up.
+//
+// A table with no stub has no row-name column, and a dictionary cannot be asked
+// for a key of none, so the absence is answered before the lookup.
+#let stub-alignment(spec) = {
+  if spec.stub.rowname == none { return start }
+  spec.align.at(spec.stub.rowname, default: start)
 }
 
 // Built-in formatters return the alignment dictionary rather than content, so

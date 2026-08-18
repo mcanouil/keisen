@@ -2,7 +2,7 @@
 // so no directive depends on being written before or after another.
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/parts/columns.typ": columns-hide, columns-label, columns-move
+#import "../../src/parts/columns.typ": columns-align, columns-combine, columns-hide, columns-label, columns-move
 #import "../../src/parts/spanners.typ": table-spanner
 #import "../../src/parts/stub.typ": table-stub
 
@@ -77,3 +77,67 @@
   (:),
 )
 #assert.eq(labelled.labels.price, [Price])
+
+// --- an alignment reaches a column the fold had not built yet ---
+
+#let paired = (estimate: (1.2,), error: (0.1,))
+#let pattern = (value, spread) => [#value (#spread)]
+
+#let combine-first = build-spec(
+  paired,
+  (columns-combine("effect", ("estimate", "error"), pattern), columns-align(end)),
+  (:),
+)
+#assert.eq(combine-first.align, (effect: end))
+
+#let align-first = build-spec(
+  paired,
+  (columns-align(end), columns-combine("effect", ("estimate", "error"), pattern)),
+  (:),
+)
+#assert.eq(align-first.align, combine-first.align)
+
+// --- the last alignment written wins, whichever spelling it is ---
+
+#let sales = (units: (1,), price: (2,))
+
+#let named-last = build-spec(
+  sales,
+  (columns-align(center), columns-align(end, columns: "units")),
+  (:),
+)
+#assert.eq(named-last.align, (units: end, price: center))
+
+#let blanket-last = build-spec(
+  sales,
+  (columns-align(end, columns: "units"), columns-align(center)),
+  (:),
+)
+#assert.eq(blanket-last.align, (units: center, price: center))
+
+// --- a selector that filters never reaches the stub ---
+//
+// The stub leaves the column list, and a filter reads that list, so only a name
+// spelled out addresses it. Written either way round, so the rule is the rule
+// rather than an accident of where the stub directive sits.
+
+#let filtered-stub = build-spec(
+  (product: ("Bolt",), units: (1,)),
+  (table-stub(rowname: "product"), columns-align(center)),
+  (:),
+)
+#assert.eq(filtered-stub.align, (units: center))
+
+#let filtered-stub-last = build-spec(
+  (product: ("Bolt",), units: (1,)),
+  (columns-align(center), table-stub(rowname: "product")),
+  (:),
+)
+#assert.eq(filtered-stub-last.align, filtered-stub.align)
+
+#let named-stub = build-spec(
+  (product: ("Bolt",), units: (1,)),
+  (table-stub(rowname: "product"), columns-align(end, columns: "product")),
+  (:),
+)
+#assert.eq(named-stub.align, (product: end))

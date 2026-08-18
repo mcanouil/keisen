@@ -35,6 +35,10 @@
     label: [95% CI],
   ),
   columns-label(p: [_p_]),
+  // A combined column holds figures but carries content, so nothing infers an
+  // edge for it. Saying so is the only way it reaches the end edge, and this is
+  // the case that used to be resolved before the column existed.
+  columns-align(end, columns: "effect"),
   table-source-note([Source: association study.]),
   theme: theme-booktabs(),
 )

@@ -15,7 +15,7 @@
 #import "../locations.typ": PARTS
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
-#import "layout.typ": alignments, column-cells, infer-alignment, metrics, slots-to-content, summarised
+#import "layout.typ": column-alignments, column-cells, infer-alignment, metrics, slots-to-content, stub-alignment, summarised
 #import "plan.typ": build-plan
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
@@ -114,7 +114,8 @@
     styles.insert(key, merged)
     styles
   })
-  let alignments = alignments(spec)
+  let alignments = column-alignments(spec)
+  let stub-align = stub-alignment(spec)
   let metrics = metrics(spec, cells, summaries)
 
   // A rule dictionary carrying only the edges that have a rule. `(top: none)`
@@ -151,10 +152,11 @@
     // stub address, the rest by column.
     let marked(body, column) = _marked(body, marks-for(footnotes, part, row-key, column))
     if has-stub {
+      // The label sits in the stub column, so it follows that column's edge.
       cells.push(_cell(
         style-for(index, part, row-key, none),
         marked(label, none),
-        align: start,
+        align: stub-align,
         fill: setting("summary-fill"),
         stroke: rule,
       ))
@@ -258,7 +260,14 @@
     labels.push(_cell(
       style-for(index, PARTS.stubhead, none, none),
       _marked(stubhead, marks-for(footnotes, PARTS.stubhead, none, none)),
-      align: start,
+      // The same rule the other column labels follow below: the theme option
+      // when it names one, the column's own edge when it leaves it to the
+      // column.
+      align: if setting("column-labels-align") == auto {
+        stub-align
+      } else {
+        setting("column-labels-align")
+      },
       stroke: label-rules,
     ))
   }
@@ -323,7 +332,7 @@
         rows.push(_cell(
           style-for(index, PARTS.stub, entry.source, none),
           _marked(body, marks-for(footnotes, PARTS.stub, entry.source, none)),
-          align: start,
+          align: stub-align,
           fill: stripe-fill(entry),
         ))
       }
