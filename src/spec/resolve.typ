@@ -386,21 +386,10 @@
   rgb(value)
 }
 
-// The style properties a cell understands, with the colours resolved.
-#let _properties(given) = {
-  let out = (:)
-  for (key, value) in given {
-    out.insert(
-      key,
-      if key == "fill" { _colour(value, "fill") } else if key == "text" and type(value) == dictionary {
-        let inner = value
-        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
-        inner
-      } else { value },
-    )
-  }
-  out
-}
+// A hex colour, which is how a stroke written as one string is told apart from a
+// stroke written as a thickness. Both are strokes Typst takes, and JSON has one
+// spelling for the two.
+#let _is-colour(value) = type(value) == str and value.match(regex("^#[0-9A-Fa-f]{3,8}$")) != none
 
 #let _selector(value) = if value == none { auto } else { value }
 
@@ -436,12 +425,15 @@
   "%": 1%,
 )
 
-#let _length(value, scope) = {
+// `what` names the thing being measured, since the same reading serves a column
+// width, a cell inset and the thickness of a rule, and a message about a width
+// sends the reader to the wrong key.
+#let _length(value, scope, what: "a width") = {
   if value == none or value == "auto" { return auto }
   if type(value) in (int, float) {
     fail(
       scope,
-      "a width needs a unit",
+      what + " needs a unit",
       value: value,
       hint: "Write it as a string, for example \"2cm\" or \"1fr\".",
     )
@@ -451,12 +443,72 @@
   if found == none {
     fail(
       scope,
-      "not a width",
+      "not " + what,
       value: value,
       hint: "Write a number and one of " + UNITS.keys().join(", ") + ", or \"auto\".",
     )
   }
   float(found.captures.first()) * UNITS.at(found.captures.last())
+}
+
+// An inset is one length, or one per side. Typst reads `left`, `right`, `top`,
+// `bottom`, `x`, `y` and `rest`, and each of them is a length, so every side the
+// caller wrote is measured and no side is invented.
+#let _inset(value) = {
+  if type(value) != dictionary { return _length(value, "style", what: "an inset") }
+  let out = (:)
+  for (side, length) in value {
+    out.insert(side, _length(length, "style", what: "an inset"))
+  }
+  out
+}
+
+// A stroke is a colour, a thickness, or a dictionary carrying both and whatever
+// else Typst reads: `dash`, `cap`, `join`, `miter-limit`. Written as one string
+// it is a colour when it is spelled as one and a thickness otherwise, which are
+// the two things a single value can mean.
+#let _stroke(value) = {
+  if value == none { return none }
+  if type(value) == str {
+    return if _is-colour(value) { _colour(value, "stroke") } else {
+      _length(value, "style", what: "a thickness")
+    }
+  }
+  if type(value) != dictionary { return value }
+  let out = value
+  if "paint" in out { out.insert("paint", _colour(out.paint, "stroke paint")) }
+  if "thickness" in out {
+    out.insert("thickness", _length(out.thickness, "style", what: "a thickness"))
+  }
+  out
+}
+
+// The style properties a cell understands, resolved out of what JSON can write.
+// Colours were resolved and everything else was passed through as written, so
+// `align`, `inset` and `stroke` had no spelling that worked: the string reached
+// the renderer and failed there, as a Typst type error pointing into this
+// package rather than as a message naming the key the caller wrote.
+#let _properties(given) = {
+  let out = (:)
+  for (key, value) in given {
+    out.insert(
+      key,
+      if key == "fill" {
+        _colour(value, "fill")
+      } else if key == "align" {
+        _alignment(value, "style")
+      } else if key == "inset" {
+        _inset(value)
+      } else if key == "stroke" {
+        _stroke(value)
+      } else if key == "text" and type(value) == dictionary {
+        let inner = value
+        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
+        inner
+      } else { value },
+    )
+  }
+  out
 }
 
 #let FORMAT-OPTIONS = (
