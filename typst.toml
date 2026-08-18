@@ -11,12 +11,9 @@ homepage = "https://m.canouil.dev/keisen"
 keywords = ["table", "display-table", "formatting", "reporting"]
 categories = ["report"]
 exclude = [
-  ".claude",
   ".editorconfig",
   ".github",
   ".gitignore",
-  ".kata.toml",
-  "AGENTS.md",
   "docs",
   "examples",
   "tests",
