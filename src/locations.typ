@@ -197,32 +197,32 @@
   }
 }
 
-// A label as it reads in a hint. A group label is a string when the data made
-// it and whatever was written when `table-row-group` did, and a spanner label is
-// content, so anything but a string is shown as the value it is.
-//
-// `check` evaluates its hint eagerly, which `src/spec.typ` records as well, so
-// this runs on every check whether or not it fails. Joining the labels straight
-// into the sentence died with a raw Typst message about adding a string and an
-// integer, pointing into this file, for a selector that was about to match.
-#let _label-text(label) = if type(label) == str { label } else { repr(label) }
-
 // Group and spanner labels are matched rather than compared, because a numeric
 // selector names the group label it plainly means and a predicate names none of
 // them. Only what the selector spells out is checked.
+//
+// The hint is built inside the failing branch, the way `check-column` builds
+// its own. Passing it to `check` built it on every call, and a label is any
+// value: a group labelled by `table-row-group(3, ..)` is an integer and a
+// spanner label is content, so listing them died with a raw Typst message about
+// adding a string and an integer, for a selector that was about to match.
+//
+// Each label is written as the value it is, which is how the problem clause
+// writes the candidate that missed. A hint listing `North` against a problem
+// naming `"Nowhere"` reads as two different vocabularies.
 #let _check-labels(scope, selector, labels, what) = {
   if selector == auto or type(selector) == function { return }
   let candidates = if type(selector) == array { selector } else { (selector,) }
   for candidate in candidates {
     if type(candidate) == function { continue }
-    check(
-      labels.any(label => matches-label(candidate, label)),
+    if labels.any(label => matches-label(candidate, label)) { continue }
+    fail(
       scope,
       "unknown " + what + " " + repr(candidate),
       hint: if labels.len() == 0 {
         "The table has no " + what + "s."
       } else {
-        "Known " + what + "s: " + labels.map(_label-text).join(", ") + "."
+        "Known " + what + "s: " + labels.map(repr).join(", ") + "."
       },
     )
   }
