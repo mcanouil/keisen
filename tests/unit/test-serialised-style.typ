@@ -19,6 +19,13 @@
 #assert.eq(resolved((align: "center")).align, center)
 #assert.eq(resolved((align: "end")).align, end)
 
+// A cell places itself on both axes, unlike a column, and the renderer takes an
+// explicit style's alignment as written. So the vertical names are read too,
+// and the two axes are written together the way Typst writes them.
+#assert.eq(resolved((align: "horizon")).align, horizon)
+#assert.eq(resolved((align: "center + horizon")).align, center + horizon)
+#assert.eq(resolved((align: "bottom+right")).align, right + bottom)
+
 // An inset is a length written as a string, as a width is.
 #assert.eq(resolved((inset: "4pt")).inset, 4pt)
 #assert.eq(resolved((inset: "1em")).inset, 1em)
@@ -48,6 +55,9 @@
 #assert.eq(resolved((fill: "#eeeeee")).fill, rgb("#eeeeee"))
 #assert.eq(resolved((text: (weight: "bold"))).text, (weight: "bold"))
 #assert.eq(resolved((text: (fill: "#ffffff"))).text.fill, rgb("#ffffff"))
+
+// A text size is a length, which JSON cannot spell either.
+#assert.eq(resolved((text: (size: "12pt"))).text.size, 12pt)
 
 // A value that is already a Typst value passes through, since the same resolver
 // runs over a style a document wrote by hand.

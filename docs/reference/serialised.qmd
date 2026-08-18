@@ -82,8 +82,8 @@ A `style` carries the same five properties `style()` takes, each written as JSON
 | Property | Written as |
 | --- | --- |
 | `fill` | A colour. |
-| `text` | A dictionary Typst reads, with `fill` as a colour. |
-| `align` | An alignment name. |
+| `text` | A dictionary Typst reads, with `fill` as a colour and `size` as a length. |
+| `align` | A horizontal name, a vertical name of `top`, `horizon` or `bottom`, or the two added: `"center + horizon"`. |
 | `inset` | A length, or a dictionary of `left`, `right`, `top`, `bottom`, `x`, `y` or `rest`, each a length. |
 | `stroke` | A colour, a length for the thickness, `null` for no rule, or a dictionary of `paint`, `thickness` and whatever else Typst reads, such as `dash`. |
 
