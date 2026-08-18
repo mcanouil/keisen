@@ -10,7 +10,7 @@
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column, matches-row, named, nanoplot-columns
-#import "spec/resolve.typ": apply-combines, apply-moves
+#import "spec/resolve.typ": apply-alignments, apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/errors.typ": check, check-column, fail
 
@@ -65,6 +65,9 @@
   summaries: (),
   grand-summaries: (),
   widths: (:),
+  // Recorded in the order they were written, and resolved into `align` once the
+  // table knows which columns it has.
+  alignments: (),
   align: (:),
   source-notes: (),
   options: (:),
@@ -246,10 +249,12 @@
 
   for name in spec.labels.keys() { check-column(known, "columns-label", name) }
   for name in spec.widths.keys() { check-column(known, "columns-width", name) }
-  for name in spec.align.keys() { check-column(known, "columns-align", name) }
+  // Alignment is not checked here. It is checked by apply-alignments, beside
+  // where it is resolved, because the stub takes an alignment and a hidden
+  // column refuses one, so `known` is the wrong set to hold it to.
 
   // A directive naming a column the table does not have formats nothing and said
-  // nothing, which is the typo the three checks above already catch. Each is
+  // nothing, which is the typo the two checks above already catch. Each is
   // reported under the name the caller wrote, so `format-date` is named rather
   // than the shared constructor behind it.
   for directive in spec.formats {
@@ -351,15 +356,11 @@
       )
       spec.widths = spec.widths + directive.widths
     } else if directive.kind == "align" {
-      // Named columns are recorded as given so an unknown name is reported;
-      // a selector matching nothing would otherwise be silent.
-      if type(directive.columns) == str {
-        spec.align.insert(directive.columns, directive.alignment)
-      } else {
-        for name in spec.columns.filter(name => matches-column(directive.columns, name)) {
-          spec.align.insert(name, directive.alignment)
-        }
-      }
+      // Recorded rather than applied, exactly as a move or a combine is. A
+      // selector resolved mid-fold reads a column list that a later stub, hide
+      // or combine still changes, so a blanket alignment never reached a
+      // combined column and an array selector filtered a typo away in silence.
+      spec.alignments.push(directive)
     } else if directive.kind == "summary" {
       if directive.scope == "group" {
         spec.summaries.push(directive)
@@ -379,10 +380,12 @@
   }
 
   // Ordering first, so spanner adjacency and every column check see the order
-  // the table will actually render in. Validation then runs once, before
-  // grouping, which would otherwise die inside the data layer rather than
-  // naming the offending directive.
-  let validated = validate-spanners(_validate(apply-moves(apply-combines(spec))))
+  // the table will actually render in. Alignment resolves after the ordering
+  // rather than before it, because an unknown column is reported with the known
+  // ones listed, and that list should read in the order the table renders in.
+  // Validation then runs once, before grouping, which would otherwise die
+  // inside the data layer rather than naming the offending directive.
+  let validated = validate-spanners(_validate(apply-alignments(apply-moves(apply-combines(spec)))))
   // Derived from the column when the stub names one, declared by the document
   // otherwise. Validation has already refused both at once.
   validated.groups = if validated.row-groups.len() > 0 {

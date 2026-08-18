@@ -4,7 +4,7 @@
 // left-to-right, because a number reads the same way in every script.
 
 #import "../../src/format/align.typ": align-slots, column-metrics
-#import "../../src/render/layout.typ": alignments, infer-alignment
+#import "../../src/render/layout.typ": column-alignments, infer-alignment, stub-alignment
 #import "../../src/theme/options.typ": DEFAULTS
 
 #let rows = (
@@ -27,10 +27,21 @@
   options: (:),
 )
 
-#assert.eq(alignments(spec), (start, end))
+#assert.eq(column-alignments(spec), (start, end))
 
 // An explicit alignment is the caller's business, direction-relative or not.
-#assert.eq(alignments(spec + (align: (amount: center))), (start, center))
+#assert.eq(column-alignments(spec + (align: (amount: center))), (start, center))
+
+// --- the stub takes an alignment of its own ---
+
+// The stub is not in the column list, so it reads the dictionary by name rather
+// than by position. Start is where a row name goes, so that is the default.
+#assert.eq(stub-alignment((stub: (rowname: "item"), align: (item: end))), end)
+#assert.eq(stub-alignment((stub: (rowname: "item"), align: (:))), start)
+
+// A table with no stub has no row-name column to look up, and a dictionary
+// cannot be asked for a key of none.
+#assert.eq(stub-alignment((stub: (rowname: none), align: (:))), start)
 
 // --- the theme aligns by direction, never by side ---
 

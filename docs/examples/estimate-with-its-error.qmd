@@ -38,15 +38,17 @@ An estimate and its standard error are one number to a reader, and so are the tw
     label: [95% CI],
   ),
   columns-label(p: [_p_]),
+  columns-align(end, columns: "effect"),
   table-source-note([Source: association study.]),
   theme: theme-booktabs(),
 )
 ```
 
-![An association table with a gene column, an effect column holding each estimate followed by its standard error in brackets, a confidence interval column holding two bounds joined by a dash, and a p column in scientific notation.](../assets/examples/combined.png)
+![An association table with a gene column, an effect column holding each estimate followed by its standard error in brackets and set against the end edge, a confidence interval column holding two bounds joined by a dash, and a p column in scientific notation.](../assets/examples/combined.png)
 
 The estimate keeps two decimals and the error three, because the pattern receives the formatted content of its sources rather than their raw values.
 That is why `combine` sits after `format` in the pipeline.
 
 It is also the price.
 A combined column carries content, so it is opaque afterwards: aligned to the start unless `columns-align` says otherwise, not lined up on a decimal separator, and outside any summary.
+That is why the effect column names itself in `columns-align` above.

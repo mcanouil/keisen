@@ -7,7 +7,7 @@ description: "Keisen's column directives: columns-label, columns-align, columns-
 | Function | Effect |
 | --- | --- |
 | `columns-label(..pairs)` | Named arguments map a column name to its label. Labelling the row-name column labels the stubhead. |
-| `columns-align(alignment, columns: auto)` | Sets alignment, direction-relative (`start`, `end`) or absolute. |
+| `columns-align(alignment, columns: auto)` | Sets alignment, direction-relative (`start`, `end`) or absolute. A name is held to the table; `auto` and a predicate filter the columns the table ends up with. |
 | `columns-width(widths)` | A dictionary of column name to length, fraction, or `auto`. |
 | `columns-hide(..columns)` | Removes columns from the table; they stay readable by predicates and formatters. |
 | `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. |
@@ -19,7 +19,24 @@ description: "Keisen's column directives: columns-label, columns-align, columns-
 The combined column takes the place of the first of its sources, and the sources are hidden rather than dropped, so predicates and formatters can still read them; `hide-sources: false` shows them as well.
 
 A combined column is opaque afterwards, and that is the price of the pattern being free-form.
-It carries content rather than alignment slots, so it is not decimal-aligned; it infers start alignment, so give it `columns-align(end, columns: ..)` when it holds figures; and it cannot be summarised, since content has no total.
+It carries content rather than alignment slots, so it is not decimal-aligned; it infers start alignment, so give it `columns-align(end, columns: ..)` when it holds figures, in either spelling; and it cannot be summarised, since content has no total.
+
+## What `columns-align` reaches
+
+Alignment is resolved once the table knows which columns it has, so a directive reads the same wherever it is written, and the last one written for a column wins.
+
+The stub's row-name column takes an alignment when `columns-align` names it, and so does any summary label beside it, so the column reads as one column.
+The stubhead follows it too while `column-labels-align` is `auto`, exactly as the other column labels do; a theme that sets that option wins over the column.
+A selector that filters rather than names never reaches the stub, because the stub leaves the column list; write the name out.
+
+Four cases are reported rather than ignored, because in each the directive would do nothing:
+
+- A column the table does not carry, named either as a name or in an array of names. `auto` and a predicate filter rather than name, so matching nothing is silent.
+- A hidden column, whether `columns-hide` removed it or `columns-combine` hid it as a source.
+- A stub group or indent column. Only the row name is drawn as a cell: a group is a row label across the table, and an indent column sets a depth.
+- A stub that carries indentation, given anything but `start`. Indentation is leading space before the row name, and any other alignment absorbs it, so every level would sit flush against the same edge.
+
+A stub is not decimal-aligned, so a stub of figures set against the end edge is ragged rather than lined up on the separator.
 
 There is no `columns-show`, and the asymmetry is deliberate.
 Directives are the document's own, so a column is shown by not hiding it; an unhide exists only to undo a sibling directive a few lines above, which is ceremony rather than a feature.
