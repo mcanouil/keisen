@@ -10,6 +10,21 @@ name: Checks
 #
 # The two path lists are the same list written twice: GitHub Actions does not
 # honour YAML anchors, so they must be kept in step by hand.
+#
+# `**` is what crosses a directory separator; a bare `*` does not. The pages
+# moved into sections, so `docs/*.qmd` reached two of twenty-five and every
+# listing under docs/examples and docs/reference went unchecked.
+#
+# Three things under docs are read by the suite, and they are named one by one
+# rather than as a blanket `docs/**`, which would start three jobs on a Quarto
+# setting nothing here compiles:
+#
+#   - the pages, whose import lines tools/version-check.sh and
+#     tools/dry-release.sh compile;
+#   - docs/_scripts, which the lint job below runs shellcheck over;
+#   - docs/assets, which tools/check.sh holds to the visual tests that render
+#     it. Without this a pull request editing an image alone would skip the
+#     check that reads it.
 on:
   push:
     branches:
@@ -21,7 +36,9 @@ on:
       - "examples/**"
       - "tools/**"
       - "typst.toml"
-      - "docs/*.qmd"
+      - "docs/**.qmd"
+      - "docs/_scripts/**.sh"
+      - "docs/assets/**"
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
@@ -37,7 +54,9 @@ on:
       - "examples/**"
       - "tools/**"
       - "typst.toml"
-      - "docs/*.qmd"
+      - "docs/**.qmd"
+      - "docs/_scripts/**.sh"
+      - "docs/assets/**"
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
@@ -47,10 +66,22 @@ on:
 permissions:
   contents: read
 
-# One active run per ref; a superseded run tells nobody anything.
+# One active run per ref; a superseded run on a pull request tells nobody
+# anything.
+#
+# A push to main is not superseded by the next push to main: both are commits
+# that must be shown to build. The ref is the same for every one of them, so
+# grouping on it threw away the verification of a commit that stays on main for
+# good.
+#
+# Asking for cancellation on pull requests alone is not enough to fix that. A
+# group admits one pending run, so a third push cancels the second while it
+# waits, whatever cancel-in-progress says. The group itself is therefore the
+# commit outside a pull request, which puts each one in a group of its own and
+# leaves nothing to cancel.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   suite:
@@ -84,10 +115,14 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2.2.0
 
-      # The runner does not carry Libertinus Serif, which the visual tests name.
-      # Typst falls back with a warning rather than failing, and nothing here
-      # asserts on a glyph: the suite compiles documents and greps the rendered
-      # SVG for strokes. Installing the font would change no result.
+      # No font is installed, and none is needed. Typst carries Libertinus Serif
+      # among the four families it embeds, which is the one the visual tests
+      # name, so the runner renders what the author's machine renders rather
+      # than falling back to something else. `typst fonts --ignore-system-fonts`
+      # lists the four.
+      #
+      # This comment used to say the opposite, and a review took it at its word
+      # and concluded that no check could compare a render across machines.
       - name: Run the checks
         run: tools/check.sh
 
