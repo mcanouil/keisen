@@ -124,15 +124,16 @@
 // address rows a reader counting marks could not predict.
 // One row per mark, not one per directive. Two cells carrying the same caveat
 // share a mark, and the footer printed that mark twice, the second time out of
-// mark order. Keyed by the note and the mark asked for, exactly as the mark
-// itself is keyed above, so two notes reading the same under two marks the
-// caller wrote stay two rows.
+// mark order.
+//
+// Keyed by the note and the mark as printed, which is what a reader counts. The
+// mark assignment above keys on the mark the caller asked for, `auto` included,
+// so two entries that resolve to the same mark under the same note are two
+// entries there and one row here. Two notes reading the same under two marks
+// the caller wrote resolve differently and stay two rows.
 //
 // Unmarked notes explain the table rather than a cell and have no mark to
 // share, so each one written is a row printed.
-//
-// Parenthesised because a leading `+` on a new line parses as a unary operator
-// on the array below it rather than as concatenation.
 #let footer-notes(footnotes) = {
   let seen = (:)
   let marked = ()

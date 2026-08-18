@@ -29,6 +29,18 @@
   let claimed = (:)
 
   for spanner in spec.spanners {
+    // A level is a position among the header rows, and everything that reads it
+    // does arithmetic on it: the rows are sorted by it, and a footnote mark is
+    // ranked by it inverted. A level that is not a whole number rendered until
+    // something counted with it, and then failed as a raw Typst error.
+    check(
+      type(spanner.level) == int,
+      "table-spanner",
+      "level must be a whole number",
+      value: spanner.level,
+      hint: "Level 1 sits directly above the column labels, and higher levels stack above it.",
+    )
+
     check(
       spanner.columns.len() > 0,
       "table-spanner",
