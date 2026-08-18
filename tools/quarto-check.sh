@@ -79,6 +79,12 @@ for f in tests/quarto/*.qmd; do
   fi
 
   ok=1
+  # Counted rather than grepped for. The guard below used to look for the
+  # assertion prefix while the extractor anchored on ` -->` at the end of the
+  # line, so a trailing space or a CRLF left the guard satisfied and the
+  # assertion unread. Counting what was actually extracted makes the two agree
+  # by construction.
+  assertions=0
 
   assert() {
     local artefact="$1"
@@ -87,6 +93,7 @@ for f in tests/quarto/*.qmd; do
 
     while IFS= read -r pattern; do
       [[ -z "${pattern}" ]] && continue
+      assertions=$((assertions + 1))
       if [[ "${sense}" == "expect" ]] && ! grep -qaF "${pattern}" "${artefact}"; then
         ok=0
         printf '  FAIL  quarto  %s  missing from %s\n' "${f}" "$(basename "${artefact}")" >&2
@@ -96,7 +103,11 @@ for f in tests/quarto/*.qmd; do
         printf '  FAIL  quarto  %s  present in %s and should not be\n' "${f}" "$(basename "${artefact}")" >&2
         printf '        rejected: %s\n' "${pattern}" >&2
       fi
-    done < <(sed -n "s|^<!-- ${sense}-${key}: \\(.*\\) -->\$|\\1|p" "${f}")
+      # Trailing whitespace is tolerated on the close, so an editor that trims
+      # and one that does not read the same. That covers a carriage return too:
+      # [[:space:]] holds one, and writing \r beside it would match a literal r
+      # under BSD sed rather than the character it names.
+    done < <(sed -n "s|^<!-- ${sense}-${key}: \\(.*\\) -->[[:space:]]*\$|\\1|p" "${f}")
   }
 
   assert "${STAGE}/${name}.typ" "typ" "expect"
@@ -105,9 +116,22 @@ for f in tests/quarto/*.qmd; do
   assert "${STAGE}/${name}.pdf" "pdf" "reject"
 
   # A fixture that asserts nothing renders forever and proves nothing.
-  if ! grep -qE '^<!-- (expect|reject)-(typ|pdf): ' "${f}"; then
+  if [[ ${assertions} -eq 0 ]]; then
     ok=0
     printf '  FAIL  quarto  %s  asserts nothing\n' "${f}" >&2
+  fi
+
+  # A line that looks like an assertion and was not read is worse than one that
+  # asserts nothing, because the file reads as covered. Counting the two
+  # separately is what tells them apart.
+  # Counted loosely on purpose. Anchoring this the way the extractor is anchored
+  # would let an indented line, or `expect-typst:` for `expect-typ:`, be missed
+  # by both and leave the fixture reading as covered.
+  written="$(grep -cE '^[[:space:]]*<!--.*(expect|reject)-(typ|pdf):' "${f}" || true)"
+  if [[ "${written}" -ne "${assertions}" ]]; then
+    ok=0
+    printf '  FAIL  quarto  %s  %s assertion line(s) written, %s read\n' "${f}" "${written}" "${assertions}" >&2
+    printf '        an assertion must close with " -->" and nothing else\n' >&2
   fi
 
   if [[ ${ok} -eq 1 ]]; then

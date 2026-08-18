@@ -41,9 +41,15 @@ for f in tests/probe/*.typ; do
   fi
 
   ok=1
+  # Counted rather than grepped for. The guard below used to look for the
+  # assertion prefix while the loops here skipped an assertion that was empty
+  # after it, so a line reading `// expect-svg: ` and nothing more satisfied the
+  # guard and asserted nothing.
+  assertions=0
 
   while IFS= read -r wanted; do
     [[ -z "${wanted}" ]] && continue
+    assertions=$((assertions + 1))
     if ! grep -qF "${wanted}" "${svg}"; then
       ok=0
       printf '  FAIL  probe  %s  missing from the render\n' "${f}" >&2
@@ -53,6 +59,7 @@ for f in tests/probe/*.typ; do
 
   while IFS= read -r unwanted; do
     [[ -z "${unwanted}" ]] && continue
+    assertions=$((assertions + 1))
     if grep -qF "${unwanted}" "${svg}"; then
       ok=0
       printf '  FAIL  probe  %s  present in the render and should not be\n' "${f}" >&2
@@ -61,9 +68,20 @@ for f in tests/probe/*.typ; do
   done < <(sed -n 's|^// reject-svg: ||p' "${f}")
 
   # A probe that asserts nothing passes silently and proves nothing.
-  if ! grep -qE '^// (expect|reject)-svg: ' "${f}"; then
+  if [[ ${assertions} -eq 0 ]]; then
     ok=0
     printf '  FAIL  probe  %s  asserts nothing\n' "${f}" >&2
+  fi
+
+  # A line that looks like an assertion and was not read is worse than one that
+  # asserts nothing, because the file reads as covered. Counted loosely on
+  # purpose: anchoring this the way the extractor is anchored would let an
+  # indented line, or `//expect-svg:` without the space, be missed by both.
+  written="$(grep -cE '^[[:space:]]*//.*(expect|reject)-svg:' "${f}" || true)"
+  if [[ "${written}" -ne "${assertions}" ]]; then
+    ok=0
+    printf '  FAIL  probe  %s  %s assertion line(s) written, %s read\n' "${f}" "${written}" "${assertions}" >&2
+    printf '        an assertion reads "// expect-svg: <text>" or "// reject-svg: <text>"\n' >&2
   fi
 
   if [[ ${ok} -eq 1 ]]; then
@@ -72,6 +90,13 @@ for f in tests/probe/*.typ; do
     failed=$((failed + 1))
   fi
 done
+
+# No probe at all would report success having read nothing, the way the
+# accessibility and Quarto checks already refuse to.
+if [[ ${total} -eq 0 ]]; then
+  printf 'probe: no probe under tests/probe\n' >&2
+  exit 1
+fi
 
 printf '%-9s %d/%d\n' "probe:" "${passed}" "${total}"
 

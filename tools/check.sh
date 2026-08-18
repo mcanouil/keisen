@@ -43,6 +43,16 @@ compile_glob() {
     fi
   done
 
+  # nullglob is set above, so a directory that holds nothing yields no
+  # iterations and would print 0/0 and pass. The accessibility and Quarto checks
+  # already refuse that; these did not, and moving tests/unit aside left the
+  # whole suite green.
+  if [[ ${label_total} -eq 0 ]]; then
+    printf '%s: nothing matched %s\n' "${label}" "${glob}" >&2
+    failures=$((failures + 1))
+    return
+  fi
+
   printf '%-9s %d/%d\n' "${label}:" "${label_passed}" "${label_total}"
 }
 
@@ -114,6 +124,17 @@ fitted_pages
 
 # Typst has no try, so a panic cannot be asserted from inside a document. These
 # documents are expected to fail, and each names the message it should produce.
+#
+# Every expectation line is read, not the first. The error grammar is
+# `<scope>: <problem>; got <repr(value)>. <hint>`, and pinning it as one string
+# would drag the repr of the offending value into the middle of the assertion,
+# which is the most volatile part of the message. Several lines let a fixture
+# pin the scope and the problem on one and the hint on another, and skip the
+# value.
+#
+# A fixture that names no expectation is refused. Asserting only that a document
+# does not compile says nothing about why, and a message that drifts to another
+# defect entirely would still pass.
 expect_fail() {
   local label_passed=0
   local label_total=0
@@ -122,22 +143,63 @@ expect_fail() {
     label_total=$((label_total + 1))
     total=$((total + 1))
 
-    local expected
-    expected="$(sed -n 's/^\/\/ expect: //p' "${f}" | head -1)"
+    local expected=()
+    while IFS= read -r line; do
+      [[ -z "${line}" ]] && continue
+      expected+=("${line}")
+    done < <(sed -n 's/^\/\/ expect: //p' "${f}")
+
+    if [[ ${#expected[@]} -eq 0 ]]; then
+      failures=$((failures + 1))
+      printf '  FAIL  expect-fail  %s  names no expectation\n' "${f}"
+      printf '        add a line reading "// expect: <the message it should print>"\n'
+      continue
+    fi
+
+    # A line that looks like an expectation and was not read is worse than none
+    # at all, because the file reads as covered. Counted loosely on purpose:
+    # anchoring this the way the extractor is anchored would let `//expect:`
+    # without the space be missed by both.
+    local written
+    written="$(grep -cE '^[[:space:]]*//.*expect:' "${f}" || true)"
+    if [[ "${written}" -ne "${#expected[@]}" ]]; then
+      failures=$((failures + 1))
+      printf '  FAIL  expect-fail  %s  %s expectation line(s) written, %s read\n' "${f}" "${written}" "${#expected[@]}"
+      printf '        an expectation reads "// expect: <text>", with one space either side of the colon\n'
+      continue
+    fi
 
     local output
     if output="$(typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>&1)"; then
       failures=$((failures + 1))
       printf '  FAIL  expect-fail  %s  compiled, but should not have\n' "${f}"
-    elif [[ -n "${expected}" ]] && ! grep -qF "${expected}" <<<"${output}"; then
-      failures=$((failures + 1))
-      printf '  FAIL  expect-fail  %s  failed with the wrong message\n' "${f}"
-      printf '        wanted: %s\n' "${expected}"
-      printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
-    else
+      continue
+    fi
+
+    local missing=0
+    local wanted
+    for wanted in "${expected[@]}"; do
+      if ! grep -qF "${wanted}" <<<"${output}"; then
+        if [[ ${missing} -eq 0 ]]; then
+          failures=$((failures + 1))
+          printf '  FAIL  expect-fail  %s  failed with the wrong message\n' "${f}"
+          printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
+        fi
+        missing=1
+        printf '        wanted: %s\n' "${wanted}"
+      fi
+    done
+
+    if [[ ${missing} -eq 0 ]]; then
       label_passed=$((label_passed + 1))
     fi
   done
+
+  if [[ ${label_total} -eq 0 ]]; then
+    printf 'expect-fail: no fixture under tests/expect-fail\n' >&2
+    failures=$((failures + 1))
+    return
+  fi
 
   printf '%-9s %d/%d\n' "expect-fail:" "${label_passed}" "${label_total}"
 }
@@ -165,6 +227,83 @@ fi
 
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
+
+# The documentation shows a listing beside a picture and says the picture is
+# what the listing produces. Nothing held it to that: tools/render-docs-assets.sh
+# is run by hand, and two tracked images were found to be the output of source
+# that had changed three times since.
+#
+# The render is reproducible, so comparing the bytes is enough. It runs after
+# the visual tests so a failure to compile is reported as a compile failure
+# rather than as a stale image.
+fresh_assets() {
+  # The manifest names the compiler the package needs, and an older one renders
+  # something this repository never agreed to. It is a floor rather than a pin:
+  # 0.15.0, which CI installs, and 0.15.1 render all fourteen visual tests to
+  # identical bytes, so requiring equality would fail the suite over a
+  # difference that makes none.
+  #
+  # A newer Typst that does change a render is caught by the comparison below,
+  # which is why the running version is named when an image is reported stale.
+  local wanted running
+  wanted="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
+  running="$(typst --version | awk '{ print $2; exit }')"
+  if [[ "$(printf '%s\n%s\n' "${wanted}" "${running}" | sort -V | head -1)" != "${wanted}" ]]; then
+    printf 'assets: this Typst is older than the package declares\n' >&2
+    printf '  typst.toml: %s\n' "${wanted}" >&2
+    printf '  running:    %s\n' "${running}" >&2
+    failures=$((failures + 1))
+    return
+  fi
+
+  local stage
+  stage="${OUT_DIR}/asset-freshness"
+  rm -rf "${stage}"
+
+  if ! tools/render-docs-assets.sh "${stage}" >/dev/null; then
+    printf 'assets: the visual tests could not be rendered\n' >&2
+    failures=$((failures + 1))
+    return
+  fi
+
+  local stale=()
+  local rendered
+  for rendered in "${stage}"/*.png; do
+    local name
+    name="$(basename "${rendered}")"
+    if ! cmp -s "${rendered}" "docs/assets/examples/${name}"; then
+      stale+=("${name}")
+    fi
+  done
+
+  # A tracked image whose visual test is gone is served by the site and produced
+  # by nothing, which is the same defect read from the other end.
+  local tracked
+  for tracked in docs/assets/examples/*.png; do
+    local name
+    name="$(basename "${tracked}")"
+    if [[ ! -f "${stage}/${name}" ]]; then
+      stale+=("${name} (no visual test renders it)")
+    fi
+  done
+
+  # A second copy of every image is nothing to leave behind after a check that
+  # has read them.
+  rm -rf "${stage}"
+
+  if [[ ${#stale[@]} -gt 0 ]]; then
+    printf 'assets: a documentation image is not what its source renders\n' >&2
+    printf '  %s\n' "${stale[@]}" >&2
+    printf '  run tools/render-docs-assets.sh and commit the result\n' >&2
+    printf '  rendered here by typst %s; the manifest declares %s\n' "${running}" "${wanted}" >&2
+    failures=$((failures + 1))
+    return
+  fi
+
+  printf 'assets:   ok\n'
+}
+
+fresh_assets
 
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.
