@@ -38,6 +38,30 @@
   }
 }
 
+// Group and spanner labels are selected by equality rather than by name: a group
+// label comes from the data or from `table-row-group`, and a spanner label is
+// content written by hand. Both live here because two places read them, the
+// location DSL and the summary directives, and each had its own reading. The
+// summaries coerced every numeric selector to a string, so a group labelled with
+// the integer 3 answered to a style and not to a summary, and the two disagreed
+// about which group they meant.
+#let matches-label(selector, label) = {
+  if selector == auto {
+    true
+  } else if type(selector) == array {
+    selector.any(candidate => matches-label(candidate, label))
+  } else if type(selector) == function {
+    selector(label)
+  } else if type(label) == str and type(selector) in (int, float) {
+    // A group derived from a numeric column carries its label as a string, so a
+    // numeric selector matches the label it obviously means. A label that is
+    // itself a number is compared as one.
+    str(selector) == label
+  } else {
+    selector == label
+  }
+}
+
 // What a selector spells out, as against what it filters for. A name that does
 // not resolve is a typo and is reported; `auto` and a predicate match nothing in
 // silence, since a table built from filtered data legitimately has fewer rows on
