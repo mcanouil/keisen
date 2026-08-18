@@ -25,12 +25,13 @@ It carries content rather than alignment slots, so it is not decimal-aligned; it
 
 Alignment is resolved once the table knows which columns it has, so a directive reads the same wherever it is written, and the last one written for a column wins.
 
-The stub's row-name column takes an alignment when `columns-align` names it, and so do the stubhead and any summary label above or below it, so the column reads as one column.
+The stub's row-name column takes an alignment when `columns-align` names it, and so does any summary label beside it, so the column reads as one column.
+The stubhead follows it too while `column-labels-align` is `auto`, exactly as the other column labels do; a theme that sets that option wins over the column.
 A selector that filters rather than names never reaches the stub, because the stub leaves the column list; write the name out.
 
 Four cases are reported rather than ignored, because in each the directive would do nothing:
 
-- A column the table does not carry, in any spelling of the selector.
+- A column the table does not carry, named either as a name or in an array of names. `auto` and a predicate filter rather than name, so matching nothing is silent.
 - A hidden column, whether `columns-hide` removed it or `columns-combine` hid it as a source.
 - A stub group or indent column. Only the row name is drawn as a cell: a group is a row label across the table, and an indent column sets a depth.
 - A stub that carries indentation, given anything but `start`. Indentation is leading space before the row name, and any other alignment absorbs it, so every level would sit flush against the same edge.

@@ -108,7 +108,11 @@
     "column " + name + " is hidden",
     hint: "Align a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.",
   )
-  check-column(spec.columns, "columns-align", name)
+  // The row-name column is the one name beyond the rendered columns that an
+  // alignment takes, so the hint that lists what is known names it too. It goes
+  // first, which is the edge the stub sits on.
+  let stub = if spec.stub.rowname == none { () } else { (spec.stub.rowname,) }
+  check-column(stub + spec.columns, "columns-align", name)
 }
 
 // Which column each alignment lands on, resolved once the table knows which

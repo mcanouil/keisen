@@ -18,6 +18,11 @@
   table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
   table-stub(rowname: "product", group: "region", label: [Product]),
   columns-label(units: [Units], revenue: [Revenue]),
+  // The stub takes an alignment of its own, and the stubhead above it and the
+  // summary labels below it follow it, so the column reads as one column. Three
+  // separate cells carry that, and reverting any one of them to start shows
+  // here.
+  columns-align(end, columns: "product"),
   format-integer("units"),
   format-number("revenue", decimals: 2),
   summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
