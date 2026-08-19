@@ -64,11 +64,11 @@ A combine pattern arrives the same way, as a template rather than a closure: `"{
 
 A location is written with `part`, `columns`, `rows`, `groups`, `spanners`, `notes` and `parts`, and a style and a footnote address cells the same way.
 
-Eight formatters are nameable: `format-number`, `format-integer`, `format-percent`, `format-currency`, `format-scientific`, `format-bytes`, `format-date` and `format-markup`.
-Three are not, and are absent by nature rather than by omission: `format`, `format-cell` and `format-nanoplot` are each given a function, and JSON has no way to write one.
+The nameable formatters are `format-number`, `format-integer`, `format-percent`, `format-currency`, `format-scientific`, `format-bytes`, `format-date` and `format-markup`.
+The formatters that cannot be named are `format`, `format-cell` and `format-nanoplot`: each is given a function, and JSON has no way to write one, so they are absent by nature rather than by omission.
 
-Seven aggregations are nameable: `aggregate-sum`, `aggregate-mean`, `aggregate-median`, `aggregate-min`, `aggregate-max`, `aggregate-count` and `aggregate-standard-deviation`.
-`aggregate-quantile` is not: it takes a probability and returns the aggregation, so naming it would mean calling it.
+The nameable aggregations are `aggregate-sum`, `aggregate-mean`, `aggregate-median`, `aggregate-min`, `aggregate-max`, `aggregate-count` and `aggregate-standard-deviation`.
+Not every aggregation can be named: `aggregate-quantile` takes a probability and returns the aggregation, so naming it would mean calling it.
 
 A width is a string carrying a number and one of `pt`, `mm`, `cm`, `in`, `em`, `fr` or `%`, or `"auto"`.
 A bare number is refused rather than given a unit nobody wrote.

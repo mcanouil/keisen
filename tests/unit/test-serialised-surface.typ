@@ -137,25 +137,10 @@
 // The reference is a section rather than a page, so the three pages that carry
 // these vocabularies are read together. A page added beside them documents
 // something this test says nothing about, and needs no entry here.
+#let serialised = read("../../docs/reference/serialised.qmd")
 #let reference = (
-  read("../../docs/reference/formatters.qmd")
-    + read("../../docs/reference/aggregations.qmd")
-    + read("../../docs/reference/serialised.qmd")
+  read("../../docs/reference/formatters.qmd") + read("../../docs/reference/aggregations.qmd") + serialised
 )
-
-#for name in FORMATTERS.keys() {
-  assert(
-    "`" + name + "`" in reference,
-    message: "formatter reachable through spec: but absent from the reference: " + name,
-  )
-}
-
-#for name in AGGREGATIONS.keys() {
-  assert(
-    "`" + name + "`" in reference,
-    message: "aggregation reachable through spec: but absent from the reference: " + name,
-  )
-}
 
 #for key in SERIALISED-KEYS {
   assert(
@@ -171,18 +156,33 @@
 // because it is given a function and JSON writes none. They are listed rather
 // than matched by a rule: a rule would have to guess, and the reference says
 // exactly this about each of them.
-#let ABSENT-BY-NATURE = ("format", "format-cell", "format-nanoplot", "aggregate-quantile")
+#let ABSENT-FORMATTERS = ("format", "format-cell", "format-nanoplot")
+#let ABSENT-AGGREGATIONS = ("aggregate-quantile",)
+#let ABSENT-BY-NATURE = ABSENT-FORMATTERS + ABSENT-AGGREGATIONS
 
-#for name in ABSENT-BY-NATURE {
-  assert(
-    "`" + name + "`" in reference,
-    message: "named as absent by nature but not mentioned in the reference: " + name,
-  )
-  assert(
-    name not in FORMATTERS and name not in AGGREGATIONS,
-    message: "named as absent by nature but the resolver reaches it: " + name,
-  )
+#let exported = dictionary(keisen).keys()
+
+// Derived rather than believed: everything the package exports under the two
+// names, less what the resolver reaches, is what the page has to explain. A new
+// formatter that takes a function forces either a resolver entry or a line on
+// the page, rather than passing unmentioned.
+#let unexplained = {
+  exported
+    .filter(name => name.starts-with("format") or name.starts-with("aggregate"))
+    .filter(name => name not in FORMATTERS and name not in AGGREGATIONS)
+    .sorted()
 }
+
+#assert.eq(
+  unexplained,
+  ABSENT-BY-NATURE.sorted(),
+  message: (
+    "these exports are neither resolvable nor named as absent by nature: "
+      + unexplained.filter(name => name not in ABSENT-BY-NATURE).join(", ")
+      + "; and these are named as absent by nature and no longer exported: "
+      + ABSENT-BY-NATURE.filter(name => name not in unexplained).join(", ")
+  ),
+)
 
 // Driven from the reference rather than from the module, which is what makes it
 // catch a name nothing exports. The reference writes a formatter as a call,
@@ -226,3 +226,60 @@
 // name is settled above, against the constructors, so the four that were spelled
 // out here are covered rather than dropped.
 #assert.eq(HANDLED-KINDS.len(), HANDLED-KINDS.dedup().len())
+
+// --- the sentences that list the names, held to the tables ---
+//
+// A name on the page and absent from the resolver is already caught, by the
+// loop above that reads every backticked formatter and aggregation out of the
+// reference and holds it to a table. What nothing held is the sentence: a name reachable through a
+// specification had only to appear somewhere across the three pages, so one
+// added to the resolver and to the formatters page was documented as nameable
+// nowhere, and the serialised page went on listing the rest.
+//
+// The page also said "Eight formatters", "Seven aggregations" and "Three are
+// not", and nothing held any of the three counts; a ninth formatter left the
+// sentence stale and the suite green. The counts are gone, because the list is
+// the count, and each list is now read back and compared to the table it
+// describes.
+// A backticked word is read off the sentence where it starts with `format` or
+// `aggregate`, so a word from the prose beside the list, `auto` or `null`, is
+// not read as a name. The filter is the prefix rather than the tables, so the
+// message below names what was found as well as what was wanted.
+#let lists(lead, names) = {
+  let lines = serialised.split("\n").filter(line => line.starts-with(lead))
+  assert.eq(
+    lines.len(),
+    1,
+    message: (
+      "the reference sentence starting \""
+        + lead
+        + "\" is written "
+        + str(lines.len())
+        + " times; it has to list "
+        + names.sorted().join(", ")
+    ),
+  )
+  let found = lines
+    .first()
+    .matches(regex("`((?:format|aggregate)[a-z-]*)`"))
+    .map(match => match.captures.first())
+    .dedup()
+    .sorted()
+  assert.eq(
+    found,
+    names.sorted(),
+    message: (
+      "the reference sentence \""
+        + lead
+        + "\" lists names nothing reaches: "
+        + found.filter(name => name not in names).join(", ")
+        + "; and leaves out: "
+        + names.filter(name => name not in found).join(", ")
+    ),
+  )
+}
+
+#lists("The nameable formatters are", FORMATTERS.keys())
+#lists("The nameable aggregations are", AGGREGATIONS.keys())
+#lists("The formatters that cannot be named are", ABSENT-FORMATTERS)
+#lists("Not every aggregation can be named", ABSENT-AGGREGATIONS)
