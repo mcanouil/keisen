@@ -37,6 +37,8 @@ Four cases are reported rather than ignored, because in each the directive would
 - A stub that carries indentation, given anything but `start`. Indentation is leading space before the row name, and any other alignment absorbs it, so every level would sit flush against the same edge.
 
 A stub is not decimal-aligned, so a stub of figures set against the end edge is ragged rather than lined up on the separator.
+It is formatted like any other column, but the decimal metric that pads a column against its separator is computed for the data columns alone.
+Keep such figures in a data column, and let the stub carry the row names, which is what a stub is for.
 
 There is no `columns-show`, and the asymmetry is deliberate.
 Directives are the document's own, so a column is shown by not hiding it; an unhide exists only to undo a sibling directive a few lines above, which is ceremony rather than a feature.

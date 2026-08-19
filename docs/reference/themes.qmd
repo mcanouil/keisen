@@ -36,4 +36,9 @@ Rules on a shared edge do not add up: the line under the column labels is the li
 A part draws its own edge, and that wins over the table's, so `body-border-top` shows only where `column-labels-border-bottom` is `none`, and `body-border-bottom` only where `footer-border-top` is.
 Where the body closes the table, `table-border-bottom` claims that edge first.
 
+`row-border` falls to every row edge the parts leave alone, which is why it draws between two body rows, between the title and the subtitle, and between two notes.
+Four edges are not among them: the table's first and last, answered by `table-border-top` and `table-border-bottom`, and the body's opening and closing edges, answered by `body-border-top` and `body-border-bottom`.
+On those four, `none` is an answer rather than a silence, so `row-border` never shows through.
+The two body keys are `none` on every preset, and `theme-minimal` answers `none` on the table's own two as well, so a table ruled as a grid writes the rule it wants on those keys.
+
 `number-rounding` answers a `format-number(rounding: auto)`, as `number-group-separator` and `number-decimal-separator` answer the separators, so a document sets its rounding once rather than on every directive.

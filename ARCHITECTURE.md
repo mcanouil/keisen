@@ -28,13 +28,18 @@ Entry points trace the same path:
 
 ## Module map
 
-| Directory | Purpose |
+| Module | Purpose |
 | --- | --- |
+| `src/data.typ` | Row-store normalisation, column extraction, and grouping. The one place that decides what a column is and where `_index` comes from. |
+| `src/locations.typ` | The location DSL and its expansion to cell addresses, with `PARTS` as the addressable vocabulary. |
+| `src/style.typ` | The style builder, style resolution into a dictionary keyed by cell address, and the merge order. |
+| `src/spec.typ` | Directive folding into the spec dictionary, and the validation that reads the whole table at once: the columns a directive names, group and spanner adjacency, and location ranges. |
+| `src/spec/` | Late resolution: column ordering, combine placement, which column each alignment lands on, and the serialised subset that resolves a JSON specification into directives. |
 | `src/parts/` | The table parts: header, stub, columns, spanners, summaries, notes, marks, substitutions, colour. Each exports the directive constructors that build it. |
 | `src/format/` | Value formatters, the selector matching they share, decimal alignment, and the nanoplot renderers. |
 | `src/render/` | The row plan, the layout decisions taken before any cell exists, and the assembly of those into one native table. |
 | `src/theme/` | The option dictionary and the presets built from it. |
-| `src/utils/` | Leaf helpers: errors and colour. No rendering here. |
+| `src/utils/` | Leaf helpers: the error grammar, colour, and the shared reading of a directive naming a column the table does not carry. No rendering here. |
 
 Every file under `src/` holds code.
 A module carrying only its header comment describes structure the package does not have, so `tools/check.sh` fails on one.

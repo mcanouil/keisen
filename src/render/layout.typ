@@ -115,6 +115,25 @@
   })
 }
 
+// The stub's cells, ready to render. The stub is formatted like any other
+// column, so a format directive naming the row-name column reaches it, but it
+// takes no decimal metric: those are computed per data column and the stub is
+// not among them, so a stub of figures is ragged where the same figures in a
+// data column line up.
+//
+// Named here rather than written inside the renderer, so that rule is one call
+// and a test can read what the renderer emits.
+#let stub-cells(spec) = {
+  if spec.stub.rowname == none { return () }
+  apply-formats(
+    spec.data,
+    spec.formats,
+    spec.stub.rowname,
+    substitutions: spec.substitutions,
+    options: spec.options,
+  ).map(slots-to-content)
+}
+
 // A summary cell formats through the same path as the body cells above it,
 // either by its own format or by whichever directive covers the column.
 #let summary-slots(spec, entry, name) = {
