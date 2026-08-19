@@ -3,6 +3,7 @@
 // holds no infinity, and a total that skipped one would read as the total of
 // the column it is printed under.
 // expect: grand-summary-rows: column ratio holds an infinite value in row 1 and cannot be summarised
+// expect: Aggregations work in decimal, which has no infinity; name the other columns.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(
