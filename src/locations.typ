@@ -12,6 +12,7 @@
 #import "format/apply.typ": matches-column, matches-label, matches-row, named
 #import "parts/stub.typ": stub-column-names
 #import "parts/summaries.typ": directives-for, summary-labels
+#import "utils/columns.typ": check-addressable
 #import "utils/errors.typ": check, check-column, fail
 
 // The vocabulary of addressable parts, named once so the renderer and the
@@ -152,24 +153,17 @@
   cells
 }
 
-// A column that exists but sits elsewhere is not an unknown column, and saying
-// so would send the reader hunting for a typo that is not there. Same order and
-// same reasoning as `_check-visible` for columns-move.
 #let _check-columns(spec, scope, selector) = {
   for name in named(selector, str) {
-    check(
-      name not in spec.hidden,
+    check-addressable(
+      name,
       scope,
-      "column " + name + " is hidden",
-      hint: "Address a visible column, or drop the columns-hide.",
+      columns: spec.columns,
+      hidden: spec.hidden,
+      stub: stub-column-names(spec.stub),
+      hidden-hint: "Address a visible column, or drop the columns-hide.",
+      stub-hint: "cells-stub() addresses the row names, and cells-stubhead() their label.",
     )
-    check(
-      name not in stub-column-names(spec.stub),
-      scope,
-      "column " + name + " is in the stub",
-      hint: "cells-stub() addresses the row names, and cells-stubhead() their label.",
-    )
-    check-column(spec.columns, scope, name)
   }
 }
 
@@ -252,7 +246,15 @@
   }
 }
 
-#let _group-labels(spec) = spec.groups.map(group => group.label)
+// The group labels a caller could legitimately name: the ones declared and the
+// ones the data derived. A declared group that matched no rows is dropped from
+// `spec.groups`, and naming it is not a typo, so it is known here.
+//
+// One rule, read the same way by the summary directives at `src/spec.typ`, so a
+// summary and the style addressing it agree on which groups exist.
+#let _group-labels(spec) = (
+  spec.row-groups.map(directive => directive.label) + spec.groups.map(group => group.label)
+).dedup()
 
 #let _expand-one(location, spec) = {
   let part = location.part

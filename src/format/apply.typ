@@ -114,6 +114,9 @@
 // exist when the directive is written. Body cells and summary cells both come
 // through here, so both read the same conventions.
 #let formatter-for(directive, options) = {
+  // A summary takes a bare formatter function as well as a directive, and a
+  // function is already the thing a directive is unwrapped into.
+  if type(directive) == function { return directive }
   if "family" not in directive { return directive.function }
   (directive.family)((
     group: option(options, "number-group-separator"),

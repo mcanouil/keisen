@@ -1,7 +1,7 @@
 // A combined column holds content built from columns that are no longer shown,
 // so it has no total. Naming it in a summary says the reader expected an
 // aggregate that cannot exist.
-// expect: summary-rows: column effect is combined from other columns and cannot be summarised
+// expect: grand-summary-rows: column effect is combined from other columns and cannot be summarised
 
 #import "../../lib.typ": *
 

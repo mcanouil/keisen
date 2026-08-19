@@ -9,9 +9,10 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
-#import "format/apply.typ": matches-column, matches-row, named, nanoplot-columns
+#import "format/apply.typ": matches-column, matches-label, matches-row, named, nanoplot-columns
 #import "spec/resolve.typ": apply-alignments, apply-combines, apply-moves
 #import "theme/options.typ": validate-options
+#import "utils/columns.typ": check-addressable
 #import "utils/errors.typ": check, check-column, fail
 
 // Every directive kind the fold below handles, named once so the hint it prints
@@ -102,6 +103,49 @@
     .filter(group => group.rows.len() > 0)
 }
 
+// A summary naming a group the table does not carry produced no row and said
+// nothing, while the location DSL refuses the same name, so a style could
+// address a summary row the directive never made.
+//
+// Run after grouping rather than inside `_validate`, because there is no group
+// list before it. Held to the labels a caller could legitimately name: the ones
+// declared plus the ones derived, rather than `spec.groups`, since a declared
+// group that matched no rows is dropped from that and naming it is not a typo.
+// `_group-labels` in `src/locations.typ` reads the same rule, so a summary and
+// the style addressing it agree on which groups exist.
+//
+// Only what the selector spells out is checked, as everywhere else: `auto` and a
+// predicate match nothing in silence.
+#let _check-summary-groups(spec) = {
+  let known = (
+    spec.row-groups.map(directive => directive.label) + spec.groups.map(group => group.label)
+  ).dedup()
+  for directive in spec.summaries {
+    let selector = directive.groups
+    if selector == auto or type(selector) == function { continue }
+    let candidates = if type(selector) == array { selector } else { (selector,) }
+    for candidate in candidates {
+      if type(candidate) == function { continue }
+      if known.any(label => matches-label(candidate, label)) { continue }
+      fail(
+        "summary-rows",
+        "unknown group " + repr(candidate),
+        hint: if known.len() == 0 {
+          "The table has no groups."
+        } else {
+          "Known groups: " + known.map(repr).join(", ") + "."
+        },
+      )
+    }
+  }
+}
+
+// The directive the caller wrote, so a grand summary is not reported as a group
+// summary. The unsummarisable check below named `summary-rows` for both.
+#let _summary-scope(directive) = (
+  if directive.scope == "group" { "summary-rows" } else { "grand-summary-rows" }
+)
+
 #let _validate(spec) = {
   let stub-columns = stub-column-names(spec.stub)
   let known = spec.columns + spec.hidden + stub-columns
@@ -157,9 +201,22 @@
   // and would reach the closure with the aggregate, failing as a Typst type
   // error that names neither the directive nor the reason.
   for directive in spec.summaries + spec.grand-summaries {
+    let scope = _summary-scope(directive)
+    // A formatter function or a format directive, which is what the design
+    // documents. Anything else reached the field access below and failed as a
+    // Typst error about closures, naming neither the directive nor the reason.
     check(
-      directive.format == none or not directive.format.at("cell", default: false),
-      if directive.scope == "group" { "summary-rows" } else { "grand-summary-rows" },
+      directive.format == none
+        or type(directive.format) == function
+        or (type(directive.format) == dictionary and directive.format.at("kind", default: none) == "format"),
+      scope,
+      "format is not a formatter",
+      value: directive.format,
+      hint: "Give a formatter function, or one of the format-* directives.",
+    )
+    check(
+      type(directive.format) != dictionary or not directive.format.at("cell", default: false),
+      scope,
       "format cannot be a cell formatter",
       hint: "A summary row has no row to read; use format() or one of the format-* directives.",
     )
@@ -240,9 +297,26 @@
     if directive.columns == auto { continue }
     for column in unsummarisable.filter(entry => matches-column(directive.columns, entry.name)) {
       fail(
-        "summary-rows",
+        _summary-scope(directive),
         "column " + column.name + " " + column.why + " and cannot be summarised",
         hint: column.hint,
+      )
+    }
+  }
+
+  // A summary naming a column the table does not carry rendered a bold Total row
+  // with every cell blank, which reads as data that did not add up rather than
+  // as a typo.
+  for directive in spec.summaries + spec.grand-summaries {
+    for name in named(directive.columns, str) {
+      check-addressable(
+        name,
+        _summary-scope(directive),
+        columns: spec.columns,
+        hidden: spec.hidden,
+        stub: stub-columns,
+        hidden-hint: "Summarise a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.",
+        stub-hint: "The stub labels the rows; a summary aggregates the columns beside it.",
       )
     }
   }
@@ -393,5 +467,6 @@
   } else {
     group-rows(validated.data, validated.stub.group)
   }
+  _check-summary-groups(validated)
   validated
 }
