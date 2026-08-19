@@ -3,6 +3,7 @@
 // silent: a table built from filtered data legitimately has fewer rows on some
 // renderings than on others.
 // expect: table-row-group: row 4 is not in the data
+// expect: Rows are numbered from zero, and this table has 2 of them.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

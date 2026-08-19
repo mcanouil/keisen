@@ -1,6 +1,7 @@
 // A source that exists in no row is a typo, and combining silently around it
 // would leave the pattern reading a column of nothing.
 // expect: columns-combine: unknown column margin
+// expect: Known columns: estimate, error.
 
 #import "../../lib.typ": *
 

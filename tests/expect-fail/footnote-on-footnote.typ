@@ -2,6 +2,7 @@
 // footnote that marked a footnote row would have to be numbered before the
 // numbering it takes part in. It is refused rather than expanded to nothing.
 // expect: cells-footnotes: the footnote rows are not addressable yet
+// expect: A footnote cannot mark a footnote row; style them with table-style instead.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

@@ -2,6 +2,8 @@
 // names the formatter the caller actually wrote rather than the one it delegates
 // to underneath.
 // expect: format-currency: value is not a finite number
+// expect: got "free".
+// expect: Only finite numbers are formatted here; use format() for anything else.
 
 #import "../../lib.typ": *
 

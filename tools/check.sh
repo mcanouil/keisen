@@ -129,8 +129,9 @@ fitted_pages
 # `<scope>: <problem>; got <repr(value)>. <hint>`, and pinning it as one string
 # would drag the repr of the offending value into the middle of the assertion,
 # which is the most volatile part of the message. Several lines let a fixture
-# pin the scope and the problem on one and the hint on another, and skip the
-# value.
+# pin each part on its own: the scope with its problem, the value, and the hint.
+# The whole message is then covered without any one assertion depending on the
+# spelling of the parts around it.
 #
 # A fixture that names no expectation is refused. Asserting only that a document
 # does not compile says nothing about why, and a message that drifts to another
@@ -169,6 +170,22 @@ expect_fail() {
       continue
     fi
 
+    # An expectation that stops at the scope asserts only that the failure came
+    # from somewhere in the package, which every failure in the package does.
+    # The grammar is `<scope>: <problem>; got <repr(value)>. <hint>`, and each
+    # fixture pins the parts its message carries, one per line: the scope with
+    # its problem, the value, and the hint. Every hint in the suite could be
+    # deleted from `src/utils/errors.typ` and the whole run stayed green.
+    local wanted
+    for wanted in "${expected[@]}"; do
+      if [[ "${wanted}" =~ ^[a-z-]+:[[:space:]]*$ ]]; then
+        failures=$((failures + 1))
+        printf '  FAIL  expect-fail  %s  the expectation "%s" names a scope and nothing else\n' "${f}" "${wanted}"
+        printf '        pin what the message says, not only where it came from\n'
+        continue 2
+      fi
+    done
+
     local output
     if output="$(typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>&1)"; then
       failures=$((failures + 1))
@@ -176,17 +193,60 @@ expect_fail() {
       continue
     fi
 
+    # The message alone, not the whole output. Typst prints a traceback under the
+    # error, and each frame of it echoes the source line it called from, hints
+    # and all. So an expectation naming a hint matched the call site that passes
+    # the hint rather than the message that printed it, and a fixture went on
+    # passing with the hint deleted from the panic.
+    local message
+    message="$(sed -n 's/^error: panicked with: //p' <<<"${output}" | head -1)"
+    if [[ -z "${message}" ]]; then
+      failures=$((failures + 1))
+      printf '  FAIL  expect-fail  %s  did not fail through the error grammar\n' "${f}"
+      printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
+      printf '        every failure in the package panics through src/utils/errors.typ\n'
+      continue
+    fi
+
     local missing=0
-    local wanted
     for wanted in "${expected[@]}"; do
-      if ! grep -qF "${wanted}" <<<"${output}"; then
+      if ! grep -qF "${wanted}" <<<"${message}"; then
         if [[ ${missing} -eq 0 ]]; then
           failures=$((failures + 1))
           printf '  FAIL  expect-fail  %s  failed with the wrong message\n' "${f}"
-          printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
+          printf '        got:    %s\n' "${message}"
         fi
         missing=1
         printf '        wanted: %s\n' "${wanted}"
+      fi
+    done
+
+    # Every part the message carries is pinned by some expectation. Without
+    # this, a fixture added tomorrow pins its problem and leaves its hint unread,
+    # which is exactly the state the whole suite was in.
+    local body="${message#*: }"
+    local tail="${body}"
+    local value=""
+    if [[ "${body}" == *"; got "* ]]; then
+      tail="${body#*; got }"
+      value="${tail%%. *}"
+    fi
+    local hint=""
+    if [[ "${tail}" == *". "* ]]; then
+      hint="${tail#*. }"
+    fi
+
+    local part
+    for part in "${value:+got ${value}${hint:+.}}" "${hint}"; do
+      [[ -z "${part}" ]] && continue
+      if ! printf '%s\n' "${expected[@]}" | grep -qF "${part}"; then
+        if [[ ${missing} -eq 0 ]]; then
+          failures=$((failures + 1))
+          printf '  FAIL  expect-fail  %s  part of the message is pinned by nothing\n' "${f}"
+          printf '        got:    %s\n' "${message}"
+        fi
+        missing=1
+        printf '        unpinned: %s\n' "${part}"
       fi
     done
 

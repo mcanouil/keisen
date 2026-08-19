@@ -2,6 +2,7 @@
 // to nothing and rendered a blank cell, which reads as a total that happens to
 // be missing rather than a question with no answer.
 // expect: summary-rows: column trend holds nanoplots and cannot be summarised
+// expect: Name the other columns: aggregating series of readings has no meaning.
 
 #import "../../lib.typ": *
 

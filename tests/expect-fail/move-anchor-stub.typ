@@ -1,5 +1,6 @@
 // A move anchored on a column the stub promotes out of the table.
 // expect: columns-move: column city is in the stub
+// expect: The stub sits on the leading edge; its columns are not reordered.
 
 #import "../../src/spec.typ": build-spec
 #import "../../src/parts/columns.typ": columns-move

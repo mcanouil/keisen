@@ -2,6 +2,7 @@
 // would need a rule for which one wins, and a rule nobody wrote down is the one
 // every reader gets wrong.
 // expect: table-row-group: the groups already come from a column
+// expect: Drop the group column from table-stub, or drop the table-row-group calls.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

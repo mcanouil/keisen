@@ -1,6 +1,7 @@
 // A move anchored on a column that a later directive hides. Written this way
 // round it used to succeed, because the anchor still existed when the move ran.
 // expect: columns-move: column notes is hidden
+// expect: Move a visible column, or drop the columns-hide.
 
 #import "../../src/spec.typ": build-spec
 #import "../../src/parts/columns.typ": columns-hide, columns-move

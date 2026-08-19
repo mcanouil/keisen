@@ -2,7 +2,7 @@
 // for a typo that is not there. It carries no summary either: the summary reads
 // the columns the table renders.
 // expect: summary-rows: column units is hidden
-// expect: Summarise a visible column
+// expect: Summarise a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

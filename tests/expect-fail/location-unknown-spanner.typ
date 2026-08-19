@@ -1,6 +1,6 @@
 // A spanner is addressed by its label, so a label no spanner carries is the
 // same typo as an unknown column.
-// expect: cells-column-spanners: unknown spanner
+// expect: cells-column-spanners: unknown spanner [Missing]
 // expect: Known spanners: [Figures].
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)

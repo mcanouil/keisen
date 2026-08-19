@@ -2,6 +2,7 @@
 // so it has no total. Naming it in a summary says the reader expected an
 // aggregate that cannot exist.
 // expect: grand-summary-rows: column effect is combined from other columns and cannot be summarised
+// expect: Summarise its sources instead; a combined column holds content, not quantities.
 
 #import "../../lib.typ": *
 
