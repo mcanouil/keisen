@@ -8,7 +8,10 @@ description: "Keisen's themes, the table-options call that merges into them, and
 Striping is `row-striping: true` on any of them, and the academic three-line style is `theme-booktabs()` plus options; a theme that differs by one boolean is not a theme.
 
 Option names are Typst identifiers, so they are written unquoted: `table-options(row-striping: true)`.
-An unknown key is an error rather than a silent no-op, and `tests/unit/test-options-read.typ` holds every declared key to being read by something, so a key that accepts a value and changes nothing cannot ship.
+An unknown key is an error rather than a silent no-op.
+`tests/unit/test-options-read.typ` holds every declared key to being read by the code.
+It searches the code with the comments cut out.
+It looks for the key as the argument of the call that reads it, so a key named in a comment or in a message does not count.
 
 | Group | Keys |
 | --- | --- |
