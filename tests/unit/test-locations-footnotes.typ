@@ -66,3 +66,43 @@
 #let footer = footer-notes(assign-marks(crossed))
 #assert.eq(footer.map(footnote => footnote.mark), ("1", "2", none))
 #assert.eq(footer.first().note, [Written second, marks the first row.])
+
+// --- one row per mark, not one per directive ---
+
+// Two cells carrying the same caveat share a mark, which is what the design
+// asks for. The footer printed one row per directive, so the shared mark was
+// printed twice, the second time out of mark order, and cells-footnotes
+// addressed a row that a reader counting marks could not find.
+#let repeated = build-spec(
+  (name: ("a", "b"), units: (1, 2)),
+  (
+    table-footnote([Provisional.], locations: cells-body(rows: 0, columns: "units")),
+    table-footnote([Measured at the till.], locations: cells-body(rows: 1, columns: "units")),
+    table-footnote([Provisional.], locations: cells-body(rows: 1, columns: "name")),
+  ),
+  (:),
+)
+#let shared = footer-notes(assign-marks(repeated))
+#assert.eq(shared.map(footnote => footnote.mark), ("1", "2"))
+#assert.eq(shared.map(footnote => footnote.note), ([Provisional.], [Measured at the till.]))
+
+// A mark the caller wrote is the caller's choice, so two notes reading the same
+// under two marks stay two rows.
+#let marked = build-spec(
+  (name: ("a", "b"), units: (1, 2)),
+  (
+    table-footnote([Provisional.], locations: cells-body(rows: 0), mark: [†]),
+    table-footnote([Provisional.], locations: cells-body(rows: 1), mark: [‡]),
+  ),
+  (:),
+)
+#assert.eq(footer-notes(assign-marks(marked)).map(footnote => footnote.mark), ([†], [‡]))
+
+// Unmarked notes explain the table rather than a cell, and have no mark to
+// share, so each one written is a row printed.
+#let unmarked = build-spec(
+  (name: ("a",), units: (1,)),
+  (table-footnote([Explains the table.]), table-footnote([Explains the table.])),
+  (:),
+)
+#assert.eq(footer-notes(assign-marks(unmarked)).len(), 2)

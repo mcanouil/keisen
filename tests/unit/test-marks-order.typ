@@ -52,3 +52,40 @@
   (:),
 )
 #assert.eq(marks-for(assign-marks(stacked), "column-spanners", 2, [Outer]), ("1",))
+
+// --- a spanner is ranked where it renders ---
+
+// Levels render highest first, so the level cannot be the rank as it stands: a
+// spanner at level 2 sits above one at level 1 and must be met first. The rank
+// read the level straight, so the reader met mark 2 above mark 1.
+#let levels = build-spec(
+  (a: (1,), b: (2,)),
+  (
+    table-spanner([Low], ("a", "b")),
+    table-spanner([High], ("a", "b"), level: 2),
+    table-footnote([On the lower spanner.], locations: cells-column-spanners(spanners: [Low])),
+    table-footnote([On the higher spanner.], locations: cells-column-spanners(spanners: [High])),
+  ),
+  (:),
+)
+#let ranked = assign-marks(levels)
+#assert.eq(marks-for(ranked, "column-spanners", 2, [High]), ("1",))
+#assert.eq(marks-for(ranked, "column-spanners", 1, [Low]), ("2",))
+
+// Within one level a spanner is met at the leftmost column it covers. A spanner
+// address carries its label where a cell address carries a column name, so the
+// column rank was never found and the order the directives happened to be
+// written in decided instead.
+#let side-by-side = build-spec(
+  (a: (1,), b: (2,), c: (3,), d: (4,)),
+  (
+    table-spanner([Left], ("a", "b")),
+    table-spanner([Right], ("c", "d")),
+    table-footnote([On the right spanner.], locations: cells-column-spanners(spanners: [Right])),
+    table-footnote([On the left spanner.], locations: cells-column-spanners(spanners: [Left])),
+  ),
+  (:),
+)
+#let across-spanners = assign-marks(side-by-side)
+#assert.eq(marks-for(across-spanners, "column-spanners", 1, [Left]), ("1",))
+#assert.eq(marks-for(across-spanners, "column-spanners", 1, [Right]), ("2",))
