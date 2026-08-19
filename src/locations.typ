@@ -9,7 +9,7 @@
 ///! stub cells, the group position for group labels, the note position for
 ///! notes, and `none` where the part has one row.
 
-#import "format/apply.typ": matches-column, matches-row, named
+#import "format/apply.typ": matches-column, matches-label, matches-row, named
 #import "parts/stub.typ": stub-column-names
 #import "parts/summaries.typ": directives-for, summary-labels
 #import "utils/errors.typ": check, check-column, fail
@@ -108,25 +108,6 @@
 
 #let _address(part, row: none, column: none) = (part: part, row: row, column: column)
 
-// Group labels are strings, taken from the data; spanner labels are content,
-// written by hand. Both are selected by equality, so a selector of either type
-// compares against the label as it stands.
-#let _matches-label(selector, label) = {
-  if selector == auto {
-    true
-  } else if type(selector) == array {
-    selector.any(candidate => _matches-label(candidate, label))
-  } else if type(selector) == function {
-    selector(label)
-  } else if type(label) == str and type(selector) in (int, float) {
-    // Group labels are strings even when the column held numbers, so a numeric
-    // selector matches the label it obviously means.
-    str(selector) == label
-  } else {
-    selector == label
-  }
-}
-
 // A summary row answers to the label that names it and to its position within
 // the group, because both are how a reader says which row they mean: "the
 // subtotal", or "the second one".
@@ -219,19 +200,29 @@
 // Group and spanner labels are matched rather than compared, because a numeric
 // selector names the group label it plainly means and a predicate names none of
 // them. Only what the selector spells out is checked.
-#let _check-labels(scope, selector, labels, what, render) = {
+//
+// The hint is built inside the failing branch, the way `check-column` builds
+// its own. Passing it to `check` built it on every call, and a label is any
+// value: a group labelled by `table-row-group(3, ..)` is an integer and a
+// spanner label is content, so listing them died with a raw Typst message about
+// adding a string and an integer, for a selector that was about to match.
+//
+// Each label is written as the value it is, which is how the problem clause
+// writes the candidate that missed. A hint listing `North` against a problem
+// naming `"Nowhere"` reads as two different vocabularies.
+#let _check-labels(scope, selector, labels, what) = {
   if selector == auto or type(selector) == function { return }
   let candidates = if type(selector) == array { selector } else { (selector,) }
   for candidate in candidates {
     if type(candidate) == function { continue }
-    check(
-      labels.any(label => _matches-label(candidate, label)),
+    if labels.any(label => matches-label(candidate, label)) { continue }
+    fail(
       scope,
       "unknown " + what + " " + repr(candidate),
       hint: if labels.len() == 0 {
         "The table has no " + what + "s."
       } else {
-        "Known " + what + "s: " + labels.map(render).join(", ") + "."
+        "Known " + what + "s: " + labels.map(repr).join(", ") + "."
       },
     )
   }
@@ -280,11 +271,11 @@
   } else if part == PARTS.stubhead {
     (_address(PARTS.stubhead),)
   } else if part == PARTS.row-groups {
-    _check-labels("cells-row-groups", location.groups, _group-labels(spec), "group", label => label)
+    _check-labels("cells-row-groups", location.groups, _group-labels(spec), "group")
     spec
       .groups
       .enumerate()
-      .filter(((index, group)) => _matches-label(location.groups, group.label))
+      .filter(((index, group)) => matches-label(location.groups, group.label))
       .map(((index, group)) => _address(PARTS.row-groups, row: index))
   } else if part == PARTS.column-labels {
     _check-columns(spec, "cells-column-labels", location.columns)
@@ -298,13 +289,12 @@
       location.spanners,
       spec.spanners.map(spanner => spanner.label),
       "spanner",
-      repr,
     )
     spec.spanners
-      .filter(spanner => _matches-label(location.spanners, spanner.label))
+      .filter(spanner => matches-label(location.spanners, spanner.label))
       .map(spanner => _address(PARTS.column-spanners, row: spanner.level, column: spanner.label))
   } else if part == PARTS.summary {
-    _check-labels("cells-summary", location.groups, _group-labels(spec), "group", label => label)
+    _check-labels("cells-summary", location.groups, _group-labels(spec), "group")
     if location.columns != none { _check-columns(spec, "cells-summary", location.columns) }
     _check-summary-rows(
       "cells-summary",
@@ -314,7 +304,7 @@
     spec
       .groups
       .enumerate()
-      .filter(((index, group)) => _matches-label(location.groups, group.label))
+      .filter(((index, group)) => matches-label(location.groups, group.label))
       .map(((index, group)) => summary-labels(directives-for(spec.summaries, group.label))
         .enumerate()
         .filter(((position, label)) => _matches-summary(location.rows, position, label))

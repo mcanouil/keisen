@@ -6,7 +6,7 @@
 ///! path as the body cells above it.
 
 #import "../data.typ": column
-#import "../format/apply.typ": matches-column, nanoplot-columns
+#import "../format/apply.typ": matches-column, matches-label, nanoplot-columns
 #import "../format/number.typ": to-decimal
 #import "../utils/errors.typ": check
 #import "substitutions.typ": is-missing
@@ -107,19 +107,12 @@
 
 // Directives that apply to one group, so a groups selector actually narrows the
 // rows it produces.
+//
+// The location DSL reads a group selector through the same matcher, which is
+// what makes a summary row and a style addressing it mean one group. They were
+// spelled separately and drifted.
 #let directives-for(directives, label) = {
-  // Group labels are strings, since group-by stringifies whatever the column
-  // held, so a numeric selector matches the label it plainly names. The
-  // location DSL coerces the same way; the two must agree or a summary and a
-  // style disagree about which group they mean.
-  let matches(selector) = {
-    if selector == auto { true } else if type(selector) == array {
-      selector.any(candidate => matches(candidate))
-    } else if type(selector) == function { selector(label) } else if type(selector) in (int, float) {
-      str(selector) == label
-    } else { selector == label }
-  }
-  directives.filter(directive => matches(directive.groups))
+  directives.filter(directive => matches-label(directive.groups, label))
 }
 
 // One entry per summary row: its label and the aggregated value per column.
