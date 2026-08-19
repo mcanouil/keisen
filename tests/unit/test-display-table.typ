@@ -11,11 +11,20 @@
 #assert.eq(infer-alignment(((mass: 1.5), (mass: 2.5)), "mass"), end)
 #assert.eq(infer-alignment(((name: "a"), (name: "b")), "name"), start)
 
-// Missing values do not make a numeric column textual.
+// Missing values do not make a numeric column textual, in any of the three
+// spellings of a gap. The empty string is the one a CSV or a JSON export
+// writes, and it was read as a value: the column stopped looking numeric and
+// the numbers in it moved to the wrong edge.
 #assert.eq(infer-alignment(((mass: 1.5), (mass: none)), "mass"), end)
+#assert.eq(infer-alignment(((mass: 1.5), (mass: "")), "mass"), end)
+#assert.eq(infer-alignment(((mass: 1.5), (mass: float.nan)), "mass"), end)
+#assert.eq(infer-alignment(((mass: 1.5), (mass: "  ")), "mass"), end)
 
-// A column with nothing in it falls back to start.
+// A column with nothing in it falls back to start, whichever gap fills it: a
+// column of all `float.nan` was inferred as numeric and aligned to the end.
 #assert.eq(infer-alignment(((mass: none),), "mass"), start)
+#assert.eq(infer-alignment(((mass: ""),), "mass"), start)
+#assert.eq(infer-alignment(((mass: float.nan),), "mass"), start)
 
 // Numeric strings are text: keisen does not guess at coercion.
 #assert.eq(infer-alignment(((mass: "1.5"),), "mass"), start)

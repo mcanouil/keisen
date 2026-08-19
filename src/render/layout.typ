@@ -30,8 +30,15 @@
 // Numeric columns sit against the end edge, everything else against the start
 // edge. Direction-relative, because Typst lays cells out along the writing
 // direction and reverses column order in right-to-left text.
+// A gap is read through `is-missing`, so the three spellings of one answer the
+// same way: `none`, an empty string, and `float.nan`. Testing against `none`
+// alone made the empty string a value, which is the spelling a CSV or a JSON
+// export writes, so a column of numbers with one gap in it stopped looking
+// numeric and moved to the start edge. It also made a column of all `float.nan`
+// look numeric, since nothing in it was `none`, so a column holding nothing sat
+// against the end edge.
 #let infer-alignment(rows, name) = {
-  let values = rows.map(row => row.at(name, default: none)).filter(value => value != none)
+  let values = rows.map(row => row.at(name, default: none)).filter(value => not is-missing(value))
   if values.len() == 0 { return start }
   if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
 }
