@@ -13,25 +13,18 @@
 #import "../format/apply.typ": matches-column, named
 #import "../parts/stub.typ": stub-column-names
 #import "../parts/substitutions.typ": is-missing
+#import "../utils/columns.typ": check-addressable
 #import "../utils/errors.typ": check, check-column
 
-// A column that exists but is not in the table is not an unknown column, and
-// saying so would send the reader hunting for a typo that is not there.
-#let _check-visible(spec, name) = {
-  check(
-    name not in spec.hidden,
-    "columns-move",
-    "column " + name + " is hidden",
-    hint: "Move a visible column, or drop the columns-hide.",
-  )
-  check(
-    name not in stub-column-names(spec.stub),
-    "columns-move",
-    "column " + name + " is in the stub",
-    hint: "The stub sits on the leading edge; its columns are not reordered.",
-  )
-  check-column(spec.columns, "columns-move", name)
-}
+#let _check-visible(spec, name) = check-addressable(
+  name,
+  "columns-move",
+  columns: spec.columns,
+  hidden: spec.hidden,
+  stub: stub-column-names(spec.stub),
+  hidden-hint: "Move a visible column, or drop the columns-hide.",
+  stub-hint: "The stub sits on the leading edge; its columns are not reordered.",
+)
 
 // Where a combined column goes, resolved once every directive has landed.
 //
