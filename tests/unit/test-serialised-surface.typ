@@ -6,7 +6,8 @@
 #import "../../lib.typ" as keisen
 #import "../../src/spec.typ": HANDLED-KINDS
 #import "../../src/spec/resolve.typ": (
-  AGGREGATIONS, ALIGNMENTS, FORMAT-OPTIONS, FORMATTERS, LOCATION-KEYS, SERIALISED-KEYS, UNITS,
+  AGGREGATIONS, ALIGNMENTS, FORMAT-OPTIONS, FORMATTERS, INSET-SIDES, LOCATION-KEYS, SERIALISED-KEYS,
+  UNITS, VERTICAL-ALIGNMENTS,
 )
 
 // A formatter with no entry in FORMAT-OPTIONS fails on the lookup that checks
@@ -204,6 +205,18 @@
 // and an alignment names itself.
 #assert.eq(UNITS.keys().sorted(), ("%", "cm", "em", "fr", "in", "mm", "pt"))
 #assert.eq(ALIGNMENTS.keys().sorted(), ("center", "end", "left", "right", "start"))
+
+// A cell style places itself on both axes, and reads an inset per side. Both
+// vocabularies are written out on the reference page, so both are held to it.
+#assert.eq(VERTICAL-ALIGNMENTS.keys().sorted(), ("bottom", "horizon", "top"))
+#assert.eq(INSET-SIDES, ("left", "right", "top", "bottom", "x", "y", "rest"))
+
+#for name in VERTICAL-ALIGNMENTS.keys() + INSET-SIDES {
+  assert(
+    "`" + name + "`" in reference,
+    message: "a style vocabulary the resolver reads but the reference does not name: " + name,
+  )
+}
 
 // A style and a footnote address cells through one list of keys, so the two
 // cannot come to mean different things.

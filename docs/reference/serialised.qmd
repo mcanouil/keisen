@@ -77,6 +77,18 @@ Its `columns` is a name, an array of names, or `null` for every column.
 JSON writes no predicate, so an array is the only way a generator names several columns, and every name in it is held to the table: one the table does not carry is reported rather than skipped.
 A colour is a hex string, wherever one is wanted: a palette stop, a fill, a text fill, or the colour a missing value takes.
 
+A `style` carries the same five properties `style()` takes, each written as JSON can write it.
+
+| Property | Written as |
+| --- | --- |
+| `fill` | A colour. |
+| `text` | A dictionary Typst reads, with `fill` as a colour and `size` as a length. |
+| `align` | A horizontal name, a vertical name of `top`, `horizon` or `bottom`, or the two added: `"center + horizon"`. |
+| `inset` | A length, or a dictionary of `left`, `right`, `top`, `bottom`, `x`, `y` or `rest`, each a length. |
+| `stroke` | A colour, a length for the thickness, `null` for no rule, or a dictionary of `paint`, `thickness` and whatever else Typst reads, such as `dash`. |
+
+: Style properties {.striped .hover tbl-colwidths="[25,75]"}
+
 `tests/unit/test-serialised-surface.typ` holds this page to the tables the resolver reads, so a name added to one and not the other fails the suite.
 
 A serialised specification is turned back into ordinary directives and folded through the same path as a hand-written table, so the two cannot diverge: one pipeline, entered two ways.
