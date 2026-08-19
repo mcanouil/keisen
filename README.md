@@ -85,18 +85,17 @@ Nanoplots are drawn with native Typst primitives for the same reason, and `forma
 
 > [!NOTE]
 > Keisen is an unfunded spare-time project, and the API is still settling.
-> Bug reports and ideas are welcome on the issue tracker.
+> Bug reports are welcome on the issue tracker, and ideas and questions in Discussions.
 >
 > I do not accept pull requests for now.
 > The internals shift between releases.
 > Every review costs time that I must take from the work that moves the library forward.
 > I am also especially careful in the current climate of unreviewed LLM-authored patches.
-> Once the surface is stable I will revisit and open the door.
+> Once the surface is stable I will accept pull requests, and I will say so here.
 >
 > Thanks in advance for your patience and your understanding.
 
-Contributions are welcome.
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for bug reporting, development setup, and commit conventions.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for where to file what, and for how the source is built and tested.
 Terms used across the source tree (`spec`, `slots`, `row plan`, `location`, `_index`, …) are catalogued in [`GLOSSARY.md`](GLOSSARY.md).
 How the pipeline fits together is described in [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
