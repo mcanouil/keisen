@@ -95,13 +95,33 @@
 }
 
 // Decimal places that leave `count` significant digits in `number`.
-#let _decimals-for-significant(number, count) = {
+#let _places-for-significant(number, count) = {
   let digits = str(calc.abs(number)).split(".")
   let integer = digits.first().trim("0", at: start)
   if integer != "" { return count - integer.len() }
   let fraction = if digits.len() > 1 { digits.at(1) } else { "" }
+  // Zero has no significant digit to place, and the arithmetic below would read
+  // its scale as leading zeros instead: `decimal("0.00")` writes two of them, so
+  // a zero from a string counted four places where a zero from an integer
+  // counted two. A decimal keeps the scale it was written with, and rounding
+  // does not always keep it, so the scale must not reach the count at all.
+  if fraction.trim("0") == "" { return count }
   let leading = fraction.len() - fraction.trim("0", at: start).len()
   leading + count
+}
+
+// The same, measured against the value that is printed rather than the value
+// that arrived. Rounding carries into a new integer digit, and the place was
+// read off the magnitude before it: 9.99 at two significant digits rounded to
+// 10.0 and kept the place computed for a one-digit integer, printing three
+// digits where two were asked for.
+//
+// One further measurement settles it. Rounding to the wider place shows the
+// magnitude the number prints at, and rounding the original to the narrower
+// place reaches the same magnitude, so a third pass reads what the second did.
+#let _decimals-for-significant(number, count, mode) = {
+  let places = _places-for-significant(number, count)
+  _places-for-significant(round-decimal(number, places, mode), count)
 }
 
 // An infinity written as whatever the caller said to write, or `none` when they
@@ -133,7 +153,7 @@
   if options.scale != 1 { number = number * decimal(str(options.scale)) }
 
   let decimals = if options.at("significant", default: none) != none {
-    _decimals-for-significant(number, options.significant)
+    _decimals-for-significant(number, options.significant, options.rounding)
   } else {
     options.decimals
   }
