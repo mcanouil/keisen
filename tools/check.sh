@@ -193,16 +193,60 @@ expect_fail() {
       continue
     fi
 
+    # The message alone, not the whole output. Typst prints a traceback under the
+    # error, and each frame of it echoes the source line it called from, hints
+    # and all. So an expectation naming a hint matched the call site that passes
+    # the hint rather than the message that printed it, and a fixture went on
+    # passing with the hint deleted from the panic.
+    local message
+    message="$(sed -n 's/^error: panicked with: //p' <<<"${output}" | head -1)"
+    if [[ -z "${message}" ]]; then
+      failures=$((failures + 1))
+      printf '  FAIL  expect-fail  %s  did not fail through the error grammar\n' "${f}"
+      printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
+      printf '        every failure in the package panics through src/utils/errors.typ\n'
+      continue
+    fi
+
     local missing=0
     for wanted in "${expected[@]}"; do
-      if ! grep -qF "${wanted}" <<<"${output}"; then
+      if ! grep -qF "${wanted}" <<<"${message}"; then
         if [[ ${missing} -eq 0 ]]; then
           failures=$((failures + 1))
           printf '  FAIL  expect-fail  %s  failed with the wrong message\n' "${f}"
-          printf '        got:    %s\n' "$(grep -m1 'error:' <<<"${output}")"
+          printf '        got:    %s\n' "${message}"
         fi
         missing=1
         printf '        wanted: %s\n' "${wanted}"
+      fi
+    done
+
+    # Every part the message carries is pinned by some expectation. Without
+    # this, a fixture added tomorrow pins its problem and leaves its hint unread,
+    # which is exactly the state the whole suite was in.
+    local body="${message#*: }"
+    local tail="${body}"
+    local value=""
+    if [[ "${body}" == *"; got "* ]]; then
+      tail="${body#*; got }"
+      value="${tail%%. *}"
+    fi
+    local hint=""
+    if [[ "${tail}" == *". "* ]]; then
+      hint="${tail#*. }"
+    fi
+
+    local part
+    for part in "${value:+got ${value}${hint:+.}}" "${hint}"; do
+      [[ -z "${part}" ]] && continue
+      if ! printf '%s\n' "${expected[@]}" | grep -qF "${part}"; then
+        if [[ ${missing} -eq 0 ]]; then
+          failures=$((failures + 1))
+          printf '  FAIL  expect-fail  %s  part of the message is pinned by nothing\n' "${f}"
+          printf '        got:    %s\n' "${message}"
+        fi
+        missing=1
+        printf '        unpinned: %s\n' "${part}"
       fi
     done
 

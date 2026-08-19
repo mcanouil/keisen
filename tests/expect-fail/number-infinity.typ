@@ -2,7 +2,7 @@
 // `infinity:` it is refused, as it always was: a column that silently drops an
 // unbounded value is a column that lies about its data.
 // expect: format-number: value is not a finite number
-// expect: got float.inf
+// expect: got float.inf.
 // expect: Only finite numbers are formatted here; use format() for anything else.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)

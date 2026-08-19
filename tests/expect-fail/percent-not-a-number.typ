@@ -2,7 +2,7 @@
 // names the formatter the caller actually wrote rather than format-number,
 // which is what the `scope` argument in src/format/percent.typ is for.
 // expect: format-percent: value is not a finite number
-// expect: got "unknown"
+// expect: got "unknown".
 // expect: Only finite numbers are formatted here; use format() for anything else.
 
 #import "../../lib.typ": *
