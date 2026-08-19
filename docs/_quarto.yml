@@ -18,7 +18,7 @@ project:
 
 website:
   title: "Keisen"
-  description: "Create elegant display tables in Typst."
+  description: "Create elegant display tables from tabular data."
   # No trailing slash: Quarto builds the social image URL by concatenating this
   # with a leading-slash image path, without normalising.
   site-url: &site-url https://m.canouil.dev/keisen

@@ -60,6 +60,14 @@ if ! tools/import-boundary.sh; then
   failures=$((failures + 1))
 fi
 
+# The rules that script holds fire on a released tree, on a stale date, and on a
+# manifest that drifted, and on this tree they fire on none of those, so it runs
+# against its own fixtures as well: a guard nothing exercises is a guard that
+# passes because its pattern stopped matching.
+if ! tools/version-check.sh --self-test; then
+  failures=$((failures + 1))
+fi
+
 if ! tools/version-check.sh; then
   failures=$((failures + 1))
 fi

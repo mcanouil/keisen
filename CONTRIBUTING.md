@@ -81,18 +81,26 @@ tools/render-docs-assets.sh
 ## Rehearsing a release
 
 ```bash
-tools/dry-release.sh
+SKIP_MANIFEST_LINT=1 tools/dry-release.sh   # a routine run
+tools/dry-release.sh                        # what a release is rehearsed with
 ```
 
-That closes by recording the benchmark timing: a 2000-row, 10-column table with styles and formats, which is the table the style index exists for.
+The script stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
+It publishes nothing.
+
+The script closes by recording the benchmark timing: a 2000-row, 10-column table with styles and formats, which is the table the style index exists for.
 It records rather than judges, since the noise on a wall-clock ratio is as wide as the signal, so read the numbers and compare them with the last release.
 Run it alone with `tools/benchmark.sh`.
 
-That stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
-It publishes nothing.
-
 Run it after touching `lib.typ`, the `exclude` list in `typst.toml`, or any listing in `docs/`.
 A module the working tree can import is not necessarily a module a package specification can reach, and compiling from an installed copy is the only check that tells the difference.
+
+The second form also lints the manifest, through [`typst-package-check`](https://github.com/typst/package-check), which is installed with `cargo install --git https://github.com/typst/package-check`.
+That linter is the one Typst Universe runs on a submission, and the entry it checks is permanent, so a finding stops the rehearsal, and so does a missing linter.
+`SKIP_MANIFEST_LINT=1` runs everything else without it, which is what the checks workflow does and what a routine run wants; a release is not rehearsed that way, and the closing line says which of the two ran.
+
+The release itself rolls `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md) into `## <version> (YYYY-MM-DD)` and writes the same day as `date-released` in [`CITATION.cff`](CITATION.cff).
+`tools/version-check.sh` holds the two to each other, and it refuses a `date-released` while the changelog says nothing has been released, so the development bump after a release removes the field again.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
 Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.
