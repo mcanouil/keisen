@@ -100,6 +100,33 @@
 // And the whole thing renders through the same pipeline as a hand-built table.
 #assert.eq(type(display-table(spec: spec)), content)
 
+// --- significant digits are nameable wherever the formatter takes them ---
+//
+// `format-percent` and `format-currency` forward `significant` to
+// format-number, so a generator names it on either. The key was listed for
+// format-number alone, which made the serialised path narrower than the
+// directives it resolves to.
+
+#let significant-spec = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((margin: 0.18234, price: 1234.5),),
+    formats: (
+      (name: "format-percent", columns: "margin", significant: 2),
+      (name: "format-currency", columns: "price", significant: 3),
+    ),
+  ),
+  build-spec,
+)
+
+#let written(format, value) = {
+  let cell = (formatter-for(format, significant-spec.options))(value)
+  cell.integer + cell.separator + cell.fraction
+}
+
+#assert.eq(written(significant-spec.formats.first(), 0.18234), "18")
+#assert.eq(written(significant-spec.formats.last(), 1234.5), "1" + sym.space.thin + "230")
+
 // --- the entry point takes the serialised form directly ---
 
 // No resolve-serialised call: display-table recognises data where a built

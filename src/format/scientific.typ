@@ -7,7 +7,7 @@
 ///! full, so the digits are always there to read.
 
 #import "../utils/errors.typ": fail, fail-enum
-#import "number.typ": format-family, format-value, to-decimal, unbounded
+#import "number.typ": format-family, format-value, resolve-decimals, to-decimal, unbounded
 
 // A decimal holds 28 to 29 significant digits, and a mantissa needs far fewer,
 // so the digit run is cut to what can be constructed.
@@ -103,7 +103,8 @@
 #let format-scientific(
   columns,
   rows: auto,
-  decimals: 2,
+  // `auto` means two decimal places, as it does across the family.
+  decimals: auto,
   exponent: "power",
   decimal-separator: auto,
   sign: false,
@@ -115,6 +116,7 @@
   if exponent not in ("power", "e") {
     fail-enum("format-scientific", "exponent", exponent, ("power", "e"))
   }
+  let places = resolve-decimals("format-scientific", decimals, 2, minimum: 0)
 
   format-family(
     columns,
@@ -126,7 +128,7 @@
       prefix: none,
       suffix: none,
       infinity: infinity,
-      decimals: decimals,
+      decimals: places,
       significant: none,
       // A mantissa carries one digit before the point, so there is nothing to
       // group and no separator to choose.

@@ -5,7 +5,7 @@
 ///! under one another.
 
 #import "../utils/errors.typ": fail-enum
-#import "number.typ": format-number
+#import "number.typ": format-number, forward-decimals
 
 // The currencies worth spelling. Anything else is written as its code, which is
 // what a reader would accept and what an unknown symbol could not be.
@@ -49,7 +49,9 @@
   format-number(
     columns,
     rows: rows,
-    decimals: if decimals != auto { decimals } else if currency in _WHOLE { 0 } else { 2 },
+    // The currency's own count yields to `significant`: see `forward-decimals`
+    // in src/format/number.typ.
+    decimals: forward-decimals(decimals, options, if currency in _WHOLE { 0 } else { 2 }),
     scope: "format-currency",
     ..if position == end { (suffix: affix) } else { (prefix: affix) },
     ..options,
