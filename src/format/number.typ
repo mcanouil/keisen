@@ -6,7 +6,7 @@
 ///! shortest round-trip string, since `decimal(3.14)` is documented as
 ///! imprecise and warns.
 
-#import "../utils/errors.typ": check, fail, fail-enum
+#import "../utils/errors.typ": check, fail, fail-enum, fail-type
 
 // A decimal holds 28 to 29 significant digits and raises rather than saturating
 // on overflow, so both ends of the range are checked before construction: too
@@ -119,8 +119,18 @@
 // One further measurement settles it. Rounding to the wider place shows the
 // magnitude the number prints at, and rounding the original to the narrower
 // place reaches the same magnitude, so a third pass reads what the second did.
-#let _decimals-for-significant(number, count, mode) = {
+//
+// The place is checked before it is rounded to, since the rounding itself is
+// what a place beyond the decimal's own would raise on.
+#let _decimals-for-significant(number, count, mode, scope) = {
   let places = _places-for-significant(number, count)
+  check(
+    places <= 28,
+    scope,
+    "significant asks for more decimal places than a decimal holds",
+    value: (significant: count, places: places),
+    hint: "The zeros between the point and the first digit are places too; use format-scientific for a value this small.",
+  )
   _places-for-significant(round-decimal(number, places, mode), count)
 }
 
@@ -152,8 +162,10 @@
 
   if options.scale != 1 { number = number * decimal(str(options.scale)) }
 
+  // A count inside its own range still resolves to a place outside one: ten
+  // digits of 1e-20 are 29 places, and a decimal holds 28.
   let decimals = if options.at("significant", default: none) != none {
-    _decimals-for-significant(number, options.significant, options.rounding)
+    _decimals-for-significant(number, options.significant, options.rounding, scope)
   } else {
     options.decimals
   }
@@ -252,10 +264,85 @@
   scope: "format-cell",
 )
 
+// A decimal count reaches arithmetic that pads or rounds whatever it is given,
+// so it is held to being a count before it gets there. Every formatter in the
+// family takes one, including the two that take no `significant`.
+//
+// `minimum` is -28 where a negative count means rounding to a place above the
+// point, which format-number offers, and 0 where it means rounding the mantissa
+// or the byte count away, which means nothing.
+//
+// The count a formatter formats with: its own `fallback` where the caller left
+// `auto`, and the caller's count once it is held to being a count.
+#let resolve-decimals(scope, decimals, fallback, minimum: -28) = {
+  if decimals == auto { return fallback }
+  if type(decimals) != int {
+    fail-type(scope, "decimals", decimals, "an integer or auto")
+  }
+  // A decimal holds 28 places, so a larger count pads zeros the value never
+  // had, and a smaller negative one rounds past every digit it has.
+  check(
+    decimals >= minimum and decimals <= 28,
+    scope,
+    // Written out rather than built from `minimum`: `str` spells a negative
+    // number with U+2212, which is not what the source says.
+    if minimum < 0 { "decimals must be between -28 and 28" } else { "decimals must be between 0 and 28" },
+    value: decimals,
+    hint: "A decimal holds 28 places; a count outside them writes digits the value does not carry.",
+  )
+  decimals
+}
+
+// Both counts reach that same arithmetic, and a caller who wrote both has
+// written two answers to one question. The resolved count is returned, so a
+// caller of this checks and resolves in one call.
+#let _exclusive(scope, decimals, significant) = {
+  if significant != none and type(significant) != int {
+    fail-type(scope, "significant", significant, "an integer or none")
+  }
+  // Zero significant digits leave none of the value: 1234.5 at a count of zero
+  // rounds to the ten thousands and prints 0. The upper end is the decimal's
+  // own, since the count resolves to a place that same decimal has to hold.
+  check(
+    significant == none or (significant >= 1 and significant <= 28),
+    scope,
+    "significant must be between 1 and 28",
+    value: significant,
+    hint: "A decimal holds 28 digits; a count outside them writes digits the value does not carry.",
+  )
+  check(
+    decimals == auto or significant == none,
+    scope,
+    "decimals and significant are mutually exclusive",
+    value: (decimals: decimals, significant: significant),
+    hint: "Write one of the two: decimals fixes the decimal places, significant derives them from the value.",
+  )
+  // Resolved last, so a caller who wrote both is told that before being told
+  // anything about the range of either.
+  resolve-decimals(scope, decimals, 2)
+}
+
+// The count a formatter in the family forwards. Its own default answers `auto`,
+// and only when the caller asked for no significant digits: `auto` has to
+// travel on, or the pair arrives at `_exclusive` as two answers to one question
+// and is refused.
+//
+// `options` is the forwarding sink, since `significant` is a key such a
+// formatter passes on rather than one it declares.
+#let forward-decimals(decimals, options, fallback) = {
+  if decimals != auto { return decimals }
+  if options.named().at("significant", default: none) != none { return auto }
+  fallback
+}
+
 #let format-number(
   columns,
   rows: auto,
-  decimals: 2,
+  // `auto` here is the formatter's own count, two decimal places, and not the
+  // theme's: there is no `number-decimals` option. It is a sentinel rather than
+  // a 2 because a default cannot be told from a value the caller wrote, and
+  // `decimals` and `significant` together are refused.
+  decimals: auto,
   significant: none,
   grouping: 3,
   // `auto` means the theme decides, through number-group-separator and
@@ -274,41 +361,56 @@
   // Named by whichever formatter in the family called, so a failure reports the
   // function the caller actually wrote.
   scope: "format-number",
-) = format-family(
-  columns,
-  conventions => value => format-value(
-    value,
-    (
-      scope: scope,
-      prefix: prefix,
-      suffix: suffix,
-      exponent: exponent,
-      infinity: infinity,
-      decimals: decimals,
-      significant: significant,
-      grouping: grouping,
-      group-separator: if group-separator == auto { conventions.group } else { group-separator },
-      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
-      scale: scale,
-      sign: sign,
-      rounding: if rounding == auto { conventions.rounding } else { rounding },
-      negative-zero: negative-zero,
+) = {
+  let places = _exclusive(scope, decimals, significant)
+
+  format-family(
+    columns,
+    conventions => value => format-value(
+      value,
+      (
+        scope: scope,
+        prefix: prefix,
+        suffix: suffix,
+        exponent: exponent,
+        infinity: infinity,
+        decimals: places,
+        significant: significant,
+        grouping: grouping,
+        group-separator: if group-separator == auto { conventions.group } else { group-separator },
+        decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
+        scale: scale,
+        sign: sign,
+        rounding: if rounding == auto { conventions.rounding } else { rounding },
+        negative-zero: negative-zero,
+      ),
     ),
-  ),
-  rows: rows,
-  scope: scope,
-)
+    rows: rows,
+    scope: scope,
+  )
+}
 
 // Forwarded options come after `decimals`, and a later named argument wins, so
 // a decimal count is refused rather than quietly turning integers into
 // fractions.
+//
+// A key that asks for nothing is not a refusal: `auto` and `none` are how the
+// rest of the family says "no opinion", so a wrapper forwarding a fixed set of
+// keys works here as it does everywhere else.
 #let format-integer(columns, rows: auto, ..options) = {
   let named = options.named()
   check(
-    "decimals" not in named and "significant" not in named,
+    named.at("decimals", default: auto) == auto and named.at("significant", default: none) == none,
     "format-integer",
     "decimals and significant do not apply to integers",
     hint: "Use format-number when a fractional part is wanted.",
   )
-  format-number(columns, rows: rows, decimals: 0, scope: "format-integer", ..options)
+  // Forwarded options come after `decimals: 0`, and a later named argument wins,
+  // so a key that asked for nothing is dropped rather than passed on: `auto`
+  // reaching format-number would resolve to its own two places.
+  let forwarded = (:)
+  for (key, value) in named {
+    if key not in ("decimals", "significant") { forwarded.insert(key, value) }
+  }
+  format-number(columns, rows: rows, decimals: 0, scope: "format-integer", ..forwarded)
 }

@@ -574,8 +574,8 @@
     "infinity",
   ),
   "format-integer": ("grouping", "group-separator", "scale", "sign", "prefix", "suffix"),
-  "format-percent": ("decimals", "scale", "symbol", "space"),
-  "format-currency": ("currency", "decimals", "symbol", "position", "space"),
+  "format-percent": ("decimals", "significant", "scale", "symbol", "space"),
+  "format-currency": ("currency", "decimals", "significant", "symbol", "position", "space"),
   "format-scientific": (
     "decimals",
     "exponent",

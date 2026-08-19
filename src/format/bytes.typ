@@ -5,7 +5,7 @@
 ///! table that does not say which it means is telling the reader nothing.
 
 #import "../utils/errors.typ": fail-enum
-#import "number.typ": format-family, format-value, to-decimal
+#import "number.typ": format-family, format-value, resolve-decimals, to-decimal
 
 #let _UNITS = (
   "1024": ([B], [KiB], [MiB], [GiB], [TiB], [PiB]),
@@ -55,7 +55,8 @@
   columns,
   rows: auto,
   base: 1024,
-  decimals: 1,
+  // `auto` means one decimal place, as it does across the family.
+  decimals: auto,
   grouping: 3,
   group-separator: auto,
   decimal-separator: auto,
@@ -67,6 +68,7 @@
   if base not in (1000, 1024) {
     fail-enum("format-bytes", "base", base, (1000, 1024))
   }
+  let places = resolve-decimals("format-bytes", decimals, 1, minimum: 0)
 
   format-family(
     columns,
@@ -79,7 +81,7 @@
       suffix: none,
       exponent: none,
       infinity: infinity,
-      decimals: decimals,
+      decimals: places,
       significant: none,
       grouping: grouping,
       group-separator: if group-separator == auto { conventions.group } else { group-separator },

@@ -11,12 +11,12 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | --- | --- |
 | `format(columns, function, rows: auto)` | Any `value => content`. The escape hatch the others are built on. |
 | `format-cell(columns, function, rows: auto)` | Any `row => content`. Receives the whole input row, hidden columns and `_index` included, for a cell that depends on its neighbours. |
-| `format-number(columns, ..)` | `decimals: 2`, `significant: none`, `grouping: 3`, `group-separator: auto`, `decimal-separator: auto`, `scale: 1`, `sign: false`, `rounding: auto`, `negative-zero: false`, `infinity: none`, `prefix`, `suffix`. |
-| `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` is an error. |
-| `format-percent(columns, ..)` | `decimals: 1`, `scale: 100`, `symbol: [%]`, `space: true`. |
-| `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `symbol: auto`, `position: start`, `space: auto`. |
-| `format-scientific(columns, ..)` | `decimals: 2`, `exponent: "power"` or `"e"`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
-| `format-bytes(columns, ..)` | `base: 1024`, `decimals: 1`, `group-separator: auto`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
+| `format-number(columns, ..)` | `decimals: auto` (two places), `significant: none`, `grouping: 3`, `group-separator: auto`, `decimal-separator: auto`, `scale: 1`, `sign: false`, `rounding: auto`, `negative-zero: false`, `infinity: none`, `prefix`, `suffix`. |
+| `format-integer(columns, ..)` | `format-number` with no fractional part. Passing `decimals` or `significant` is an error. |
+| `format-percent(columns, ..)` | `decimals: auto` (one place), `significant: none`, `scale: 100`, `symbol: [%]`, `space: true`. |
+| `format-currency(columns, ..)` | `currency: "EUR"`, `decimals: auto`, `significant: none`, `symbol: auto`, `position: start`, `space: auto`. |
+| `format-scientific(columns, ..)` | `decimals: auto` (two places), `exponent: "power"` or `"e"`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
+| `format-bytes(columns, ..)` | `base: 1024`, `decimals: auto` (one place), `group-separator: auto`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
 | `format-date(columns, ..)` | `pattern: "[year]-[month]-[day]"`. Takes a `datetime` or an ISO-8601 string. |
 | `format-markup(columns, ..)` | Evaluates a string of Typst markup. No arguments of its own. |
 | `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. See [Nanoplots](nanoplots.qmd). |
@@ -32,6 +32,14 @@ Only finite numbers are formatted, and an infinite value is an error unless `inf
 What it writes is opaque content, so it takes no part in the decimal alignment of the column around it.
 A column holding an infinity cannot be summarised either: aggregations work in `decimal`, which has no infinity, so a total would silently be the total of the other rows.
 `columns: auto` leaves such a column out, as it does a nanoplot column, and naming it in `summary-rows` is an error.
+
+`decimals` fixes the number of decimal places, and `significant` derives them from the value, so the two are mutually exclusive and writing both is an error.
+`format-number`, `format-percent` and `format-currency` are the three that take `significant`, and each spells its own default as `decimals: auto`: two places, one place, and whatever the currency circulates in.
+Leaving `decimals` at `auto` is what lets `significant` answer instead.
+This `auto` is the formatter's own count rather than the theme's, unlike the separators and the rounding beside it: no theme option names a number of decimal places.
+A decimal holds 28 places, so `significant` is a count from 1 to 28 and `decimals` a place from -28 to 28, and a count outside them is refused.
+A count inside them is refused as well where the value is small enough to carry it past the same 28 places, since the zeros after the point are places too; `format-scientific` writes such a value instead.
+`format-integer` takes neither key, and `format-scientific` and `format-bytes` take `decimals` alone: a mantissa and a byte count have no significant-digit reading, and neither takes a negative count either.
 
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`, and `"half-even"` is implemented in the package for anyone expecting R's behaviour.
