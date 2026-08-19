@@ -1,6 +1,7 @@
 // An option the built-in does not take, which used to surface as Typst's own
 // unexpected-argument error pointing inside keisen.
 // expect: format: unknown key digits
+// expect: Known keys: name, columns, rows, decimals, significant, grouping, group-separator, decimal-separator, scale, sign, rounding, negative-zero, prefix, suffix, infinity.
 
 #import "../../src/spec.typ": build-spec
 #import "../../src/spec/resolve.typ": resolve-serialised

@@ -1,6 +1,7 @@
 // A format directive naming a column that does not exist formats nothing and
 // used to say nothing, which is the same typo the label and width checks catch.
 // expect: format-number: unknown column typo
+// expect: Known columns: units, price.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

@@ -1,6 +1,7 @@
 // format-markup evaluates a string as Typst. A number is not markup, and
 // evaluating it would be a guess about what the caller meant.
 // expect: format-markup: value must be a string of Typst markup, or content
+// expect: got 42
 
 #import "../../lib.typ": *
 

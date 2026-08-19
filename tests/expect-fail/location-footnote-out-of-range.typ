@@ -1,6 +1,7 @@
 // Footnote rows are numbered by where they land in the footer, so a position
 // past the last one is a miscount. It used to be styled in silence.
 // expect: cells-footnotes: note 2 is not in the table
+// expect: Notes are numbered from zero, and this table has 2 of them.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

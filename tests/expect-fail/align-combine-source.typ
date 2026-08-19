@@ -1,6 +1,7 @@
 // A combine hides its sources without the caller writing columns-hide, so the
 // hint names both routes rather than pointing at a directive nobody wrote.
-// expect: columns-align: column estimate is hidden. Align a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.
+// expect: columns-align: column estimate is hidden
+// expect: Align a visible column: columns-hide removes one, and columns-combine hides its sources unless hide-sources is false.
 
 #import "../../src/spec.typ": build-spec
 #import "../../src/parts/columns.typ": columns-align, columns-combine

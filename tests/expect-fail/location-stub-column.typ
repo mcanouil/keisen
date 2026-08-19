@@ -1,6 +1,7 @@
 // A column that exists but sits in the stub is not an unknown column, and
 // saying so would send the reader hunting for a typo that is not there.
 // expect: cells-body: column product is in the stub
+// expect: cells-stub() addresses the row names, and cells-stubhead() their label.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

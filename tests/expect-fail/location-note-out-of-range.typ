@@ -1,6 +1,7 @@
 // Source notes are numbered from zero, so a position past the last one is a
 // miscount rather than a note that happens to be absent.
 // expect: cells-source-notes: note 1 is not in the table
+// expect: Notes are numbered from zero, and this table has 1 of them.
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

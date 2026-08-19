@@ -1,6 +1,7 @@
 // The same pair the other way round. Both orders must fail the same way: that
 // symmetry is the guarantee, and it is why moves resolve after the fold.
 // expect: columns-move: column notes is hidden
+// expect: Move a visible column, or drop the columns-hide.
 
 #import "../../src/spec.typ": build-spec
 #import "../../src/parts/columns.typ": columns-hide, columns-move

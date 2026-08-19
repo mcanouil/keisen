@@ -129,8 +129,9 @@ fitted_pages
 # `<scope>: <problem>; got <repr(value)>. <hint>`, and pinning it as one string
 # would drag the repr of the offending value into the middle of the assertion,
 # which is the most volatile part of the message. Several lines let a fixture
-# pin the scope and the problem on one and the hint on another, and skip the
-# value.
+# pin each part on its own: the scope with its problem, the value, and the hint.
+# The whole message is then covered without any one assertion depending on the
+# spelling of the parts around it.
 #
 # A fixture that names no expectation is refused. Asserting only that a document
 # does not compile says nothing about why, and a message that drifts to another
@@ -169,6 +170,22 @@ expect_fail() {
       continue
     fi
 
+    # An expectation that stops at the scope asserts only that the failure came
+    # from somewhere in the package, which every failure in the package does.
+    # The grammar is `<scope>: <problem>; got <repr(value)>. <hint>`, and each
+    # fixture pins the parts its message carries, one per line: the scope with
+    # its problem, the value, and the hint. Every hint in the suite could be
+    # deleted from `src/utils/errors.typ` and the whole run stayed green.
+    local wanted
+    for wanted in "${expected[@]}"; do
+      if [[ "${wanted}" =~ ^[a-z-]+:[[:space:]]*$ ]]; then
+        failures=$((failures + 1))
+        printf '  FAIL  expect-fail  %s  the expectation "%s" names a scope and nothing else\n' "${f}" "${wanted}"
+        printf '        pin what the message says, not only where it came from\n'
+        continue 2
+      fi
+    done
+
     local output
     if output="$(typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>&1)"; then
       failures=$((failures + 1))
@@ -177,7 +194,6 @@ expect_fail() {
     fi
 
     local missing=0
-    local wanted
     for wanted in "${expected[@]}"; do
       if ! grep -qF "${wanted}" <<<"${output}"; then
         if [[ ${missing} -eq 0 ]]; then
