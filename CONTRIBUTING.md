@@ -3,6 +3,11 @@
 Thanks for your interest in helping improve Keisen.
 This document explains where to file what, and the basics of working on the source.
 
+> [!NOTE]
+> I do not accept pull requests for now.
+> The reasons, and when that changes, are in the [README](README.md#contributing).
+> File what you have instead, as described in [Where to file what](#where-to-file-what), and say what you would change.
+
 ## Where to file what
 
 - **Bug report.**
@@ -16,6 +21,9 @@ This document explains where to file what, and the basics of working on the sour
 A bug report must include the Typst version, the Keisen version, and a minimal document that reproduces the problem.
 
 ## Working on the source
+
+This section describes how I work on the source, and the checks a patch must pass once I accept pull requests.
+It is also what a fork needs to keep the suite green.
 
 Requirements: Typst 0.15.0 or later, Bash 5 or later, [Quarto](https://quarto.org), and `shellcheck` plus `shfmt` if you touch the scripts.
 
