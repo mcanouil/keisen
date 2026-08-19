@@ -7,7 +7,7 @@
 ///! alignment, and strokes are decided.
 
 #import "../format/align.typ": align-slots
-#import "../format/apply.typ": apply-formats, matches-column
+#import "../format/apply.typ": matches-column
 #import "../data.typ": column
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, footer-notes, marks-for
@@ -15,7 +15,10 @@
 #import "../locations.typ": PARTS
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
-#import "layout.typ": column-alignments, column-cells, infer-alignment, metrics, slots-to-content, stub-alignment, summarised
+#import "layout.typ": (
+  column-alignments, column-cells, infer-alignment, metrics, slots-to-content, stub-alignment, stub-cells,
+  summarised,
+)
 #import "plan.typ": build-plan
 
 // `fill` and `stroke` arrive from the theme and the row plan; an explicit style
@@ -68,15 +71,7 @@
 
   // The stub goes through the same formatting pipeline as every other column,
   // so a format directive naming the row-name column takes effect there too.
-  let stub-cells = if has-stub {
-    apply-formats(
-      spec.data,
-      spec.formats,
-      spec.stub.rowname,
-      substitutions: spec.substitutions,
-      options: spec.options,
-    )
-  } else { () }
+  let stub-content = stub-cells(spec)
   let indents = if spec.stub.indent == none { () } else {
     column(spec.data, spec.stub.indent)
   }
@@ -329,7 +324,7 @@
           let level = indents.at(entry.source)
           if level == none { 0 } else { level }
         }
-        let name = slots-to-content(stub-cells.at(entry.source))
+        let name = stub-content.at(entry.source)
         let named = text(weight: setting("stub-weight"), name)
         let body = if depth == 0 { named } else { h(setting("stub-indent-step") * depth) + named }
         rows.push(_cell(

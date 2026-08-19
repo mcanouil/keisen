@@ -52,3 +52,55 @@
 )
 #assert.eq(indented.stub.indent, "depth")
 #assert.eq(indented.columns, ("units",))
+
+// --- a numeric stub is not decimal-aligned ---
+//
+// The decimal metric that pads a column against its separator is computed for
+// the data columns alone, so a stub of figures renders ragged where the same
+// figures in a data column line up. The reference says so, and the stub arm
+// below reads what the renderer emits: `stub-cells` is the call the renderer
+// makes for the stub. The data arm is a reference construction, built from the
+// same metric the renderer computes, and it is there as the contrast rather
+// than as a second reading of the renderer.
+//
+// The evidence is width. Two figures of different length line up only when the
+// shorter one is padded, so a padded column renders them to one width and an
+// unpadded one does not.
+
+#import "../../src/format/align.typ": align-slots
+#import "../../src/format/number.typ": format-number
+#import "../../src/parts/summaries.typ": summary-values
+#import "../../src/render/layout.typ": column-cells, metrics, slots-to-content, stub-cells
+
+#let figures = build-spec(
+  (year: (1999, 20005), units: (10, 2000.25)),
+  (table-stub(rowname: "year"), format-number(auto)),
+  (:),
+)
+
+#assert.eq(figures.columns, ("units",))
+
+#context {
+  let stub = stub-cells(figures)
+
+  // The format reaches the stub: 1999 is written to two decimal places with the
+  // group separator the theme names, rather than as the integer it arrived as.
+  assert.eq(stub.first(), [#("1" + sym.space.thin + "999.00")])
+
+  // And the two rows keep the widths their digits give them.
+  assert(
+    measure(stub.first()).width < measure(stub.last()).width,
+    message: "a stub is not padded, so a shorter figure stays shorter",
+  )
+
+  // The same figures in a data column, through the metric the renderer computes
+  // rather than one built here, come out to one width.
+  let cells = column-cells(figures)
+  let metric = metrics(figures, cells, summary-values(figures)).first()
+  let padded = cells.first().map(slots => slots-to-content(align-slots(slots, metric)))
+  assert.eq(
+    measure(padded.first()).width,
+    measure(padded.last()).width,
+    message: "a data column is padded against its separator, so its cells share a width",
+  )
+}
