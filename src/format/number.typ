@@ -14,6 +14,11 @@
 // than it has. Typst has no try, so neither can be attempted and recovered.
 #let _limit = 7.9e28
 
+// The exact largest decimal, which the rounding below measures its shift
+// against. `_limit` above is a conservative float bound that sits under it, and
+// `_fits` closes the gap between the two by counting digits.
+#let _decimal-max = decimal("79228162514264337593543950335")
+
 #let _numeric = regex("^[+-]?\d+(\.\d+)?$")
 
 // Digits a decimal literal would need, counting the fractional ones that a
@@ -50,6 +55,22 @@
 
 // `digits` may be negative, which rounds to tens, hundreds, and so on; that is
 // how significant-digit formatting reaches the integer part.
+//
+// It must lie within -28 to 28, which is what a decimal holds as places: the
+// scale below is ten to its magnitude, and a wider one raises before anything
+// here can report it.
+//
+// A written count is bounded by `resolve-decimals`. A resolved place is bounded
+// by the check in `_decimals-for-significant`, which reads the first of its two
+// measurements; the second is what arrives here, and it cannot be wider, since
+// rounding to the first place never pushes the place out. That is a proof rather
+// than a check, and the bound is stated here rather than tested twice.
+//
+// Two limits of the type are left open, and each is filed with a reproduction.
+// A place far below zero can carry into a magnitude no decimal holds, which the
+// un-shift below raises on. `options.scale` is what carries a value that far.
+// Half-up raises on the same input, so the two modes agree, and both raise
+// outside the project grammar.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))
@@ -57,11 +78,29 @@
   if mode == "half-up" { return calc.round(value, digits: digits) }
 
   let scale = calc.pow(decimal(10), calc.abs(digits))
+
+  // The shift is measured before it is taken: a decimal raises rather than
+  // saturating, and Typst has no try, so an overflow cannot be caught after the
+  // fact. The room falls as the place rises, and a value with none left has no
+  // fractional digit at that place to sit a tie on, so plain rounding is exact
+  // for it.
+  //
+  // Only the multiplying side is measured. Dividing shrinks, and the un-shift
+  // that follows it has a limit of its own, named in the header above.
+  if digits > 0 and calc.abs(value) > _decimal-max / scale {
+    return calc.round(value, digits: digits)
+  }
+
   let shifted = if digits < 0 { value / scale } else { value * scale }
 
   // The tie test runs through calc.trunc, which returns an int, so a shifted
-  // value beyond the integer range takes plain rounding instead. Nothing that
-  // large can sit on a tie: it has no fractional part left to sit on.
+  // value beyond the integer range takes plain rounding instead.
+  //
+  // This is a known limitation rather than a proof. A shifted value keeps a
+  // fractional part whenever the value's own scale runs past the place asked
+  // for, so one beyond the integer range can still sit on a tie, and half-even
+  // then answers what half-up would. It is reachable, it is written into the
+  // reference, and it is filed with its reproduction and a way to close it.
   if calc.abs(shifted) >= decimal("9223372036854775807") {
     return calc.round(value, digits: digits)
   }
