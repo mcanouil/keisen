@@ -149,6 +149,51 @@
 #assert.eq(dashed.substitutions.first().test, "zero")
 #assert.eq(dashed.substitutions.first().replacement, [--])
 
+// --- the formatter options JSON cannot spell ---
+//
+// Most options pass through as written. Five cannot: `prefix`, `suffix`,
+// `symbol` and `infinity` are content, and `position` is an alignment, so each
+// arrives as a string and is read into the value the formatter expects. Handed
+// on as a string, a symbol was drawn as the characters of its own name, and a
+// position was refused by the formatter it was written for.
+//
+// A resolved directive carries the formatter rather than the options it was
+// built from, so each conversion is read where it shows: in the cell.
+
+#let converted = resolve-serialised(
+  (
+    kind: "display-table",
+    data: (price: (1234.5,), share: (0.5,), rate: (float.inf,)),
+    formats: (
+      (name: "format-currency", columns: "price", symbol: "EUR", position: "end"),
+      (name: "format-number", columns: "share", prefix: "~", suffix: " of it"),
+      (name: "format-number", columns: "rate", infinity: "inf"),
+    ),
+  ),
+  build-spec,
+)
+
+// Looked up by the column it names rather than by position, so the assertions
+// below do not depend on the order the formats were written in.
+#let cell(name) = {
+  let directive = converted.formats.find(directive => directive.columns == name)
+  (formatter-for(directive, converted.options))(converted.data.first().at(name))
+}
+
+// Read as the alignment `end`, the symbol follows the number, against a space
+// that does not break. Left as the string "end", the formatter refuses it.
+#assert.eq(cell("price").prefix, none)
+#assert.eq(cell("price").suffix, sym.space.nobreak + [EUR])
+
+// A prefix and a suffix are content wherever they are written, rather than the
+// characters of a string set as a value.
+#assert.eq(cell("share").prefix, [#"~"])
+#assert.eq(cell("share").suffix, [#" of it"])
+
+// An infinity is written as whatever the caller said to write, and it is the
+// whole cell: there are no digits to pad a column against.
+#assert.eq(cell("rate"), [#"inf"])
+
 // --- significant digits are nameable wherever the formatter takes them ---
 //
 // `format-percent` and `format-currency` forward `significant` to

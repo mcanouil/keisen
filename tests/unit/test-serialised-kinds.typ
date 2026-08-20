@@ -2,7 +2,6 @@
 // takes no closure, so each is expressible as data; they were absent by
 // omission rather than by nature.
 
-#import "../../src/format/apply.typ": formatter-for
 #import "../../src/spec.typ": build-spec
 #import "../../src/spec/resolve.typ": resolve-serialised
 
@@ -75,41 +74,3 @@
 )
 #assert.eq(several.footnotes.first().locations.len(), 2)
 #assert.eq(several.footnotes.first().mark, [dagger])
-
-// --- a formatter option that JSON cannot spell ---
-//
-// Most options pass through as written. Five cannot: `prefix`, `suffix`,
-// `symbol` and `infinity` are content, and `position` is an alignment, so each
-// arrives as a string and is read into the value the formatter expects. Handed
-// on as a string, `position` reached the renderer and placed nothing, and the
-// currency symbol was drawn as the characters of its own name.
-
-// A resolved directive carries the formatter rather than the options it was
-// built from, so the conversion is read where it shows: in the cell.
-
-#let converted = resolve-serialised(
-  (
-    kind: "display-table",
-    data: (price: (1234.5,), share: (0.5,)),
-    formats: (
-      (name: "format-currency", columns: "price", symbol: "EUR", position: "end"),
-      (name: "format-number", columns: "share", suffix: " of it"),
-    ),
-  ),
-  build-spec,
-)
-
-#let cell(position) = {
-  (formatter-for(converted.formats.at(position), converted.options))(
-    converted.data.first().at(("price", "share").at(position)),
-  )
-}
-
-// Read as the alignment `end`, the symbol follows the number, against a space
-// that does not break. Left as the string "end", the formatter refuses it.
-#assert.eq(cell(0).prefix, none)
-#assert.eq(cell(0).suffix, sym.space.nobreak + [EUR])
-
-// And the suffix is content wherever it is written, rather than the characters
-// of a string set as a value.
-#assert.eq(cell(1).suffix, [#" of it"])
