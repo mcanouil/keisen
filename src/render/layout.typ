@@ -4,6 +4,7 @@
 ///! content a summary cell ends up holding. `assemble.typ` reads these and puts
 ///! cells together; nothing here knows what a `table.cell` is.
 
+#import "../data.typ": column
 #import "../format/align.typ": align-slots, column-metrics
 #import "../format/apply.typ": apply-formats, formatter-for, matches-column
 #import "../parts/substitutions.typ": is-missing, is-zero
@@ -137,6 +138,18 @@
     substitutions: spec.substitutions,
     options: spec.options,
   ).map(slots-to-content)
+}
+
+// One indentation level per row, taken from the column the stub names. A table
+// with no indent column has no levels at all, and a row that carries no value in
+// that column sits flat rather than failing: a sparse row store is data with a
+// gap in it, not data with an error in it.
+//
+// Always one entry per row, so the renderer indexes it by row position without
+// asking whether there are levels at all.
+#let stub-depths(spec) = {
+  if spec.stub.indent == none { return spec.data.map(row => 0) }
+  column(spec.data, spec.stub.indent).map(level => if level == none { 0 } else { level })
 }
 
 // A stub cell's body: the row name in the stub's weight, moved one indentation

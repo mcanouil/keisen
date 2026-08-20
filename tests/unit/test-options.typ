@@ -41,7 +41,11 @@
   option(theme-booktabs(), "column-labels-border-bottom") != none,
   message: "booktabs rules under the column labels",
 )
-#assert.eq(option(theme-booktabs(), "footer-border-top"), none)
+// Read off the preset rather than through `option`, which falls back to the
+// default: `footer-border-top` defaults to `none`, so the door that yields a
+// value cannot tell a preset that clears the rule from one that never mentions
+// it. The preset must say so itself, since it does not build on the default.
+#assert.eq(theme-booktabs().at("footer-border-top", default: "absent"), none)
 #assert(option(theme-default(), "footer-border-top") != none, message: "the default rules the footer")
 
 // theme-minimal rules the column labels and nothing else, where the default
@@ -50,8 +54,8 @@
   option(theme-minimal(), "column-labels-border-bottom") != none,
   message: "minimal still rules under the column labels",
 )
-#assert.eq(option(theme-minimal(), "table-border-top"), none)
-#assert.eq(option(theme-minimal(), "table-border-bottom"), none)
+#assert.eq(theme-minimal().at("table-border-top", default: "absent"), none)
+#assert.eq(theme-minimal().at("table-border-bottom", default: "absent"), none)
 #assert(option(theme-default(), "table-border-top") != none, message: "the default rules the top")
 #assert(option(theme-default(), "table-border-bottom") != none, message: "the default rules the bottom")
 

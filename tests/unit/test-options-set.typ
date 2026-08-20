@@ -32,8 +32,9 @@
 // which this package writes quoted, or as a named argument of `table-options`.
 //
 // A named argument is counted only in a file that configures options at all,
-// because `key: value` is the shape of every named argument in Typst and
-// `breakable` is one of `block`'s. Reading a key by name is not setting it:
+// which is one calling `table-options` or `build-spec`, or one passing a theme.
+// `key: value` is the shape of every named argument in Typst, and `breakable` is
+// one of `block`'s. Reading a key by name is not setting it:
 // `option(theme-compact(), "cell-inset")` asserts what the preset carries, and
 // the renderer could stop reading the key with that assertion still green, which
 // is what `test-options-read.typ` is for.
@@ -51,7 +52,11 @@
   )
   let body = "\n" + text
   if body.contains(regex("[^-\\w]\"" + name + "\"\\s*:")) { return true }
-  let configures = body.contains("table-options(") or body.contains(regex("theme\\s*:"))
+  let configures = (
+    body.contains("table-options(")
+      or body.contains("build-spec(")
+      or body.contains(regex("theme\\s*:"))
+  )
   configures and body.contains(regex("[^-\\w]" + name + "\\s*:"))
 }
 
