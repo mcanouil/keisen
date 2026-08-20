@@ -39,6 +39,10 @@ on:
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
       - "docs/assets/**"
+      # tools/version-check.sh reads both, holding the one-line description in
+      # every place it is written to the manifest's.
+      - "docs/_quarto.yml"
+      - "docs/site.webmanifest"
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
@@ -57,6 +61,10 @@ on:
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
       - "docs/assets/**"
+      # tools/version-check.sh reads both, holding the one-line description in
+      # every place it is written to the manifest's.
+      - "docs/_quarto.yml"
+      - "docs/site.webmanifest"
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
@@ -157,13 +165,18 @@ jobs:
       # documentation's own listings are where that import is printed.
       #
       # The same script the author runs, pointed at the runner's temporary
-      # directory instead of a home one. Its manifest lint is skipped here,
-      # since typst-package-check is not installed on the runner.
+      # directory instead of a home one.
+      #
+      # Its manifest lint gates a release, and it is skipped here by name:
+      # installing the linter would cost minutes on every pull request to check
+      # a file that changes a few times a year, and the release is rehearsed
+      # from a machine that carries it.
       - name: Rehearse the release
         shell: bash
         env:
           XDG_DATA_HOME: ${{ runner.temp }}
           STAGE_ROOT: ${{ runner.temp }}/stage
+          SKIP_MANIFEST_LINT: "1"
         run: tools/dry-release.sh
 
   lint:

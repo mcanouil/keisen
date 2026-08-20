@@ -1,6 +1,6 @@
 # Keisen
 
-Create elegant **display tables** for Typst.
+Create elegant **display tables** from tabular data.
 
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 The library implements the **display-table grammar** in a declarative API for Typst documents, inspired by [`gt`](https://gt.rstudio.com) (R) and [`great_tables`](https://posit-dev.github.io/great-tables/) (Python).

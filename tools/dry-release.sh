@@ -21,6 +21,26 @@ cd "${REPO_ROOT}"
 
 tools/version-check.sh
 
+# Read before the work rather than after it: a rehearsal that stages, installs
+# and compiles everything, then stops because a linter is missing, has spent
+# minutes to say what it knew at the start.
+#
+# The runner is the one place the lint is allowed to be missing. CI rehearses
+# the staged package on every pull request, and installing a Rust tool there
+# would cost minutes per run to lint a file that changes a few times a year. The
+# release itself is run from a machine that carries the tool, and that is the
+# run this gate is for, so the workflow opts out by name rather than by silence.
+LINT_MANIFEST=1
+if [[ "${SKIP_MANIFEST_LINT:-0}" == "1" ]]; then
+  LINT_MANIFEST=0
+elif ! command -v typst-package-check >/dev/null 2>&1; then
+  printf 'manifest: typst-package-check is not installed\n' >&2
+  printf '  a rehearsal that skips the manifest lint is not a rehearsal\n' >&2
+  printf '  cargo install --git https://github.com/typst/package-check\n' >&2
+  printf '  or set SKIP_MANIFEST_LINT=1, which the checks workflow does\n' >&2
+  exit 1
+fi
+
 VERSION="$(awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml)"
 
 STAGE_ROOT="${STAGE_ROOT:-/tmp/keisen-dry-release}"
@@ -147,24 +167,28 @@ if [[ ${failures} -gt 0 ]]; then
 fi
 
 # The lint Typst Universe itself runs on a submission, so a finding here is a
-# finding upstream. It is reported rather than fatal: it fetches the homepage
-# and repository URLs, and the homepage 404s until the documentation site is
-# published, which happens at the release this script rehearses. Failing on
-# that would make the rehearsal fail on every machine that has the tool, which
-# is the same as having no rehearsal.
+# finding upstream, and the entry it lints is permanent.
 #
-# It must be clean before a submission. Nothing here can tell that apart from
-# the expected 404, so a human reads it.
-if command -v typst-package-check >/dev/null 2>&1; then
-  printf '\nManifest lint (advisory, reaches the network):\n'
-  if typst-package-check check "${STAGE}"; then
-    printf 'Manifest lint clean.\n'
-  else
-    printf '\ntypst-package-check reported the above. Until the documentation site\n' >&2
-    printf 'is published an unreachable homepage is expected; anything else is not.\n' >&2
-  fi
+# It gates the rehearsal rather than the commit. It reaches the network, and
+# tools/check.sh runs before every commit and stays offline; here the network is
+# implied already, since this script installs a packaged copy and compiles
+# against it.
+#
+# It was advisory while the documentation site was unpublished, because the
+# homepage 404ed and nothing could tell that apart from a real finding.
+if [[ "${LINT_MANIFEST}" == "0" ]]; then
+  printf '\nManifest lint skipped: SKIP_MANIFEST_LINT is set.\n'
+  printf 'A release is not rehearsed with it set.\n'
 else
-  printf 'typst-package-check not installed; skipping manifest lint.\n'
+  printf '\nManifest lint (reaches the network):\n'
+  if ! typst-package-check check "${STAGE}"; then
+    printf '\nmanifest: typst-package-check reported the above\n' >&2
+    printf '  the entry it lints is permanent, so this stops the release rather than a commit\n' >&2
+    printf '  it fetches the homepage and the repository, so a network fault reads the same\n' >&2
+    printf '  as a finding: run it again before treating the report as one\n' >&2
+    exit 1
+  fi
+  printf 'Manifest lint clean.\n'
 fi
 
 # The design asks for the 2000-row timing to be recorded per release, and this
@@ -173,4 +197,12 @@ fi
 printf '\n'
 tools/benchmark.sh
 
-printf '\nDry-run OK for keisen:%s\n' "${VERSION}"
+# The banner says whether the gate ran. The skip notice is printed above the
+# benchmark, which is the longest thing this script prints, so a release read
+# from the last line alone should not be able to mistake a skipped lint for a
+# clean one.
+if [[ "${LINT_MANIFEST}" == "0" ]]; then
+  printf '\nDry-run OK for keisen:%s, with the manifest lint skipped\n' "${VERSION}"
+else
+  printf '\nDry-run OK for keisen:%s\n' "${VERSION}"
+fi
