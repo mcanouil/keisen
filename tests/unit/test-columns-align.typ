@@ -23,7 +23,14 @@
 
 #let named = build-spec(data, (columns-align(center, columns: "units"),), (:))
 #assert.eq(named.align, (units: center))
-#assert.eq(column-alignments(named), (start, center, start))
+
+// --- inference can be turned off, and then nothing is inferred ---
+//
+// The theme option decides what an unnamed column falls back to, and a column
+// the directive names is unaffected either way.
+#let unread = build-spec(data, (columns-align(center, columns: "units"),), (infer-alignment: false))
+#assert.eq(column-alignments(unread), (start, center, start))
+#assert.eq(column-alignments(build-spec(data, (), (infer-alignment: false))), (start, start, start))
 
 // --- columns: auto covers every column ---
 //
