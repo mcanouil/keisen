@@ -104,3 +104,35 @@
     message: "a data column is padded against its separator, so its cells share a width",
   )
 }
+
+// --- an indented stub sits one step in per level ---
+//
+// The step is a theme option, and nothing had ever set it: discarding it, so
+// every stub row rendered flat, left the whole suite green. Nothing reads a
+// built table back, so the rule is named in `layout.typ` and measured here, as
+// the padding above is.
+
+#import "../../src/render/layout.typ": stub-body
+#import "../../src/theme/options.typ": option, table-options
+
+#let stepped = build-spec(
+  (product: ("Total", "Bolt"), depth: (0, 1), units: (30, 10)),
+  (table-stub(rowname: "product", indent: "depth"), table-options(stub-indent-step: 2em)),
+  (:),
+)
+
+#context {
+  let step = option(stepped.options, "stub-indent-step").to-absolute()
+  let flat = measure(stub-body(stepped, [Bolt], 0)).width
+
+  assert.eq(
+    measure(stub-body(stepped, [Bolt], 1)).width,
+    flat + step,
+    message: "a stub at depth 1 sits one step in",
+  )
+  assert.eq(
+    measure(stub-body(stepped, [Bolt], 2)).width,
+    flat + step * 2,
+    message: "a stub at depth 2 sits two steps in",
+  )
+}

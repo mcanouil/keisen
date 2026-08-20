@@ -62,6 +62,11 @@
   spec.align.at(spec.stub.rowname, default: start)
 }
 
+// The theme option when it names an alignment, the column's own edge when it
+// leaves the choice to the column. Both label rows follow the rule, so both read
+// it from here rather than each spelling it.
+#let label-alignment(named, fallback) = if named == auto { fallback } else { named }
+
 // Built-in formatters return the alignment dictionary rather than content, so
 // the slots can be padded to line a column up on its separator. Always returns
 // content: a cell holds content, and an unformatted column still carries
@@ -132,6 +137,18 @@
     substitutions: spec.substitutions,
     options: spec.options,
   ).map(slots-to-content)
+}
+
+// A stub cell's body: the row name in the stub's weight, moved one indentation
+// step in per level of depth.
+//
+// Named here rather than written inside the renderer, for the reason
+// `stub-cells` is: the rule is then one call, and a test can measure what the
+// renderer emits rather than rebuilding it.
+#let stub-body(spec, name, depth) = {
+  let named = text(weight: option(spec.options, "stub-weight"), name)
+  if depth == 0 { return named }
+  h(option(spec.options, "stub-indent-step") * depth) + named
 }
 
 // A summary cell formats through the same path as the body cells above it,
