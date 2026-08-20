@@ -43,6 +43,12 @@ boundary_scan() {
 # Every branch of the rule above, against fixture trees. A guard nothing
 # exercises is a guard that passes because its pattern stopped matching.
 if [[ "${1:-}" == "--self-test" ]]; then
+  if [[ $# -gt 1 ]]; then
+    printf 'import boundary: unknown argument %s\n' "$2" >&2
+    printf '  the only one is --self-test\n' >&2
+    exit 1
+  fi
+
   fixtures="$(mktemp -d)"
   trap 'rm -rf "${fixtures}"' EXIT
   cases=0

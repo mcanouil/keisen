@@ -43,7 +43,30 @@ read_assertion() {
   printf '%s\n%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 }
 
+# The assertion lines a fixture wrote, against the ones the extractor reads.
+#
+# The two patterns are deliberately different: the loose one counts anything that
+# looks like an assertion, and the strict one is what `sed` below extracts. A
+# line the extractor never sees is worse than no line at all, because the fixture
+# reads as covered. Written as a function of a path so --self-test can reach it,
+# since every fixture in the tree is written the one way.
+assertion_lines() {
+  local path="$1"
+  local written read_lines
+  written="$(grep -cE '^[[:space:]]*//.*expect-tag:' "${path}" || true)"
+  read_lines="$(grep -cE '^// expect-tag: ' "${path}" || true)"
+  printf '%s\n%s\n' "${written}" "${read_lines}"
+}
+
 if [[ "${1:-}" == "--self-test" ]]; then
+  if [[ $# -gt 1 ]]; then
+    printf 'accessibility: unknown argument %s\n' "$2" >&2
+    printf '  the only one is --self-test\n' >&2
+    exit 1
+  fi
+
+  fixtures="$(mktemp -d)"
+  trap 'rm -rf "${fixtures}"' EXIT
   cases=0
   bad=0
 
@@ -77,6 +100,27 @@ if [[ "${1:-}" == "--self-test" ]]; then
   expect 1 '' '' '3' 'a count naming no tag'
   expect 1 '' '' '3 ' 'a count and a space'
   expect 1 '' '' '' 'an assertion that reads as nothing'
+
+  counts() {
+    local written="$1" read_lines="$2" body="$3" name="$4"
+    cases=$((cases + 1))
+    printf '%s\n' "${body}" >"${fixtures}/fixture.typ"
+    local pair
+    pair="$(assertion_lines "${fixtures}/fixture.typ")"
+    if [[ "${pair%%$'\n'*}" != "${written}" || "${pair#*$'\n'}" != "${read_lines}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted %s written and %s read, got %s and %s\n' \
+        "${name}" "${written}" "${read_lines}" "${pair%%$'\n'*}" "${pair#*$'\n'}" >&2
+    fi
+  }
+
+  counts 1 1 '// expect-tag: 3 /S /TH' 'an assertion the extractor reads'
+  counts 1 0 '  // expect-tag: 3 /S /TH' 'an indented assertion'
+  counts 1 0 '//expect-tag: 3 /S /TH' 'no space after the slashes'
+  counts 1 0 '// expect-tag:3 /S /TH' 'no space after the colon'
+  counts 2 1 '// expect-tag: 3 /S /TH
+//expect-tag: 1 /S /THead' 'one of two the extractor misses'
+  counts 0 0 '#import "../../lib.typ": *' 'a fixture that asserts nothing'
 
   if [[ ${bad} -gt 0 ]]; then
     printf 'accessibility: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
@@ -149,12 +193,9 @@ for f in tests/accessibility/*.typ; do
     printf '  FAIL  accessibility  %s  asserts nothing\n' "${f}" >&2
   fi
 
-  # A line that looks like an assertion and was not read is worse than none at
-  # all, because the fixture reads as covered. Counted loosely on purpose:
-  # anchoring this the way the extractor is anchored would let an indented line,
-  # or `//expect-tag:` without the space, be missed by both.
-  written="$(grep -cE '^[[:space:]]*//.*expect-tag:' "${f}" || true)"
-  read_lines="$(grep -cE '^// expect-tag: ' "${f}" || true)"
+  pair="$(assertion_lines "${f}")"
+  written="${pair%%$'\n'*}"
+  read_lines="${pair#*$'\n'}"
   if [[ "${written}" -ne "${read_lines}" ]]; then
     ok=0
     printf '  FAIL  accessibility  %s  %s assertion line(s) written, %s read\n' \

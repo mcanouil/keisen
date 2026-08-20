@@ -434,6 +434,12 @@ if ! tools/quarto-check.sh; then
   fail_check "quarto"
 fi
 
+# A failed document with no failed check beside it would exit 0 today only by
+# accident of where the counters sit, so the count gates the exit as well.
+if [[ ${documents_failed} -gt 0 && ${#failed_checks[@]} -eq 0 ]]; then
+  failed_checks+=("a document, under no named check")
+fi
+
 if [[ ${#failed_checks[@]} -gt 0 ]]; then
   named="$(printf ', %s' "${failed_checks[@]}")"
   printf '\n%d check(s) failed: %s\n' "${#failed_checks[@]}" "${named:2}" >&2
