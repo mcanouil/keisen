@@ -10,6 +10,7 @@
 
 #import "../../src/data.typ": normalise
 #import "../../src/parts/colour.typ": colour-styles, data-colour
+#import "../../src/utils/colour.typ": fraction-of
 
 #let palette = (rgb("#ff0000"), rgb("#00ff00"))
 #let spread = normalise((units: (0, 50, 100)))
@@ -46,11 +47,18 @@
 #assert(halfway != "#ff0000", message: "a value halfway up the domain is not the bottom stop")
 #assert(halfway != "#00ff00", message: "a value halfway up the domain is not the top stop")
 
-// A value outside the domain is clamped rather than extrapolated, so it draws
-// the stop it ran past.
+// A value outside the domain draws the stop it ran past.
 #assert.eq(fills(data-colour(palette, columns: "units", domain: (0, 25)), rows: short).last(), "#00ff00")
 
-// A domain of no width reads as the middle rather than dividing by zero.
+// The clamp that puts it there is in `fraction-of`, and the colour above cannot
+// see it: sampling past the end of a gradient returns the end, so an
+// unclamped 2.0 draws the top stop as surely as a clamped 1.0 does. So the
+// clamp is asserted where it lives, and so is the domain of no width, which
+// reads as the middle rather than dividing by zero.
+#assert.eq(fraction-of(50, 0, 25), 1.0)
+#assert.eq(fraction-of(-10, 0, 25), 0.0)
+#assert.eq(fraction-of(5, 10, 10), 0.5)
+
 #assert.eq(
   fills(data-colour(palette, columns: "units", domain: (50, 50)), rows: short),
   (halfway, halfway),
