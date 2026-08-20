@@ -100,6 +100,55 @@
 // And the whole thing renders through the same pipeline as a hand-built table.
 #assert.eq(type(display-table(spec: spec)), content)
 
+// --- substitutions and grand summaries, which a generator writes as data ---
+//
+// Both are resolved by a loop of their own, and both loops could be made to
+// produce nothing at all: `examples/table-spec.json` carries the two keys and
+// `examples/serialised.typ` only compiles it, so a whole block of a generator's
+// output was dropped without a word.
+
+#let blocks = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((region: "North", units: 1250), (region: "South", units: none)),
+    stub: (rowname: none, group: "region", label: none, indent: none),
+    substitutions: ((test: "missing", columns: "units", replacement: "n/a"),),
+    summaries: ((name: "aggregate-sum", label: "Subtotal", columns: ("units",)),),
+    "grand-summaries": ((name: "aggregate-sum", label: "Total", columns: ("units",)),),
+  ),
+  build-spec,
+)
+
+#assert.eq(blocks.substitutions.len(), 1)
+#assert.eq(blocks.substitutions.first().test, "missing")
+#assert.eq(blocks.substitutions.first().columns, "units")
+
+// The replacement is written as a string and arrives as content, since that is
+// what a cell holds.
+#assert.eq(blocks.substitutions.first().replacement, [n/a])
+
+// The two summary loops answer for their own key alone, so neither can stand in
+// for the other.
+#assert.eq(blocks.summaries.len(), 1)
+#assert.eq(blocks.summaries.first().scope, "group")
+#assert.eq(blocks.summaries.first().functions.keys(), ("Subtotal",))
+#assert.eq(blocks.grand-summaries.len(), 1)
+#assert.eq(blocks.grand-summaries.first().scope, "grand")
+#assert.eq(blocks.grand-summaries.first().functions.keys(), ("Total",))
+
+// A substitution left without a replacement takes the package's own dash rather
+// than nothing, which is the value a generator omits the key to get.
+#let dashed = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((units: none),),
+    substitutions: ((test: "zero", columns: "units"),),
+  ),
+  build-spec,
+)
+#assert.eq(dashed.substitutions.first().test, "zero")
+#assert.eq(dashed.substitutions.first().replacement, [--])
+
 // --- significant digits are nameable wherever the formatter takes them ---
 //
 // `format-percent` and `format-currency` forward `significant` to
