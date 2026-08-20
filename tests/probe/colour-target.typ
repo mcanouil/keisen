@@ -8,11 +8,14 @@
 // was filled, and the option was not read. It is the only rule this file
 // exercises, so that is the only thing its absence can mean.
 //
-// The glyph carries the palette colour rather than the cell.
+// The rejection is the assertion that reads the option. The two expectations
+// below say the colour reached the page at all, and a filled cell would satisfy
+// them as readily as a coloured glyph, since a fill and a glyph are written the
+// same way. Which of the two it went into is asserted in
+// `tests/unit/test-data-colour.typ`, on the style dictionary itself.
+//
 // expect-svg: fill="#08306b"
-// A gap follows the same rule, through the colour named for it.
 // expect-svg: fill="#402020"
-// And neither cell is filled, so nothing asks for a white glyph.
 // reject-svg: fill="#ffffff"
 
 #import "../../lib.typ": *

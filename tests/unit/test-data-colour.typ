@@ -1,8 +1,9 @@
 // `data-colour` carries four options that no test set: `domain`, `reverse`,
-// `target` and `missing`. Three of them are value logic, decided in
-// `colour-styles` before anything is drawn, so they are asserted here. The
-// fourth decides whether the colour reaches the cell or the glyph, which only a
-// render shows, and `tests/probe/colour-target.typ` reads it there.
+// `target` and `missing`. All four are decided in `colour-styles` before
+// anything is drawn, so all four are asserted here.
+// `tests/probe/colour-target.typ` reads `target` again in a render, because a
+// style dictionary says which key the colour went into and only the render says
+// what that did to the page.
 //
 // Colours are compared as hex, because a sampled colour comes back in the space
 // the palette is mixed in, and the question here is which colour, not how it is
@@ -78,3 +79,29 @@
 )
 #assert.eq(with-missing.keys(), ("0", "1"))
 #assert.eq(with-missing.at("1").fill.to-hex(), "#00ffff")
+
+// --- target says which of the two the colour becomes ---
+//
+// Filled, the cell carries the colour and the text carries the contrast chosen
+// for it. Named for the text, the cell is left alone.
+
+#let filled = colour-styles(data-colour(palette, columns: "units"), spread, "units").at("0")
+#assert.eq(filled.fill.to-hex(), "#ff0000")
+#assert.eq(filled.text.fill, black)
+
+#let lettered = colour-styles(
+  data-colour(palette, columns: "units", target: "text"),
+  spread,
+  "units",
+).at("0")
+#assert("fill" not in lettered, message: "a text target leaves the cell unfilled")
+#assert.eq(lettered.text.fill.to-hex(), "#ff0000")
+
+// A gap follows the target as any other cell does.
+#let lettered-gap = colour-styles(
+  data-colour(palette, columns: "units", target: "text", missing: rgb("#00ffff")),
+  gapped,
+  "units",
+).at("1")
+#assert("fill" not in lettered-gap, message: "a text target leaves a gap's cell unfilled")
+#assert.eq(lettered-gap.text.fill.to-hex(), "#00ffff")
