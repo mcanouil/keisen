@@ -24,8 +24,11 @@ A fixture that names no expectation is refused, and so is an expectation that st
 
 Two mutations in `src/utils/errors.typ`, each of which must fail the check:
 
-- Drop `hint: hint` from the `panic` call in `fail`. 59 fixtures fail.
-- Drop `value: value` from the same call. 24 fixtures fail.
+- Drop `hint: hint` from the `panic` call in `fail`. Every fixture that pins a hint fails.
+- Drop `value: value` from the same call. Every fixture that pins a value fails.
+
+A count stood here instead, and it went stale twice without a word, because nothing counts the fixtures but a reader.
+The rule is what the mutation proves, so the rule is what is written.
 
 Both were green before the expectations were extended, so every hint and every value was being printed and read by nothing.
 The hint is the half of a message that says what to do about it.
