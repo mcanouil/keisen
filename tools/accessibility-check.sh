@@ -26,6 +26,119 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
+# One assertion, read into the count it wants and the tag it counts.
+#
+# The shape is refused before anything is compared, because a count that is not
+# a number is an arithmetic error: `[[ "0" -ne "/S" ]]` raises, and inside an
+# `if` condition `set -e` does not catch it, so the condition read false and the
+# fixture was marked passed. A line reading `// expect-tag: /S /TH`, with the
+# count left out, was a fixture that asserted nothing and said so to nobody.
+#
+# Written as a function of a string, so --self-test below can run every branch:
+# the live path needs a compiled PDF, and every fixture in the tree is well
+# formed, so only the passing shape would ever run.
+read_assertion() {
+  local assertion="$1"
+  [[ "${assertion}" =~ ^([0-9]+)[[:space:]]+([^[:space:]].*)$ ]] || return 1
+  printf '%s\n%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+}
+
+# The assertion lines a fixture wrote, against the ones the extractor reads.
+#
+# The two patterns are deliberately different: the loose one counts anything that
+# looks like an assertion, and the strict one is what `sed` below extracts. A
+# line the extractor never sees is worse than no line at all, because the fixture
+# reads as covered. Written as a function of a path so --self-test can reach it,
+# since every fixture in the tree is written the one way.
+assertion_lines() {
+  local path="$1"
+  local written read_lines
+  written="$(grep -cE '^[[:space:]]*//.*expect-tag:' "${path}" || true)"
+  read_lines="$(grep -cE '^// expect-tag: ' "${path}" || true)"
+  printf '%s\n%s\n' "${written}" "${read_lines}"
+}
+
+if [[ "${1:-}" == "--self-test" ]]; then
+  if [[ $# -gt 1 ]]; then
+    printf 'accessibility: unknown argument %s\n' "$2" >&2
+    printf '  the only one is --self-test\n' >&2
+    exit 2
+  fi
+
+  fixtures="$(mktemp -d)"
+  trap 'rm -rf "${fixtures}"' EXIT
+  cases=0
+  bad=0
+
+  expect() {
+    local wanted="$1" count="$2" tag="$3" assertion="$4" name="$5"
+    cases=$((cases + 1))
+    local got=0 read_back
+    read_back="$(read_assertion "${assertion}")" || got=$?
+    if [[ "${got}" -ne "${wanted}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
+      return
+    fi
+    [[ "${wanted}" -ne 0 ]] && return
+    if [[ "${read_back%%$'\n'*}" != "${count}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the count %s\n' "${name}" "${count}" >&2
+      return
+    fi
+    if [[ "${read_back#*$'\n'}" != "${tag}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the tag %s\n' "${name}" "${tag}" >&2
+    fi
+  }
+
+  expect 0 '3' '/S /TH' '3 /S /TH' 'a count and a tag'
+  expect 0 '0' '/Scope /Row' '0 /Scope /Row' 'a count of zero, which pins an absence'
+  expect 0 '3' '/S /TH' '3   /S /TH' 'more than one space between them'
+  expect 1 '' '' '/S /TH' 'the count left out'
+  expect 1 '' '' 'three /S /TH' 'the count written as a word'
+  expect 1 '' '' '3' 'a count naming no tag'
+  expect 1 '' '' '3 ' 'a count and a space'
+  expect 1 '' '' '' 'an assertion that reads as nothing'
+
+  counts() {
+    local written="$1" read_lines="$2" body="$3" name="$4"
+    cases=$((cases + 1))
+    printf '%s\n' "${body}" >"${fixtures}/fixture.typ"
+    local pair
+    pair="$(assertion_lines "${fixtures}/fixture.typ")"
+    if [[ "${pair%%$'\n'*}" != "${written}" || "${pair#*$'\n'}" != "${read_lines}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted %s written and %s read, got %s and %s\n' \
+        "${name}" "${written}" "${read_lines}" "${pair%%$'\n'*}" "${pair#*$'\n'}" >&2
+    fi
+  }
+
+  counts 1 1 '// expect-tag: 3 /S /TH' 'an assertion the extractor reads'
+  counts 1 0 '  // expect-tag: 3 /S /TH' 'an indented assertion'
+  counts 1 0 '//expect-tag: 3 /S /TH' 'no space after the slashes'
+  counts 1 0 '// expect-tag:3 /S /TH' 'no space after the colon'
+  counts 2 1 '// expect-tag: 3 /S /TH
+//expect-tag: 1 /S /THead' 'one of two the extractor misses'
+  counts 0 0 '#import "../../lib.typ": *' 'a fixture that asserts nothing'
+
+  if [[ ${bad} -gt 0 ]]; then
+    printf 'accessibility: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
+    exit 1
+  fi
+
+  printf 'accessibility: self-test %d/%d\n' "${cases}" "${cases}"
+  exit 0
+fi
+
+# An argument this does not know is a typo, and a typo that runs the live check
+# and reports a pass is how a caller loses the self-test without noticing.
+if [[ $# -gt 0 ]]; then
+  printf 'accessibility: unknown argument %s\n' "$1" >&2
+  printf '  the only one is --self-test\n' >&2
+  exit 2
+fi
+
 OUT_DIR="${OUT_DIR:-/tmp/keisen-check}"
 mkdir -p "${OUT_DIR}"
 
@@ -56,9 +169,15 @@ for f in tests/accessibility/*.typ; do
   ok=1
 
   while IFS= read -r assertion; do
-    [[ -z "${assertion}" ]] && continue
-    wanted="${assertion%% *}"
-    tag="${assertion#* }"
+    if ! read_back="$(read_assertion "${assertion}")"; then
+      ok=0
+      printf '  FAIL  accessibility  %s  an assertion is malformed\n' "${f}" >&2
+      printf '        read: // expect-tag: %s\n' "${assertion}" >&2
+      printf '        an assertion reads "// expect-tag: <count> <tag>"\n' >&2
+      continue
+    fi
+    wanted="${read_back%%$'\n'*}"
+    tag="${read_back#*$'\n'}"
 
     found="$(grep -c -x -F "${tag}" "${tags}" || true)"
     if [[ "${found}" -ne "${wanted}" ]]; then
@@ -72,6 +191,16 @@ for f in tests/accessibility/*.typ; do
   if ! grep -qE '^// expect-tag: ' "${f}"; then
     ok=0
     printf '  FAIL  accessibility  %s  asserts nothing\n' "${f}" >&2
+  fi
+
+  pair="$(assertion_lines "${f}")"
+  written="${pair%%$'\n'*}"
+  read_lines="${pair#*$'\n'}"
+  if [[ "${written}" -ne "${read_lines}" ]]; then
+    ok=0
+    printf '  FAIL  accessibility  %s  %s assertion line(s) written, %s read\n' \
+      "${f}" "${written}" "${read_lines}" >&2
+    printf '        an assertion reads "// expect-tag: <count> <tag>", with one space either side of the colon\n' >&2
   fi
 
   if [[ ${ok} -eq 1 ]]; then

@@ -170,6 +170,35 @@ citation_date() {
   fi
 }
 
+# The import lines a scan read, held to the manifest's version.
+#
+# Written as a function of the lines rather than of the scan, so --self-test can
+# run every branch: `git grep` finding nothing and every import being correct
+# look the same from outside, and with `|| true` on the scan they were the same
+# here. A guard that read nothing is a guard that passes for the wrong reason.
+import_versions() {
+  local wanted="$1" lines="$2"
+  local read_lines stale
+
+  read_lines="$(grep -c '@preview/keisen:' <<<"${lines}" || true)"
+  if [[ "${read_lines}" -eq 0 ]]; then
+    printf 'version: no import of @preview/keisen was read at all\n' >&2
+    printf '  the install line is written in the README, the reference and the examples\n' >&2
+    return 1
+  fi
+
+  stale="$(awk -F'@preview/keisen:' -v want="${wanted}" '$2 != want' <<<"${lines}")"
+  if [[ -n "${stale}" ]]; then
+    printf 'version: an import names a version the manifest does not\n' >&2
+    printf '  typst.toml: %s\n' "${wanted}" >&2
+    # Every offender, rather than the first: a bump is then one pass over the
+    # repository instead of one run of this script per file.
+    printf '%s\n' "${stale}" |
+      awk -F'@preview/keisen:' '{ sub(/:$/, "", $1); printf "  %s names %s\n", $1, $2 }' >&2
+    return 1
+  fi
+}
+
 # Every branch of the rule above, against fixtures. A guard nothing exercises is
 # a guard that passes because its pattern stopped matching.
 if [[ "${1:-}" == "--self-test" ]]; then
@@ -314,6 +343,36 @@ website:
   categorised 1 'names no category' 'categories = []' 'an empty array'
   categorised 1 'names no category' '# categories = ["report"]' 'a commented key'
 
+  imported() {
+    local wanted="$1" reported="$2" lines="$3" name="$4"
+    cases=$((cases + 1))
+    local got=0 said
+    said="$(import_versions "0.1.0" "${lines}" 2>&1 >/dev/null)" || got=$?
+    if [[ "${got}" -ne "${wanted}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
+      return
+    fi
+    if [[ -n "${reported}" && "${said}" != *"${reported}"* ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the %s branch\n' "${name}" "${reported}" >&2
+      printf '        said: %s\n' "${said%%$'\n'*}" >&2
+    fi
+  }
+
+  # The import line is spelled from a variable rather than written out, because
+  # the live scan below reads this file too, and a fixture naming another version
+  # would be an offender of its own.
+  mark='@preview/keisen'
+
+  imported 0 '' "README.md:12:${mark}:0.1.0" 'one import, the manifest version'
+  imported 0 '' "README.md:12:${mark}:0.1.0
+docs/index.qmd:4:${mark}:0.1.0" 'two imports that agree'
+  imported 1 'a version the manifest does not' "README.md:12:${mark}:0.2.0" 'an import that drifted'
+  imported 1 'a version the manifest does not' "README.md:12:${mark}:0.1.0
+docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
+  imported 1 'read at all' '' 'a scan that read nothing'
+
   if [[ ${bad} -gt 0 ]]; then
     printf 'version: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
     exit 1
@@ -404,18 +463,10 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 # git grep reads the tracked files, skips the binary ones, and carries a path
-# with a space in it through unharmed.
-stale="$(git grep -nEo '@preview/keisen:[0-9]+\.[0-9]+\.[0-9]+' |
-  awk -F'@preview/keisen:' -v want="${manifest}" '$2 != want' || true)"
+# with a space in it through unharmed. Finding nothing is not an error to git, so
+# the count is read by the function above rather than trusted here.
+lines="$(git grep -nEo '@preview/keisen:[0-9]+\.[0-9]+\.[0-9]+' || true)"
 
-if [[ -n "${stale}" ]]; then
-  printf 'version: an import names a version the manifest does not\n' >&2
-  printf '  typst.toml: %s\n' "${manifest}" >&2
-  # Every offender, rather than the first: a bump is then one pass over the
-  # repository instead of one run of this script per file.
-  printf '%s\n' "${stale}" |
-    awk -F'@preview/keisen:' '{ sub(/:$/, "", $1); printf "  %s names %s\n", $1, $2 }' >&2
-  exit 1
-fi
+import_versions "${manifest}" "${lines}" || exit 1
 
 printf 'version:  %s\n' "${manifest}"
