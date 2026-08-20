@@ -3,7 +3,7 @@
 // `test-options-read.typ` holds every declared key to being read by a renderer,
 // which is why an option nothing sets was never reported: it is read, in a
 // branch or a cell nothing had ever asked for. Thirty-one of the forty-six were
-// set by no test, and this list records the twenty-eight that still are.
+// set by no test, and this list records the twenty-seven that still are.
 //
 // A key covered tomorrow comes off the list, and a key declared tomorrow is
 // covered or added here on purpose, so the list can only shrink.
@@ -128,6 +128,7 @@
   source("../probe/table-rules-with-notes.typ"),
   source("../probe/table-rules.typ"),
   source("../probe/theme-borders.typ"),
+  source("test-columns-align.typ"),
   source("test-columns-combine.typ"),
   source("test-direction.typ"),
   source("test-directive-order.typ"),
@@ -175,7 +176,6 @@
   "table-align",
   "table-width",
   "breakable",
-  "infer-alignment",
   "decimal-align",
   "header-title-size",
   "header-title-weight",
