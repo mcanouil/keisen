@@ -85,7 +85,11 @@ remove_stage() {
 # neither ships without anyone having decided that it should, which is how a
 # repository's own housekeeping ends up published.
 verify_coverage() {
-  local excluded payload=" ${PAYLOAD[*]} "
+  # Guarded rather than expanded straight, because an empty array under `set -u`
+  # is an error on the bash macOS ships, and an empty payload is what a caller
+  # passes to watch this refuse.
+  local excluded payload=" "
+  [[ ${#PAYLOAD[@]} -gt 0 ]] && payload=" ${PAYLOAD[*]} "
   excluded=" $(awk '/^exclude[[:space:]]*=/, /\]/' typst.toml |
     grep -oE '"[^"]+"' | tr -d '"' | tr '\n' ' ')"
 

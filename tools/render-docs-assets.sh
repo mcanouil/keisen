@@ -22,6 +22,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
+# Enabled before anything below is parsed, since a page glob written with
+# `+([0-9])` is a syntax error to a shell that has not been told to read it.
+shopt -s nullglob extglob
+
 # A page suffix is a number, and a visual test may be named with one, so
 # `nanoplots-2.png` is either the second page of `nanoplots` or the whole of
 # `nanoplots-2`. Nothing in the name says which, and the run that cleared the
@@ -74,6 +78,25 @@ if [[ "${1:-}" == "--self-test" ]]; then
   collide 2 'two numbered siblings of one name' report report-1 report-2
   collide 0 'no visual test at all'
 
+  # The page glob itself, against files rather than against a string. The
+  # counting and the clearing below are written as the same pattern, and this
+  # holds that pattern to selecting the pages and nothing beside them: a name
+  # whose tail is not a number belongs to the test that carries it.
+  probe="$(mktemp -d)"
+  for leaf in report.png report-1.png report-12.png report-3d.png report-inline.png; do
+    : >"${probe}/${leaf}"
+  done
+  selected=("${probe}/report"-+([0-9]).png)
+  chosen=""
+  for path in "${selected[@]}"; do chosen="${chosen} $(basename "${path}")"; done
+  rm -rf "${probe}"
+
+  cases=$((cases + 1))
+  if [[ "${chosen}" != " report-1.png report-12.png" ]]; then
+    bad=$((bad + 1))
+    printf '  FAIL  self-test  the page glob selects the pages alone  got%s\n' "${chosen}" >&2
+  fi
+
   if [[ ${bad} -gt 0 ]]; then
     printf 'render-docs-assets: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
     exit 1
@@ -87,8 +110,6 @@ OUT_DIR="${1:-docs/assets/examples}"
 PPI=144
 
 mkdir -p "${OUT_DIR}"
-
-shopt -s nullglob extglob
 
 # One staging directory for the whole run, removed however the script ends. Made
 # inside the loop and removed on the success path alone, a compile that failed
@@ -109,10 +130,14 @@ if [[ ${#names[@]} -eq 0 ]]; then
   exit 1
 fi
 
-collisions="$(name_collisions "${names[@]}")"
-if [[ -n "${collisions}" ]]; then
+collisions=()
+while IFS= read -r line; do
+  [[ -n "${line}" ]] && collisions+=("${line}")
+done < <(name_collisions "${names[@]}")
+
+if [[ ${#collisions[@]} -gt 0 ]]; then
   printf 'render-docs-assets: two visual tests share a rendered name\n' >&2
-  printf '  %s\n' "${collisions}" >&2
+  printf '  %s\n' "${collisions[@]}" >&2
   printf '  rename one of them; a trailing number reads as a page\n' >&2
   exit 1
 fi
@@ -128,8 +153,8 @@ for name in "${names[@]}"; do
   typst compile "${f}" --root "${REPO_ROOT}" "${stage}/${name}-{p}.png" \
     --format png --ppi "${PPI}" --ignore-system-fonts
 
-  # The same rule the clearing line below uses, so the two cannot drift: a page
-  # is the name, a hyphen, and digits.
+  # The pattern the clearing line below uses, and the one the self-test holds:
+  # a page is the name, a hyphen, and digits.
   rendered=("${stage}/${name}"-+([0-9]).png)
   pages="${#rendered[@]}"
 
