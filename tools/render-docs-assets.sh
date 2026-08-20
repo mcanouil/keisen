@@ -83,6 +83,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   # holds that pattern to selecting the pages and nothing beside them: a name
   # whose tail is not a number belongs to the test that carries it.
   probe="$(mktemp -d)"
+  trap 'rm -rf "${probe}"' EXIT
   for leaf in report.png report-1.png report-12.png report-3d.png report-inline.png; do
     : >"${probe}/${leaf}"
   done
@@ -90,8 +91,10 @@ if [[ "${1:-}" == "--self-test" ]]; then
   # Sorted rather than taken in the order the glob returned, because pathname
   # expansion sorts by the locale and a UTF-8 one ignores the hyphen, which puts
   # report-12 before report-1.
-  chosen="$(for path in "${selected[@]}"; do basename "${path}"; done | LC_ALL=C sort | tr '\n' ' ')"
-  rm -rf "${probe}"
+  chosen=""
+  if [[ ${#selected[@]} -gt 0 ]]; then
+    chosen="$(for path in "${selected[@]}"; do basename "${path}"; done | LC_ALL=C sort | tr '\n' ' ')"
+  fi
 
   cases=$((cases + 1))
   if [[ "${chosen}" != "report-1.png report-12.png " ]]; then

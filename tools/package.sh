@@ -47,8 +47,21 @@ README_NAME="README.md"
 # set out to remove.
 tracked_under() {
   local entry="$1"
-  local tracked=() path
-  while IFS= read -r -d '' path; do tracked+=("${path}"); done < <(git ls-files -z -- "${entry}")
+  local listing tracked=() path
+
+  # Written to a file rather than to a variable, because a command substitution
+  # drops the null bytes that separate the names, and read before it is split,
+  # so git failing is reported as git failing rather than as a directory that
+  # tracks nothing.
+  listing="$(mktemp)"
+  if ! git ls-files -z -- "${entry}" >"${listing}"; then
+    rm -f "${listing}"
+    printf 'package: git could not read the tracked files under %s\n' "${entry}" >&2
+    return 1
+  fi
+
+  while IFS= read -r -d '' path; do tracked+=("${path}"); done <"${listing}"
+  rm -f "${listing}"
   if [[ ${#tracked[@]} -eq 0 ]]; then
     printf 'package: the payload names %s, which holds no tracked file\n' "${entry}" >&2
     return 1
@@ -86,11 +99,7 @@ remove_stage() {
 # neither ships without anyone having decided that it should, which is how a
 # repository's own housekeeping ends up published.
 verify_coverage() {
-  # Guarded rather than expanded straight, because an empty array under `set -u`
-  # is an error on the bash macOS ships, and an empty payload is what a caller
-  # passes to watch this refuse.
-  local excluded payload=" "
-  [[ ${#PAYLOAD[@]} -gt 0 ]] && payload=" ${PAYLOAD[*]} "
+  local excluded payload=" ${PAYLOAD[*]} "
   excluded=" $(awk '/^exclude[[:space:]]*=/, /\]/' typst.toml |
     grep -oE '"[^"]+"' | tr -d '"' | tr '\n' ' ')"
 
@@ -274,12 +283,15 @@ if [[ "${1:-}" == "--self-test" ]]; then
   remove_stage
   check 'no staging directory is nothing to remove' yes
 
-  # And an archive whose stage refuses leaves none behind. The payload is
-  # emptied, so `verify_coverage` reports every tracked name and exits.
+  # And an archive whose stage refuses leaves none behind. The payload is cut to
+  # one name, so `verify_coverage` reports every other tracked name and exits.
   sandbox="$(mktemp -d)"
+  # The payload is cut inside the subshell on purpose, so the run below refuses
+  # and every case after this one reads the real list.
+  # shellcheck disable=SC2030
   (
     TMPDIR="${sandbox}"
-    PAYLOAD=()
+    PAYLOAD=(typst.toml)
     archive "${sandbox}/out"
   ) >/dev/null 2>&1 || true
   left="$(find "${sandbox}" -maxdepth 1 -type d -name 'keisen-package.*' | wc -l | tr -d ' ')"
@@ -289,6 +301,26 @@ if [[ "${1:-}" == "--self-test" ]]; then
   else
     check 'a refused archive leaves no staging directory' no
   fi
+
+  # The payload as it stands, staged into a temporary directory. The copy loop
+  # is where the two lists used to disagree, and nothing here reached it: only
+  # the release rehearsal stages, and it is not run before a commit.
+  staged="$(mktemp -d)"
+  if (stage "${staged}/payload") >/dev/null 2>&1; then
+    absent=()
+    # shellcheck disable=SC2031
+    for entry in "${PAYLOAD[@]}"; do
+      [[ -e "${staged}/payload/${entry}" ]] || absent+=("${entry}")
+    done
+    if [[ ${#absent[@]} -eq 0 ]]; then
+      check 'every payload entry lands in the staged copy' yes
+    else
+      check "the staged copy is missing ${absent[*]}" no
+    fi
+  else
+    check 'the payload stages' no
+  fi
+  rm -rf "${staged}"
 
   if [[ ${bad} -gt 0 ]]; then
     printf 'package: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
