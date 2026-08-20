@@ -27,12 +27,27 @@ read_version() {
   awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml
 }
 
+# What ships, named once. `verify_coverage` reads this list and `stage` copies
+# it, so a name declared here and shipped by nobody is not expressible. The two
+# were separate lists, a string the check trusted and a `cp` beside it, and only
+# the check read the string: a file could be declared and never shipped.
+PAYLOAD=(typst.toml lib.typ LICENSE README.md src)
+
+# The staging directory an archive builds in, named at this level because the
+# trap that removes it runs after the frame that made it has gone.
+STAGE_TMP=""
+
+remove_stage() {
+  [[ -n "${STAGE_TMP}" ]] && rm -rf "${STAGE_TMP}"
+  return 0
+}
+
 # What ships is decided twice: by the payload this script copies, and by
 # `exclude` in typst.toml, which is what Typst Universe reads. A file named by
 # neither ships without anyone having decided that it should, which is how a
 # repository's own housekeeping ends up published.
 verify_coverage() {
-  local excluded payload=" typst.toml lib.typ LICENSE README.md src "
+  local excluded payload=" ${PAYLOAD[*]} "
   excluded=" $(awk '/^exclude[[:space:]]*=/, /\]/' typst.toml |
     grep -oE '"[^"]+"' | tr -d '"' | tr '\n' ' ')"
 
@@ -59,12 +74,22 @@ stage() {
   verify_coverage
 
   mkdir -p "${dest}"
-  cp typst.toml lib.typ LICENSE "${dest}/"
-  tools/stage-readme.sh README.md "${dest}"
-  # Tracked files only, at their working-tree state. A plain `cp -r` would
-  # sweep ignored strays into the payload, so what shipped would depend on
-  # what happened to be lying in the tree.
-  git ls-files -z -- src | tar -cf - --null -T - | tar -xf - -C "${dest}"
+
+  local entry
+  for entry in "${PAYLOAD[@]}"; do
+    if [[ "${entry}" == "README.md" ]]; then
+      # The published README is the stripped one: the badges and the sections
+      # about developing the package are repository furniture.
+      tools/stage-readme.sh README.md "${dest}"
+    elif [[ -d "${entry}" ]]; then
+      # Tracked files only, at their working-tree state. A plain `cp -r` would
+      # sweep ignored strays into the payload, so what shipped would depend on
+      # what happened to be lying in the tree.
+      git ls-files -z -- "${entry}" | tar -cf - --null -T - | tar -xf - -C "${dest}"
+    else
+      cp "${entry}" "${dest}/"
+    fi
+  done
 
   if [[ -n "${version}" ]]; then
     local commit date_utc
@@ -95,17 +120,20 @@ archive() {
   }
   [[ -n "${basename}" ]] || basename="keisen-${version}"
 
-  local tmp leaf
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp}"' RETURN
+  local leaf
+  STAGE_TMP="$(mktemp -d)"
+  # On EXIT rather than RETURN: `stage` below exits through `verify_coverage`
+  # when the payload and `exclude` disagree, and an `exit` unwinding the frame
+  # runs no RETURN trap, so a failed archive left its staging directory behind.
+  trap remove_stage EXIT
   leaf="keisen-${version}"
-  stage "${tmp}/${leaf}" "${override}"
+  stage "${STAGE_TMP}/${leaf}" "${override}"
 
   mkdir -p "${out_dir}"
   out_dir="$(cd "${out_dir}" && pwd)"
   rm -f "${out_dir}/${basename}.tar.gz" "${out_dir}/${basename}.zip"
-  tar -czf "${out_dir}/${basename}.tar.gz" -C "${tmp}" "${leaf}"
-  (cd "${tmp}" && zip -qr "${out_dir}/${basename}.zip" "${leaf}")
+  tar -czf "${out_dir}/${basename}.tar.gz" -C "${STAGE_TMP}" "${leaf}"
+  (cd "${STAGE_TMP}" && zip -qr "${out_dir}/${basename}.zip" "${leaf}")
 }
 
 cmd="${1:-}"

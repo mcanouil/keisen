@@ -35,6 +35,36 @@ shopt -s nullglob
 stage="$(mktemp -d "${TMPDIR:-/tmp}/keisen-assets.XXXXXX")"
 trap 'rm -rf "${stage}"' EXIT
 
+# A page suffix is a number, and a visual test may be named with one, so
+# `nanoplots-2.png` is either the second page of `nanoplots` or the whole of
+# `nanoplots-2`. Nothing in the name says which, and the run that cleared the
+# destination by `-[0-9]*` deleted the second while reporting success on both.
+#
+# Refused here rather than resolved, because either reading is wrong for the
+# other test. With the pair refused, the clearing glob below names this test's
+# own pages and nothing else.
+names=()
+for f in tests/visual/*.typ; do
+  names+=("$(basename "${f%.typ}")")
+done
+
+collisions=()
+for name in "${names[@]}"; do
+  [[ "${name}" =~ ^(.+)-[0-9]+$ ]] || continue
+  for other in "${names[@]}"; do
+    if [[ "${other}" == "${BASH_REMATCH[1]}" ]]; then
+      collisions+=("${name}.png reads as page ${name##*-} of ${other}")
+    fi
+  done
+done
+
+if [[ ${#collisions[@]} -gt 0 ]]; then
+  printf 'render-docs-assets: two visual tests share a rendered name\n' >&2
+  printf '  %s\n' "${collisions[@]}" >&2
+  printf '  rename one of them; a trailing number reads as a page\n' >&2
+  exit 1
+fi
+
 total=0
 
 for f in tests/visual/*.typ; do
