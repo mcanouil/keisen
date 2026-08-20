@@ -148,7 +148,7 @@
 // Always one entry per row, so the renderer indexes it by row position without
 // asking whether there are levels at all.
 #let stub-depths(spec) = {
-  if spec.stub.indent == none { return spec.data.map(row => 0) }
+  if spec.stub.indent == none { return (0,) * spec.data.len() }
   column(spec.data, spec.stub.indent).map(level => if level == none { 0 } else { level })
 }
 

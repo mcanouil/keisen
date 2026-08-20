@@ -49,42 +49,48 @@
 // this one is not a mention of it. Rust regex has no lookaround, so the anchor
 // is a character class and each source gains a newline in front of it for the
 // case where the key opens the text.
-#let sets(name, text) = {
+// Whether a source configures options at all, read once per file rather than
+// once per key: the answer is the same for all forty-six of them.
+#let configures(text) = (
+  text.contains("table-options(")
+    or text.contains("build-spec(")
+    or text.contains(regex("theme\\s*:"))
+    or text.contains(regex("options\\s*:"))
+)
+
+#let sets(name, source) = {
   // A key holding a regex metacharacter would loosen the pattern rather than
   // fail, so the shape a key may take is asserted rather than escaped.
   assert(
     name.match(regex("^[a-z][a-z-]*$")) != none,
     message: "an option name outside a to z and the hyphen needs escaping here: " + name,
   )
-  let body = "\n" + text
-  if body.contains(regex("[^-\\w]\"" + name + "\"\\s*:")) { return true }
-  let configures = (
-    body.contains("table-options(")
-      or body.contains("build-spec(")
-      or body.contains(regex("theme\\s*:"))
-      or body.contains(regex("options\\s*:"))
-  )
-  configures and body.contains(regex("[^-\\w]" + name + "\\s*:"))
+  if source.text.contains(regex("[^-\\w]\"" + name + "\"\\s*:")) { return true }
+  source.configures and source.text.contains(regex("[^-\\w]" + name + "\\s*:"))
 }
+
+// The literals below are written as a source is: the text with a newline in
+// front of it, and the marker answered once.
+#let probe(text) = (text: "\n" + text, configures: configures(text))
 
 // Both directions, against literals: the shapes that give a key a value count, a
 // read does not, a name inside another name does not, and a named argument of
 // something else does not.
-#assert(sets("k", "table-options(k: true)"))
-#assert(sets("k", "(\"k\": 1em)"))
-#assert(sets("k", "display-table(data, theme: (k: 1em))"))
-#assert(sets("k", "cell(directive, options: (k: 1em))"))
-#assert(not sets("k", "block(k: false)"))
-#assert(not sets("k", "option(theme-compact(), \"k\")"))
-#assert(not sets("k", "table-options(a-k: true)"))
-#assert(not sets("k", "(\"x-k\": 1em)"))
-#assert(not sets("k", "the k option"))
+#assert(sets("k", probe("table-options(k: true)")))
+#assert(sets("k", probe("(\"k\": 1em)")))
+#assert(sets("k", probe("display-table(data, theme: (k: 1em))")))
+#assert(sets("k", probe("cell(directive, options: (k: 1em))")))
+#assert(not sets("k", probe("block(k: false)")))
+#assert(not sets("k", probe("option(theme-compact(), \"k\")")))
+#assert(not sets("k", probe("table-options(a-k: true)")))
+#assert(not sets("k", probe("(\"x-k\": 1em)")))
+#assert(not sets("k", probe("the k option")))
 
 #let source(path) = {
   let text = read(path)
   assert("/*" not in text, message: "the sequence /* is not stripped and can hide a key: " + path)
   assert("://" not in text, message: "a // inside a string cuts the rest of its line: " + path)
-  strip-comments(text)
+  probe(strip-comments(text))
 }
 
 // Every test and example that configures options at all, each read on its own so
@@ -93,6 +99,10 @@
 // which this finds:
 //
 //   grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples
+//
+// That grep names this file too, and it is left out on purpose: it sets no
+// option outside the strings it tests `sets` against, and reading itself would
+// trip its own guard against `://`, which it carries as a literal.
 //
 // A file left out can only leave a key looking uncovered, so an omission cannot
 // loosen the assertion below. It leaves the record stale instead: a key covered
@@ -191,7 +201,7 @@
 )
 
 #assert.eq(
-  DEFAULTS.keys().filter(name => not sources.any(text => sets(name, text))),
+  DEFAULTS.keys().filter(name => not sources.any(source => sets(name, source))),
   UNCOVERED,
   message: "cover the key or record it in UNCOVERED; a key that gained a test comes off the list",
 )
