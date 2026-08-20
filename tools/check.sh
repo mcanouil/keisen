@@ -69,6 +69,12 @@ compile_glob() {
   printf '%-9s %d/%d\n' "${label}:" "${label_passed}" "${label_total}"
 }
 
+# The boundary holds on a tree that has none of the shapes it refuses, so it runs
+# against its own fixtures as well, as the version check does.
+if ! tools/import-boundary.sh --self-test; then
+  fail_check "boundary self-test"
+fi
+
 if ! tools/import-boundary.sh; then
   fail_check "boundary"
 fi
