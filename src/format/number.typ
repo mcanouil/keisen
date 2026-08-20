@@ -15,8 +15,8 @@
 #let _limit = 7.9e28
 
 // The exact largest decimal, which the rounding below measures its shift
-// against. `_limit` is the float approximation of it, and a float is what a
-// float check has to compare with.
+// against. `_limit` above is a conservative float bound that sits under it, and
+// `_fits` closes the gap between the two by counting digits.
 #let _decimal-max = decimal("79228162514264337593543950335")
 
 #let _numeric = regex("^[+-]?\d+(\.\d+)?$")
@@ -73,7 +73,12 @@
   // saturating, and Typst has no try, so an overflow cannot be caught after the
   // fact. The room falls as the place rises, and a value with none left has no
   // fractional digit at that place to sit a tie on, so plain rounding is exact
-  // for it. Only the multiplying branch can overflow; dividing shrinks.
+  // for it.
+  //
+  // The shift can only overflow where it multiplies. The negative side divides
+  // here and multiplies back at the end, and that un-shift carries the same
+  // range limit half-up has, since half-even at a tie never rounds further from
+  // zero than half-up does.
   if digits > 0 and calc.abs(value) > _decimal-max / scale {
     return calc.round(value, digits: digits)
   }

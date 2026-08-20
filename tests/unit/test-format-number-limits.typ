@@ -61,15 +61,38 @@
   round-decimal(decimal("-12345"), 28, "half-up"),
 )
 
-// Either side of the boundary itself, which is where an off-by-one would show:
-// at 22 places the largest value that can still be shifted is 7922816.2514..,
-// so one of these takes the shift and the other takes the fallback.
+// Either side of the boundary itself: at 22 places the largest value that can
+// still be shifted is 7922816.2514.., so one of these takes the shift and the
+// other takes the fallback. Both hold a bound that is too permissive, which
+// raises where it shifts. Neither holds one that is too strict, since the
+// fallback returns these values unchanged as well.
 #assert.eq(round-decimal(decimal("7922816"), 22, "half-even"), decimal("7922816"))
 #assert.eq(round-decimal(decimal("7922817"), 22, "half-even"), decimal("7922817"))
 #assert.eq(
   round-decimal(decimal("7922817"), 22, "half-even"),
   round-decimal(decimal("7922817"), 22, "half-up"),
 )
+
+// A bound that is too strict is held by a tie at the same place, which only the
+// shift can find: 2.5 at the 23rd place rounds down to an even 2 here and up to
+// 3 under half-up, and the fallback would give the half-up answer to both.
+#assert.eq(
+  round-decimal(decimal("0.00000000000000000000025"), 22, "half-even"),
+  decimal("0.0000000000000000000002"),
+)
+#assert.eq(
+  round-decimal(decimal("0.00000000000000000000025"), 22, "half-up"),
+  decimal("0.0000000000000000000003"),
+)
+
+// --- half-even below the point, where the shift divides ---
+
+// The negative side of the contract: a place below zero divides first and
+// multiplies back at the end, and the tie test has a mirror of its own.
+#assert.eq(round-decimal(decimal("150"), -2, "half-even"), decimal("200"))
+#assert.eq(round-decimal(decimal("250"), -2, "half-even"), decimal("200"))
+#assert.eq(round-decimal(decimal("-150"), -2, "half-even"), decimal("-200"))
+#assert.eq(round-decimal(decimal("-250"), -2, "half-even"), decimal("-200"))
 
 // A tie at a place the shift still reaches is unaffected.
 #assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
