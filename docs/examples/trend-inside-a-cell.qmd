@@ -29,6 +29,7 @@ A column of series is a column of shapes, and a reader compares them by eye.
   format-nanoplot("trend", plot: nanoplot-line, width: 6em, height: 1em, baseline: 25%),
   format-nanoplot("volume", plot: nanoplot-bar, width: 6em, height: 1em, baseline: 25%),
   format-percent("weight", decimals: 1),
+  table-options(cell-vertical-align: horizon),
   table-source-note([Source: portfolio ledger.]),
 )
 ```
@@ -37,6 +38,9 @@ A column of series is a column of shapes, and a reader compares them by eye.
 
 Cash reads as flat because all three rows share one scale, taken from the column itself rather than passed in.
 Scaled per cell, its small wobble would draw exactly like the others' real movement, which is how a nanoplot lies.
+
+A plot is taller than the figures beside it, so `cell-vertical-align` decides where the short cells sit.
+Typst puts a table cell at the top of its row, and `horizon` centres each one against the tallest cell beside it.
 
 The two renderers differ on where they measure from.
 `nanoplot-bar` measures from zero, since a bar drawn from 5 to 10 makes a small difference look like the whole quantity.
