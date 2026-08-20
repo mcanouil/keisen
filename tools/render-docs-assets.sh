@@ -27,7 +27,7 @@ PPI=144
 
 mkdir -p "${OUT_DIR}"
 
-shopt -s nullglob
+shopt -s nullglob extglob
 
 # One staging directory for the whole run, removed however the script ends. Made
 # inside the loop and removed on the success path alone, a compile that failed
@@ -48,6 +48,14 @@ for f in tests/visual/*.typ; do
   names+=("$(basename "${f%.typ}")")
 done
 
+# Rendering nothing and reporting success is how a suite claims coverage it does
+# not have. Read here rather than after the loop, since an empty array is what
+# every line below walks.
+if [[ ${#names[@]} -eq 0 ]]; then
+  printf 'render-docs-assets: no visual test under tests/visual\n' >&2
+  exit 1
+fi
+
 collisions=()
 for name in "${names[@]}"; do
   [[ "${name}" =~ ^(.+)-[0-9]+$ ]] || continue
@@ -65,11 +73,8 @@ if [[ ${#collisions[@]} -gt 0 ]]; then
   exit 1
 fi
 
-total=0
-
-for f in tests/visual/*.typ; do
-  total=$((total + 1))
-  name="$(basename "${f%.typ}")"
+for name in "${names[@]}"; do
+  f="tests/visual/${name}.typ"
 
   # Rendered aside and moved into place only once every page is written.
   # Clearing first, as this did, meant a compile that failed halfway left the
@@ -87,17 +92,11 @@ for f in tests/visual/*.typ; do
   fi
 
   # Only now is the previous output cleared. The page suffix is matched as
-  # digits, not as anything: a plain -* would make "nanoplots" claim the output
-  # of "nanoplots-inline", deleting it and counting its pages as its own.
-  rm -f "${OUT_DIR}/${name}".png "${OUT_DIR}/${name}"-[0-9]*.png
+  # digits and nothing else: a plain -* would make "nanoplots" claim the output
+  # of "nanoplots-inline", and -[0-9]* would claim "nanoplots-3d", which is a
+  # name the refusal above allows because it is not a page number.
+  rm -f "${OUT_DIR}/${name}".png "${OUT_DIR}/${name}"-+([0-9]).png
   mv "${stage}/${name}"*.png "${OUT_DIR}/"
 
   printf '%-12s %s page(s)\n' "${name}:" "${pages}"
 done
-
-# Rendering nothing and reporting success is how a suite claims coverage it does
-# not have.
-if [[ ${total} -eq 0 ]]; then
-  printf 'render-docs-assets: no visual test under tests/visual\n' >&2
-  exit 1
-fi
