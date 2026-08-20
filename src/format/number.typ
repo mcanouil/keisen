@@ -55,6 +55,12 @@
 
 // `digits` may be negative, which rounds to tens, hundreds, and so on; that is
 // how significant-digit formatting reaches the integer part.
+//
+// It must lie within -28 to 28, which is what a decimal holds as places: the
+// scale below is ten to its magnitude, and a wider one raises before anything
+// here can report it. Every caller bounds it before arriving, `resolve-decimals`
+// for a written count and `_decimals-for-significant` for a resolved place, so
+// the bound is stated here rather than checked twice.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))

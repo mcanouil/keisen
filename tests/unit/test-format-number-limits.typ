@@ -1,7 +1,7 @@
 // Values that decimal cannot represent are rejected before they reach it,
 // because Typst has no try and a decimal overflow raises a raw error.
 
-#import "../../src/format/number.typ": group-digits, round-decimal, to-decimal
+#import "../../src/format/number.typ": format-value, group-digits, round-decimal, to-decimal
 
 // --- magnitude, both ends ---
 
@@ -53,11 +53,44 @@
   round-decimal(decimal("12345"), 28, "half-up"),
 )
 
-// Either side of the largest shift that fits: 1e6 shifted by 22 places is 1e28,
-// and by 23 places it is 1e29, which is beyond the type.
-#assert.eq(round-decimal(decimal("1000000"), 22, "half-even"), decimal("1000000"))
-#assert.eq(round-decimal(decimal("1000000"), 23, "half-even"), decimal("1000000"))
+// The negative side takes the same branch, and the tie test behind it has a
+// mirror of its own.
+#assert.eq(round-decimal(decimal("-12345"), 28, "half-even"), decimal("-12345"))
+#assert.eq(
+  round-decimal(decimal("-12345"), 28, "half-even"),
+  round-decimal(decimal("-12345"), 28, "half-up"),
+)
+
+// Either side of the boundary itself, which is where an off-by-one would show:
+// at 22 places the largest value that can still be shifted is 7922816.2514..,
+// so one of these takes the shift and the other takes the fallback.
+#assert.eq(round-decimal(decimal("7922816"), 22, "half-even"), decimal("7922816"))
+#assert.eq(round-decimal(decimal("7922817"), 22, "half-even"), decimal("7922817"))
+#assert.eq(
+  round-decimal(decimal("7922817"), 22, "half-even"),
+  round-decimal(decimal("7922817"), 22, "half-up"),
+)
 
 // A tie at a place the shift still reaches is unaffected.
 #assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
 #assert.eq(round-decimal(decimal("1.5"), 0, "half-even"), decimal("2"))
+
+// The formatter is the path a caller takes, and the reproduction the defect was
+// filed with went through it. Rounding is chosen by option there, so a change
+// that routes it differently is caught here rather than at the helper alone.
+#let _options(rounding) = (
+  scope: "format-number",
+  decimals: 28,
+  significant: none,
+  grouping: 3,
+  group-separator: " ",
+  decimal-separator: ".",
+  scale: 1,
+  sign: false,
+  negative-zero: false,
+  rounding: rounding,
+)
+#assert.eq(
+  format-value(12345, _options("half-even")),
+  format-value(12345, _options("half-up")),
+)
