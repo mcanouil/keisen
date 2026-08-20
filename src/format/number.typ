@@ -14,6 +14,11 @@
 // than it has. Typst has no try, so neither can be attempted and recovered.
 #let _limit = 7.9e28
 
+// The exact largest decimal, which the rounding below measures its shift
+// against. `_limit` is the float approximation of it, and a float is what a
+// float check has to compare with.
+#let _decimal-max = decimal("79228162514264337593543950335")
+
 #let _numeric = regex("^[+-]?\d+(\.\d+)?$")
 
 // Digits a decimal literal would need, counting the fractional ones that a
@@ -57,6 +62,16 @@
   if mode == "half-up" { return calc.round(value, digits: digits) }
 
   let scale = calc.pow(decimal(10), calc.abs(digits))
+
+  // The shift is measured before it is taken: a decimal raises rather than
+  // saturating, and Typst has no try, so an overflow cannot be caught after the
+  // fact. The room falls as the place rises, and a value with none left has no
+  // fractional digit at that place to sit a tie on, so plain rounding is exact
+  // for it. Only the multiplying branch can overflow; dividing shrinks.
+  if digits > 0 and calc.abs(value) > _decimal-max / scale {
+    return calc.round(value, digits: digits)
+  }
+
   let shifted = if digits < 0 { value / scale } else { value * scale }
 
   // The tie test runs through calc.trunc, which returns an int, so a shifted

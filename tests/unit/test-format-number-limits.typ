@@ -40,3 +40,24 @@
   decimal("12345678901234567891"),
 )
 #assert.eq(round-decimal(decimal("2.5"), 0, "half-even"), decimal("2"))
+
+// --- half-even beyond the shift a decimal can hold ---
+
+// The shift is what overflows, and the room for it falls as the place rises. A
+// value with no room has no fractional digit left at that place, so it cannot
+// sit on a tie and plain rounding is exact for it. Both modes must therefore
+// agree, and neither may raise.
+#assert.eq(round-decimal(decimal("12345"), 28, "half-even"), decimal("12345"))
+#assert.eq(
+  round-decimal(decimal("12345"), 28, "half-even"),
+  round-decimal(decimal("12345"), 28, "half-up"),
+)
+
+// Either side of the largest shift that fits: 1e6 shifted by 22 places is 1e28,
+// and by 23 places it is 1e29, which is beyond the type.
+#assert.eq(round-decimal(decimal("1000000"), 22, "half-even"), decimal("1000000"))
+#assert.eq(round-decimal(decimal("1000000"), 23, "half-even"), decimal("1000000"))
+
+// A tie at a place the shift still reaches is unaffected.
+#assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
+#assert.eq(round-decimal(decimal("1.5"), 0, "half-even"), decimal("2"))
