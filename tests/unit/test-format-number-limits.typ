@@ -56,21 +56,14 @@
 
 // The shift is what overflows, and the room for it falls as the place rises. A
 // value with no room has no fractional digit left at that place, so it cannot
-// sit on a tie and plain rounding is exact for it. Both modes must therefore
-// agree, and neither may raise.
+// sit on a tie and plain rounding is exact for it. The value itself is what is
+// pinned: the fallback is the half-up branch, so comparing the two modes could
+// only ever catch a raise, never a wrong answer.
 #assert.eq(round-decimal(decimal("12345"), 28, "half-even"), decimal("12345"))
-#assert.eq(
-  round-decimal(decimal("12345"), 28, "half-even"),
-  round-decimal(decimal("12345"), 28, "half-up"),
-)
 
 // The negative side takes the same branch, and the tie test behind it has a
 // mirror of its own.
 #assert.eq(round-decimal(decimal("-12345"), 28, "half-even"), decimal("-12345"))
-#assert.eq(
-  round-decimal(decimal("-12345"), 28, "half-even"),
-  round-decimal(decimal("-12345"), 28, "half-up"),
-)
 
 // The boundary itself, at every place the contract allows, and at the full
 // precision the type carries. A whole number either side of it is too coarse:
@@ -100,23 +93,24 @@
 
   let above = boundary + decimal(1) / scale
   assert(above > boundary, message: "the step did not clear the boundary at " + str(digits))
-  assert.eq(
-    round-decimal(above, digits, "half-even"),
-    round-decimal(above, digits, "half-up"),
-  )
-}
+  // The rescale leaves fewer places than were asked for, so the fallback owes
+  // the value back unchanged. Pinned as a value rather than against half-up,
+  // which is the branch the fallback runs.
+  assert.eq(round-decimal(above, digits, "half-even"), above)
 
-// A bound that is too strict is held by a tie at the same place, which only the
-// shift can find: 2.5 at the 23rd place rounds down to an even 2 here and up to
-// 3 under half-up, and the fallback would give the half-up answer to both.
-#assert.eq(
-  round-decimal(decimal("0.00000000000000000000025"), 22, "half-even"),
-  decimal("0.0000000000000000000002"),
-)
-#assert.eq(
-  round-decimal(decimal("0.00000000000000000000025"), 22, "half-up"),
-  decimal("0.0000000000000000000003"),
-)
+  // A bound that is too strict answers half-up where a tie sits, and only the
+  // shift can find a tie. This one sits one place past what was asked for and
+  // far below the boundary, so it must take the shift at every place.
+  //
+  // A decimal holds 28 places, so a tie one place past 28 is not representable
+  // and the last iteration has none to offer. The boundary above is swept there
+  // all the same, since that is where the guard fires.
+  if digits < 28 {
+    let tie = decimal("2.5") / scale
+    assert.eq(round-decimal(tie, digits, "half-even"), decimal(2) / scale)
+    assert.eq(round-decimal(tie, digits, "half-up"), decimal(3) / scale)
+  }
+}
 
 // --- half-even below the point, where the shift divides ---
 
