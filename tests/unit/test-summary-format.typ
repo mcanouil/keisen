@@ -30,13 +30,16 @@
 
 // The directive form still works, and it is the form that carries options, so
 // its output is the formatter's rather than the raw aggregate.
+//
+// Asserted as the exact content, because the unformatted aggregate is content
+// too: `type(..) == content` held whether the format was read or discarded.
 #assert.eq(
-  type(written(summary-rows(
+  written(summary-rows(
     functions: (Total: aggregate-sum),
     columns: "units",
     format: format-integer("units", suffix: [ units]),
-  ))),
-  content,
+  )),
+  [#8] + [ units],
 )
 #assert.eq(
   written(summary-rows(functions: (Total: aggregate-sum), columns: "units", format: none)),
