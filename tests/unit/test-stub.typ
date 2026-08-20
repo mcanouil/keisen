@@ -104,3 +104,53 @@
     message: "a data column is padded against its separator, so its cells share a width",
   )
 }
+
+// --- an indented stub sits one step in per level ---
+//
+// The step is a theme option, and nothing had ever set it: discarding it, so
+// every stub row rendered flat, left the whole suite green. Nothing reads a
+// built table back, so the rule is named in `layout.typ` and measured here, as
+// the padding above is.
+
+#import "../../src/render/layout.typ": stub-body, stub-depths
+#import "../../src/theme/options.typ": option, table-options
+
+// The levels themselves, as the renderer reads them: one per row, from the
+// column the stub names. Nothing had read these either, so a renderer that gave
+// every row a depth of zero left the suite green.
+#assert.eq(stub-depths(indented), (0, 1))
+
+// No indent column is no levels, and the array is still one entry per row, so
+// the renderer indexes it without asking.
+#assert.eq(stub-depths(ungrouped), (0, 0, 0))
+
+// A sparse row store is data with a gap in it: the row that carries no level
+// sits flat rather than failing.
+#let sparse = build-spec(
+  ((product: "Total", depth: 1), (product: "Bolt")),
+  (table-stub(rowname: "product", indent: "depth"),),
+  (:),
+)
+#assert.eq(stub-depths(sparse), (1, 0))
+
+#let stepped = build-spec(
+  (product: ("Total", "Bolt"), depth: (0, 1), units: (30, 10)),
+  (table-stub(rowname: "product", indent: "depth"), table-options(stub-indent-step: 2em)),
+  (:),
+)
+
+#context {
+  let step = option(stepped.options, "stub-indent-step").to-absolute()
+  let flat = measure(stub-body(stepped, [Bolt], 0)).width
+
+  assert.eq(
+    measure(stub-body(stepped, [Bolt], 1)).width,
+    flat + step,
+    message: "a stub at depth 1 sits one step in",
+  )
+  assert.eq(
+    measure(stub-body(stepped, [Bolt], 2)).width,
+    flat + step * 2,
+    message: "a stub at depth 2 sits two steps in",
+  )
+}

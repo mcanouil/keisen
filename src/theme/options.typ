@@ -51,8 +51,9 @@
   "cell-inset": 0.5em,
   "body-border-top": none,
   "body-border-bottom": none,
-  // `auto` leaves the vertical placement to Typst, which centres a cell against
-  // the tallest in its row.
+  // `auto` leaves the vertical placement to Typst, which puts a cell at the top
+  // of its row. `horizon` centres each one against the tallest cell beside it,
+  // which is what a row of unequal heights usually wants.
   "cell-vertical-align": auto,
   // Summaries
   "summary-weight": "bold",

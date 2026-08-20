@@ -30,7 +30,9 @@ It looks for the key as the argument of the call that reads it, so a key named i
 Given a width, the columns no `columns-width` names share whatever the named ones leave, since a track sized to its content would never fill the width.
 
 `column-border` and `row-border` are off by default, and rule the table as a grid rather than by part.
-`column-labels-align` and `cell-vertical-align` are `auto`, which follows the column and leaves the vertical placement to Typst.
+`column-labels-align` is `auto`, which follows the column beneath the label.
+`cell-vertical-align` is `auto`, which leaves the placement to Typst: a cell sits at the top of its row.
+Give it `horizon` to centre every cell against the tallest one beside it, which is what a row of unequal heights usually wants.
 
 Rules on a shared edge do not add up: the line under the column labels is the line over the body, and the line over the footer is the line under it.
 A part draws its own edge, and that wins over the table's, so `body-border-top` shows only where `column-labels-border-bottom` is `none`, and `body-border-bottom` only where `footer-border-top` is.

@@ -1,6 +1,12 @@
 // One column built from several. The pattern reads the formatted content of its
 // sources, which is why the estimate keeps two decimals and the error three:
 // each source was formatted by its own directive before the pattern saw it.
+//
+// The labels are centred here, which is the one thing that reads
+// `column-labels-align` as anything but `auto`. Both label rows follow the
+// option, the stubhead and the column labels alike, and a call site that stopped
+// reading it would leave a label back on its column's own edge and the tracked
+// image stale.
 
 #import "../../lib.typ": *
 
@@ -39,6 +45,7 @@
   // edge for it. Saying so is the only way it reaches the end edge, and this is
   // the case that used to be resolved before the column existed.
   columns-align(end, columns: "effect"),
+  table-options(column-labels-align: center),
   table-source-note([Source: association study.]),
   theme: theme-booktabs(),
 )

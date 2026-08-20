@@ -8,7 +8,6 @@
 
 #import "../format/align.typ": align-slots
 #import "../format/apply.typ": matches-column
-#import "../data.typ": column
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, footer-notes, marks-for
 #import "../parts/summaries.typ": summary-values
@@ -16,8 +15,8 @@
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
 #import "layout.typ": (
-  column-alignments, column-cells, infer-alignment, metrics, slots-to-content, stub-alignment, stub-cells,
-  summarised,
+  column-alignments, column-cells, infer-alignment, label-alignment, metrics, slots-to-content,
+  stub-alignment, stub-body, stub-cells, stub-depths, summarised,
 )
 #import "plan.typ": build-plan
 
@@ -72,9 +71,7 @@
   // The stub goes through the same formatting pipeline as every other column,
   // so a format directive naming the row-name column takes effect there too.
   let stub-content = stub-cells(spec)
-  let indents = if spec.stub.indent == none { () } else {
-    column(spec.data, spec.stub.indent)
-  }
+  let depths = stub-depths(spec)
 
   let full(body) = table.cell(colspan: width, body)
 
@@ -258,14 +255,7 @@
     labels.push(_cell(
       style-for(index, PARTS.stubhead, none, none),
       _marked(stubhead, marks-for(footnotes, PARTS.stubhead, none, none)),
-      // The same rule the other column labels follow below: the theme option
-      // when it names one, the column's own edge when it leaves it to the
-      // column.
-      align: if setting("column-labels-align") == auto {
-        stub-align
-      } else {
-        setting("column-labels-align")
-      },
+      align: label-alignment(setting("column-labels-align"), stub-align),
       stroke: label-rules,
     ))
   }
@@ -276,11 +266,7 @@
         text(weight: setting("column-labels-weight"), size: setting("column-labels-size"), spec.labels.at(name, default: [#name])),
         marks-for(footnotes, PARTS.column-labels, none, name),
       ),
-      align: if setting("column-labels-align") == auto {
-        alignments.at(position)
-      } else {
-        setting("column-labels-align")
-      },
+      align: label-alignment(setting("column-labels-align"), alignments.at(position)),
       stroke: label-rules,
     ))
   }
@@ -320,13 +306,7 @@
       ))
     } else if entry.part == "body" {
       if has-stub {
-        let depth = if indents.len() == 0 { 0 } else {
-          let level = indents.at(entry.source)
-          if level == none { 0 } else { level }
-        }
-        let name = stub-content.at(entry.source)
-        let named = text(weight: setting("stub-weight"), name)
-        let body = if depth == 0 { named } else { h(setting("stub-indent-step") * depth) + named }
+        let body = stub-body(spec, stub-content.at(entry.source), depths.at(entry.source))
         rows.push(_cell(
           style-for(index, PARTS.stub, entry.source, none),
           _marked(body, marks-for(footnotes, PARTS.stub, entry.source, none)),
