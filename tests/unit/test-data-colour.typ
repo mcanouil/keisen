@@ -1,6 +1,6 @@
-// `data-colour` carries four options that no test set: `domain`, `reverse`,
-// `target` and `missing`. All four are decided in `colour-styles` before
-// anything is drawn, so all four are asserted here.
+// `data-colour` carries five options that no test set: `domain`, `reverse`,
+// `target`, `missing` and `rows`. Each is decided in `colour-styles` before
+// anything is drawn, so each is asserted here.
 // `tests/probe/colour-target.typ` reads `target` again in a render, because a
 // style dictionary says which key the colour went into and only the render says
 // what that did to the page.
@@ -17,7 +17,7 @@
 #let spread = normalise((units: (0, 50, 100)))
 
 #let fills(directive, rows: spread) = {
-  colour-styles(directive, rows, "units").pairs().map(((position, style)) => style.fill.to-hex())
+  colour-styles(directive, rows, "units").values().map(style => style.fill.to-hex())
 }
 
 // --- the scale spans the data unless a domain is given ---
@@ -79,6 +79,26 @@
 )
 #assert.eq(with-missing.keys(), ("0", "1"))
 #assert.eq(with-missing.at("1").fill.to-hex(), "#00ffff")
+
+// A column with nothing to place drops the colour altogether, because the span
+// of the column is asked for before the gaps are coloured. That is `zsam`, and
+// this assertion holds today's answer so the change has something to break.
+#assert.eq(
+  colour-styles(
+    data-colour(palette, columns: "units", missing: rgb("#00ffff")),
+    normalise((units: (none, none))),
+    "units",
+  ),
+  (:),
+)
+
+// --- rows narrows the directive to part of the column ---
+//
+// The span is taken over the rows the predicate keeps, so a single row is a
+// domain of no width and sits in the middle of the palette.
+#let one-row = colour-styles(data-colour(palette, columns: "units", rows: 0), spread, "units")
+#assert.eq(one-row.keys(), ("0",))
+#assert.eq(one-row.at("0").fill.to-hex(), halfway)
 
 // --- target says which of the two the colour becomes ---
 //

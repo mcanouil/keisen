@@ -4,12 +4,14 @@
 // the edge its data suggested, and turning inference off changed nothing that
 // anyone watched.
 //
-// The directives are read elsewhere, and were before this file existed:
-// `test-selector-names.typ` holds the named form, `test-directive-order.typ` the
-// blanket form and the last-wins rule, both against `spec.align`, and
-// `test-direction.typ` holds the inferred edges. What no file read is the step
-// from a spec into the row of alignments the renderer emits, with the option
-// answering either way.
+// The rest was read before this file existed, and the two assertions under
+// inference restate it: `test-selector-names.typ` holds the named directive and
+// `test-directive-order.typ` the blanket form and the last-wins rule, both
+// against `spec.align`, and `test-direction.typ:30-33` holds both rows of
+// `column-alignments` under the default. They are kept here as the contrast the
+// pair below is read against.
+//
+// What this file adds is the option answering `false`.
 
 #import "../../src/parts/columns.typ": columns-align
 #import "../../src/render/layout.typ": column-alignments
