@@ -87,14 +87,16 @@ if [[ "${1:-}" == "--self-test" ]]; then
     : >"${probe}/${leaf}"
   done
   selected=("${probe}/report"-+([0-9]).png)
-  chosen=""
-  for path in "${selected[@]}"; do chosen="${chosen} $(basename "${path}")"; done
+  # Sorted rather than taken in the order the glob returned, because pathname
+  # expansion sorts by the locale and a UTF-8 one ignores the hyphen, which puts
+  # report-12 before report-1.
+  chosen="$(for path in "${selected[@]}"; do basename "${path}"; done | LC_ALL=C sort | tr '\n' ' ')"
   rm -rf "${probe}"
 
   cases=$((cases + 1))
-  if [[ "${chosen}" != " report-1.png report-12.png" ]]; then
+  if [[ "${chosen}" != "report-1.png report-12.png " ]]; then
     bad=$((bad + 1))
-    printf '  FAIL  self-test  the page glob selects the pages alone  got%s\n' "${chosen}" >&2
+    printf '  FAIL  self-test  the page glob selects the pages alone  got %s\n' "${chosen}" >&2
   fi
 
   if [[ ${bad} -gt 0 ]]; then

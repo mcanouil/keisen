@@ -61,6 +61,7 @@ tracked_under() {
 payload_kind() {
   local entry="$1"
   if [[ "${entry}" == "${README_NAME}" ]]; then
+    [[ -f "${entry}" ]] || return 1
     printf 'readme\n'
   elif [[ -d "${entry}" ]]; then
     printf 'directory\n'
@@ -130,14 +131,12 @@ stage() {
       # about developing the package are repository furniture.
       tools/stage-readme.sh "${README_NAME}" "${dest}"
       ;;
-    directory)
-      # Tracked files only, at their working-tree state. A plain `cp -r` would
-      # sweep ignored strays into the payload, so what shipped would depend on
-      # what happened to be lying in the tree.
+    *)
+      # Tracked files only, at their working-tree state, and at their paths. A
+      # plain `cp` would sweep in a file git does not track, so what shipped
+      # would depend on what happened to be lying in the tree, and it would
+      # flatten a nested entry into the root of the payload.
       tracked_under "${entry}" | tar -cf - --null -T - | tar -xf - -C "${dest}"
-      ;;
-    file)
-      cp "${entry}" "${dest}/"
       ;;
     esac
   done
@@ -227,6 +226,17 @@ if [[ "${1:-}" == "--self-test" ]]; then
   kind_is file typst.toml 'a file is copied'
   kind_is refused no-such-file.md 'a name that is not there is refused'
 
+  # The README is rewritten by name, so a README that is not there is refused by
+  # the same rule as any other missing entry rather than reported as covered.
+  if (
+    README_NAME="no-such-readme.md"
+    payload_kind "no-such-readme.md"
+  ) >/dev/null 2>&1; then
+    check 'a README that is not there is refused' no
+  else
+    check 'a README that is not there is refused' yes
+  fi
+
   # A directory ships the files it tracks, and one that tracks none is refused
   # rather than copied as an empty archive.
   if tracked_under src >/dev/null 2>&1; then
@@ -239,6 +249,14 @@ if [[ "${1:-}" == "--self-test" ]]; then
     check 'a directory holding no tracked file is refused' no
   else
     check 'a directory holding no tracked file is refused' yes
+  fi
+
+  # A file is copied by the same rule, so one git does not track is refused
+  # rather than shipped.
+  if tracked_under .git/config >/dev/null 2>&1; then
+    check 'a file git does not track is refused' no
+  else
+    check 'a file git does not track is refused' yes
   fi
 
   # The staging directory goes, however the archive ended.
