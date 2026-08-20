@@ -5,7 +5,8 @@
 #import "../../src/format/apply.typ": formatter-for
 #import "../../src/spec.typ": build-spec
 #import "../../src/render/layout.typ": column-cells
-#import "../../src/spec/resolve.typ": resolve-predicate, resolve-serialised
+#import "../../src/parts/substitutions.typ": substitute-zero
+#import "../../src/spec/resolve.typ": _OPTION-KINDS, resolve-predicate, resolve-serialised
 
 // --- predicates ---
 
@@ -140,8 +141,9 @@
 #assert.eq(blocks.grand-summaries.first().functions.keys(), ("Total",))
 #assert.eq((blocks.grand-summaries.first().functions.Total)((1, 2)), 3)
 
-// A substitution left without a replacement takes the package's own dash rather
-// than nothing, which is the value a generator omits the key to get.
+// A substitution left without a replacement takes the same default the written
+// directive takes, rather than one spelled again in the resolver: the two
+// defaults are held together here, so neither can drift from the other.
 #let dashed = resolve-serialised(
   (
     kind: "display-table",
@@ -151,7 +153,7 @@
   build-spec,
 )
 #assert.eq(dashed.substitutions.first().test, "zero")
-#assert.eq(dashed.substitutions.first().replacement, [--])
+#assert.eq(dashed.substitutions.first().replacement, substitute-zero("units").replacement)
 
 // --- the formatter options JSON cannot spell ---
 //
@@ -197,6 +199,11 @@
 // An infinity is written as whatever the caller said to write, and it is the
 // whole cell: there are no digits to pad a column against.
 #assert.eq(slots-for("rate"), [#"inf"])
+
+// The five above are every conversion the resolver declares. A sixth added
+// tomorrow arrives as a string with nothing to notice, so it is covered here or
+// this fails.
+#assert.eq(_OPTION-KINDS.keys().sorted(), ("infinity", "position", "prefix", "suffix", "symbol"))
 
 // --- significant digits are nameable wherever the formatter takes them ---
 //
