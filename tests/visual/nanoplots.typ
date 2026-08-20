@@ -1,6 +1,13 @@
 // In-cell nanoplots drawn with native primitives, sharing one domain down the
 // column so the sparklines can be compared. Cash must read as flat: scaled per
 // cell, its small wobble would draw exactly like real movement.
+//
+// A plot is taller than the figures beside it, so this is the table where the
+// theme's vertical placement shows. Nothing in the suite had ever set
+// `cell-vertical-align`, and the option reaches `table.cell` through the
+// renderer, which no assertion can read back. The render is the reader: with
+// the option discarded, every short cell falls back to the top of its row,
+// which is where Typst puts a table cell, and the tracked image goes stale.
 
 #import "../../lib.typ": *
 
@@ -26,5 +33,6 @@
   format-nanoplot("trend", plot: nanoplot-line, width: 6em, height: 1em, baseline: 25%),
   format-nanoplot("volume", plot: nanoplot-bar, width: 6em, height: 1em, baseline: 25%),
   format-percent("weight", decimals: 1),
+  table-options(cell-vertical-align: horizon),
   table-source-note([Source: portfolio ledger.]),
 )
