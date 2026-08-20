@@ -43,8 +43,8 @@
 
 // Given a wider domain, it is halfway up and draws neither stop.
 #let halfway = fills(data-colour(palette, columns: "units", domain: (0, 100)), rows: short).last()
-#assert(halfway != "#ff0000")
-#assert(halfway != "#00ff00")
+#assert(halfway != "#ff0000", message: "a value halfway up the domain is not the bottom stop")
+#assert(halfway != "#00ff00", message: "a value halfway up the domain is not the top stop")
 
 // A value outside the domain is clamped rather than extrapolated, so it draws
 // the stop it ran past.
