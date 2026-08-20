@@ -6,9 +6,9 @@
 # `@preview` is the namespace the rule in .claude/CLAUDE.md names, and it is not
 # the only one that breaks it. `@local` resolves on the machine that wrote it and
 # nowhere else, so the published package would carry an import nobody who
-# installs it can read. The pattern is therefore any namespace at all, behind the
-# opening quote Typst requires, so a namespace named in a comment is prose rather
-# than an import.
+# installs it can read. The pattern is therefore any namespace at all, read on an
+# import line rather than anywhere in the file: a namespace named in a comment,
+# or quoted inside a message, is prose about an import rather than one.
 
 set -euo pipefail
 
@@ -30,7 +30,8 @@ boundary_scan() {
     return 1
   fi
 
-  offenders="$(grep -rlE '"@[A-Za-z0-9_-]+/' "${root}" --include='*.typ' || true)"
+  offenders="$(grep -rlE '^[[:space:]]*#(import|include)[[:space:]]+"@[A-Za-z0-9_-]+/' \
+    "${root}" --include='*.typ' || true)"
   if [[ -n "${offenders}" ]]; then
     printf 'import boundary: a package import under %s\n' "${root}" >&2
     printf '  %s\n' "${offenders}" >&2
@@ -74,9 +75,16 @@ if [[ "${1:-}" == "--self-test" ]]; then
 
   expect 0 "" "a module that imports nothing" '#let table-header(title) = (kind: "header")'
   expect 0 "" "a module that imports a sibling" '#import "utils/errors.typ": check'
-  expect 1 "a package import" "an @preview import" '#import "@preview/other:0.1.0": *'
+  # The namespace is spelled from a variable rather than written out, because the
+  # version check reads this file too, and an install line here would be an
+  # import of its own on the day the version moves.
+  ns='@preview'
+
+  expect 1 "a package import" "an @preview import" "#import \"${ns}/other:0.1.0\": *"
   expect 1 "a package import" "an @local import" '#import "@local/other:0.1.0": *'
-  expect 0 "" "a namespace named in a comment" '// The install line reads @preview/keisen:0.1.0'
+  expect 1 "a package import" "an include" "#include \"${ns}/other:0.1.0\""
+  expect 0 "" "a namespace named in a comment" "// The install line reads ${ns}/keisen:0.1.0"
+  expect 0 "" "a namespace quoted in a message" "#let hint = \"write ${ns}/keisen:0.1.0\""
   expect 1 "no Typst file was read" "a tree holding no Typst file"
 
   cases=$((cases + 1))

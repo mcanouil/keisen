@@ -149,6 +149,19 @@ for f in tests/accessibility/*.typ; do
     printf '  FAIL  accessibility  %s  asserts nothing\n' "${f}" >&2
   fi
 
+  # A line that looks like an assertion and was not read is worse than none at
+  # all, because the fixture reads as covered. Counted loosely on purpose:
+  # anchoring this the way the extractor is anchored would let an indented line,
+  # or `//expect-tag:` without the space, be missed by both.
+  written="$(grep -cE '^[[:space:]]*//.*expect-tag:' "${f}" || true)"
+  read_lines="$(grep -cE '^// expect-tag: ' "${f}" || true)"
+  if [[ "${written}" -ne "${read_lines}" ]]; then
+    ok=0
+    printf '  FAIL  accessibility  %s  %s assertion line(s) written, %s read\n' \
+      "${f}" "${written}" "${read_lines}" >&2
+    printf '        an assertion reads "// expect-tag: <count> <tag>", with one space either side of the colon\n' >&2
+  fi
+
   if [[ ${ok} -eq 1 ]]; then
     passed=$((passed + 1))
   else

@@ -23,7 +23,9 @@ mkdir -p "${OUT_DIR}"
 shopt -s nullglob
 
 # Two counts, because they answer two questions: how many documents were
-# compiled, and which checks failed. One number for both reported "1 failure(s)
+# compiled, and which checks failed. A document counted as failed is one this
+# refused, whether it was compiled or turned away before that, which is why the
+# two numbers are printed as separate sentences rather than as a ratio. One number for both reported "1 failure(s)
 # out of 111 compile(s)" whether a single document or a whole sub-suite had
 # failed, and named neither.
 compiles=0
@@ -435,7 +437,7 @@ fi
 if [[ ${#failed_checks[@]} -gt 0 ]]; then
   named="$(printf ', %s' "${failed_checks[@]}")"
   printf '\n%d check(s) failed: %s\n' "${#failed_checks[@]}" "${named:2}" >&2
-  printf '%d compile(s) run, %d of them failed.\n' "${compiles}" "${documents_failed}" >&2
+  printf '%d compile(s) run; %d document(s) failed.\n' "${compiles}" "${documents_failed}" >&2
   exit 1
 fi
 
