@@ -77,11 +77,12 @@
   //
   // Only the shift itself is measured here, and only where it multiplies. The
   // negative side divides here and multiplies back at the end, and that un-shift
-  // can overflow on its own: rounding the largest decimal to the nearest ten to
-  // the twenty-eighth asks for a value one step above the largest. Half-up
-  // raises on the same input, so the two modes agree, and both raise outside the
-  // project grammar. That is filed with its reproduction, and it is a limit of
-  // the type rather than of this branch.
+  // can overflow on its own, where rounding to a place far below zero carries
+  // into a magnitude the type cannot hold. `to-decimal` cannot build a value
+  // that large, so the entry point is `scale`, which multiplies before the
+  // rounding reads the value. Half-up raises on the same input, so the two modes
+  // agree, and both raise outside the project grammar. That is filed with its
+  // reproduction, and it is a limit of the type rather than of this branch.
   if digits > 0 and calc.abs(value) > _decimal-max / scale {
     return calc.round(value, digits: digits)
   }

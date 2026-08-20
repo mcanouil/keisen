@@ -1,7 +1,9 @@
 // Values that decimal cannot represent are rejected before they reach it,
 // because Typst has no try and a decimal overflow raises a raw error.
 
-#import "../../src/format/number.typ": format-value, group-digits, round-decimal, to-decimal
+#import "../../src/data.typ": normalise
+#import "../../src/format/apply.typ": apply-formats
+#import "../../src/format/number.typ": format-number, group-digits, round-decimal, to-decimal
 
 // The largest decimal, written here rather than imported: the module holds the
 // same constant, and a test that read it would agree with the module about a
@@ -79,7 +81,13 @@
 // The threshold is a quotient, so it is exact only while dividing by a power of
 // ten moves the point rather than dropping a digit. Rounded up, it would let
 // the first overflowing value through, which is what the first assertion holds.
-// One representable step above it must reach the fallback and stay there.
+// A value above it must reach the fallback and stay there.
+//
+// The step is written as one unit of the last place, which is the smallest step
+// at 27 places and fewer. At 28 the boundary already carries the largest
+// mantissa the type has, so the addition rescales and lands further up than a
+// step. That still sits above the boundary, which is all the case needs, and
+// the assertion below says so rather than leaving it to be assumed.
 #for digits in range(1, 29) {
   let scale = calc.pow(decimal(10), digits)
   let boundary = largest / scale
@@ -90,6 +98,7 @@
   assert.eq(round-decimal(boundary, digits, "half-even"), boundary)
 
   let above = boundary + decimal(1) / scale
+  assert(above > boundary, message: "the step did not clear the boundary at " + str(digits))
   assert.eq(
     round-decimal(above, digits, "half-even"),
     round-decimal(above, digits, "half-up"),
@@ -121,27 +130,23 @@
 #assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
 #assert.eq(round-decimal(decimal("1.5"), 0, "half-even"), decimal("2"))
 
-// The formatter is the path a caller takes, and the reproduction the defect was
-// filed with went through it. Rounding is chosen by option there, so a change
-// that routes it differently is caught here rather than at the helper alone.
-#let _options(rounding) = (
-  scope: "format-number",
-  decimals: 28,
-  significant: none,
-  grouping: 3,
-  group-separator: " ",
-  decimal-separator: ".",
-  scale: 1,
-  sign: false,
-  negative-zero: false,
-  rounding: rounding,
-)
-#assert.eq(
-  format-value(12345, _options("half-even")),
-  format-value(12345, _options("half-up")),
-)
+// --- the directive, which is the path a caller takes ---
+
+// The reproduction the defect was filed with went through the formatter, and
+// the rounding mode reaches it from the directive. Driven from there, as
+// tests/unit/test-theme-rounding.typ drives it, so a change that stopped
+// forwarding the mode is caught here rather than at the helper alone.
+#let rows = normalise((value: (12345,)))
+#let formatted(rounding) = apply-formats(
+  rows,
+  (format-number("value", decimals: 28, rounding: rounding),),
+  "value",
+  options: (:),
+).first()
+
+#assert.eq(formatted("half-even"), formatted("half-up"))
 
 // The slots themselves, so a change that makes both modes agree on the wrong
-// answer is caught as well.
-#assert.eq(format-value(12345, _options("half-even")).integer, "12 345")
-#assert.eq(format-value(12345, _options("half-even")).fraction, "0" * 28)
+// answer is caught as well. The separator is the theme default, a thin space.
+#assert.eq(formatted("half-even").integer, "12" + sym.space.thin + "345")
+#assert.eq(formatted("half-even").fraction, "0" * 28)
