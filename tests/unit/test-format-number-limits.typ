@@ -85,9 +85,12 @@
 #for digits in range(1, 29) {
   let scale = calc.pow(decimal(10), digits)
   let boundary = largest / scale
-  assert(
-    boundary * scale <= largest,
-    message: "the threshold rounded up at " + str(digits) + " places",
+  // Read as digits rather than by shifting back, which would raise at the
+  // multiplication in the one case this exists to catch and report nothing.
+  assert.eq(
+    str(boundary).replace(".", "").len(),
+    str(largest).len(),
+    message: "the threshold dropped a digit at " + str(digits) + " places",
   )
   assert.eq(round-decimal(boundary, digits, "half-even"), boundary)
 

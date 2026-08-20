@@ -65,6 +65,12 @@
 // measurements; the second is what arrives here, and it cannot be wider, since
 // rounding to the first place never pushes the place out. That is a proof rather
 // than a check, and the bound is stated here rather than tested twice.
+//
+// Two limits of the type are left open, and each is filed with a reproduction.
+// A place far below zero can carry into a magnitude no decimal holds, which the
+// un-shift below raises on. `options.scale` is what carries a value that far.
+// Half-up raises on the same input, so the two modes agree, and both raise
+// outside the project grammar.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))
@@ -79,14 +85,8 @@
   // fractional digit at that place to sit a tie on, so plain rounding is exact
   // for it.
   //
-  // Only the shift itself is measured here, and only where it multiplies. The
-  // negative side divides here and multiplies back at the end, and that un-shift
-  // can overflow on its own, where rounding to a place far below zero carries
-  // into a magnitude the type cannot hold. `options.scale` is what carries a
-  // value that far, since it multiplies before the rounding reads it. Half-up
-  // raises on the same input, so the two modes agree, and both raise outside the
-  // project grammar. That is filed with its reproduction, and it is a limit of
-  // the type rather than of this branch.
+  // Only the multiplying side is measured. Dividing shrinks, and the un-shift
+  // that follows it has a limit of its own, named in the header above.
   if digits > 0 and calc.abs(value) > _decimal-max / scale {
     return calc.round(value, digits: digits)
   }
@@ -99,8 +99,8 @@
   // This is a known limitation rather than a proof. A shifted value keeps a
   // fractional part whenever the value's own scale runs past the place asked
   // for, so one beyond the integer range can still sit on a tie, and half-even
-  // then answers what half-up would. It is reachable, and filed with its
-  // reproduction; closing it needs a tie test that does not go through an int.
+  // then answers what half-up would. It is reachable, it is written into the
+  // reference, and it is filed with its reproduction and a way to close it.
   if calc.abs(shifted) >= decimal("9223372036854775807") {
     return calc.round(value, digits: digits)
   }
