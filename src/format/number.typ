@@ -86,8 +86,13 @@
   let shifted = if digits < 0 { value / scale } else { value * scale }
 
   // The tie test runs through calc.trunc, which returns an int, so a shifted
-  // value beyond the integer range takes plain rounding instead. Nothing that
-  // large can sit on a tie: it has no fractional part left to sit on.
+  // value beyond the integer range takes plain rounding instead.
+  //
+  // This is a known limitation rather than a proof. A shifted value keeps a
+  // fractional part whenever the value's own scale runs past the place asked
+  // for, so one beyond the integer range can still sit on a tie, and half-even
+  // then answers what half-up would. It is reachable, and filed with its
+  // reproduction; closing it needs a tie test that does not go through an int.
   if calc.abs(shifted) >= decimal("9223372036854775807") {
     return calc.round(value, digits: digits)
   }

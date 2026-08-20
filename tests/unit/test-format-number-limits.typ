@@ -63,9 +63,10 @@
 
 // Either side of the boundary itself: at 22 places the largest value that can
 // still be shifted is 7922816.2514.., so one of these takes the shift and the
-// other takes the fallback. Both hold a bound that is too permissive, which
-// raises where it shifts. Neither holds one that is too strict, since the
-// fallback returns these values unchanged as well.
+// other takes the fallback. 7922817 is the one that holds a bound that is too
+// permissive, since that bound would shift it and raise; 7922816 only shows
+// that the boundary value itself still round-trips. Neither holds a bound that
+// is too strict, since the fallback returns both unchanged as well.
 #assert.eq(round-decimal(decimal("7922816"), 22, "half-even"), decimal("7922816"))
 #assert.eq(round-decimal(decimal("7922817"), 22, "half-even"), decimal("7922817"))
 #assert.eq(
@@ -117,3 +118,8 @@
   format-value(12345, _options("half-even")),
   format-value(12345, _options("half-up")),
 )
+
+// The slots themselves, so a change that makes both modes agree on the wrong
+// answer is caught as well.
+#assert.eq(format-value(12345, _options("half-even")).integer, "12 345")
+#assert.eq(format-value(12345, _options("half-even")).fraction, "0" * 28)
