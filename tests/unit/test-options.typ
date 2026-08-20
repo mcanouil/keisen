@@ -27,24 +27,33 @@
 
 // theme-compact builds on the default rather than restating it.
 #assert.eq(option(theme-compact(), "cell-inset"), 0.3em)
-#assert(option(theme-compact(), "table-font-size") != option(theme-default(), "table-font-size"))
+#assert(
+  option(theme-compact(), "table-font-size") != option(theme-default(), "table-font-size"),
+  message: "theme-compact sets a font size of its own",
+)
 #assert.eq(option(theme-compact(), "table-border-top"), option(theme-default(), "table-border-top"))
 
 // theme-booktabs is the three-line rule: one above the table, one below it, one
 // under the column labels, and nothing under the footer where the default rules.
-#assert(option(theme-booktabs(), "table-border-top") != none)
-#assert(option(theme-booktabs(), "table-border-bottom") != none)
-#assert(option(theme-booktabs(), "column-labels-border-bottom") != none)
+#assert(option(theme-booktabs(), "table-border-top") != none, message: "booktabs rules the top")
+#assert(option(theme-booktabs(), "table-border-bottom") != none, message: "booktabs rules the bottom")
+#assert(
+  option(theme-booktabs(), "column-labels-border-bottom") != none,
+  message: "booktabs rules under the column labels",
+)
 #assert.eq(option(theme-booktabs(), "footer-border-top"), none)
-#assert(option(theme-default(), "footer-border-top") != none)
+#assert(option(theme-default(), "footer-border-top") != none, message: "the default rules the footer")
 
 // theme-minimal rules the column labels and nothing else, where the default
 // rules the table above and below as well.
-#assert(option(theme-minimal(), "column-labels-border-bottom") != none)
+#assert(
+  option(theme-minimal(), "column-labels-border-bottom") != none,
+  message: "minimal still rules under the column labels",
+)
 #assert.eq(option(theme-minimal(), "table-border-top"), none)
 #assert.eq(option(theme-minimal(), "table-border-bottom"), none)
-#assert(option(theme-default(), "table-border-top") != none)
-#assert(option(theme-default(), "table-border-bottom") != none)
+#assert(option(theme-default(), "table-border-top") != none, message: "the default rules the top")
+#assert(option(theme-default(), "table-border-bottom") != none, message: "the default rules the bottom")
 
 // --- merging follows call order ---
 
