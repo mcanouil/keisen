@@ -54,5 +54,5 @@ It is also the price.
 A combined column carries content, so it is opaque afterwards: aligned to the start unless `columns-align` says otherwise, not lined up on a decimal separator, and outside any summary.
 That is why the effect column names itself in `columns-align` above.
 
-A label follows its own column by default, so these labels would sit on four different edges.
+A label follows its own column by default, so these labels would not share one edge.
 `column-labels-align` centres every one of them instead, the stubhead included, and leaves the cells where their columns put them.

@@ -34,7 +34,7 @@ A column of series is a column of shapes, and a reader compares them by eye.
 )
 ```
 
-![A portfolio table with a sparkline and a bar plot per row: equities rising, bonds falling, and cash nearly flat.](../assets/examples/nanoplots.png)
+![A portfolio table with a sparkline and a bar plot per row, the asset name and the weight centred against the plots beside them: equities rising, bonds falling, and cash nearly flat.](../assets/examples/nanoplots.png)
 
 Cash reads as flat because all three rows share one scale, taken from the column itself rather than passed in.
 Scaled per cell, its small wobble would draw exactly like the others' real movement, which is how a nanoplot lies.
