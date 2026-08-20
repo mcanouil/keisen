@@ -26,6 +26,75 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
+# One assertion, read into the count it wants and the tag it counts.
+#
+# The shape is refused before anything is compared, because a count that is not
+# a number is an arithmetic error: `[[ "0" -ne "/S" ]]` raises, and inside an
+# `if` condition `set -e` does not catch it, so the condition read false and the
+# fixture was marked passed. A line reading `// expect-tag: /S /TH`, with the
+# count left out, was a fixture that asserted nothing and said so to nobody.
+#
+# Written as a function of a string, so --self-test below can run every branch:
+# the live path needs a compiled PDF, and every fixture in the tree is well
+# formed, so only the passing shape would ever run.
+read_assertion() {
+  local assertion="$1"
+  [[ "${assertion}" =~ ^([0-9]+)[[:space:]]+([^[:space:]].*)$ ]] || return 1
+  printf '%s\n%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+}
+
+if [[ "${1:-}" == "--self-test" ]]; then
+  cases=0
+  bad=0
+
+  expect() {
+    local wanted="$1" count="$2" tag="$3" assertion="$4" name="$5"
+    cases=$((cases + 1))
+    local got=0 read_back
+    read_back="$(read_assertion "${assertion}")" || got=$?
+    if [[ "${got}" -ne "${wanted}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
+      return
+    fi
+    [[ "${wanted}" -ne 0 ]] && return
+    if [[ "$(head -1 <<<"${read_back}")" != "${count}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the count %s\n' "${name}" "${count}" >&2
+      return
+    fi
+    if [[ "$(tail -n +2 <<<"${read_back}")" != "${tag}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the tag %s\n' "${name}" "${tag}" >&2
+    fi
+  }
+
+  expect 0 '3' '/S /TH' '3 /S /TH' 'a count and a tag'
+  expect 0 '0' '/Scope /Row' '0 /Scope /Row' 'a count of zero, which pins an absence'
+  expect 0 '3' '/S /TH' '3   /S /TH' 'more than one space between them'
+  expect 1 '' '' '/S /TH' 'the count left out'
+  expect 1 '' '' 'three /S /TH' 'the count written as a word'
+  expect 1 '' '' '3' 'a count naming no tag'
+  expect 1 '' '' '3 ' 'a count and a space'
+  expect 1 '' '' '' 'an assertion that reads as nothing'
+
+  if [[ ${bad} -gt 0 ]]; then
+    printf 'accessibility: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
+    exit 1
+  fi
+
+  printf 'accessibility: self-test %d/%d\n' "${cases}" "${cases}"
+  exit 0
+fi
+
+# An argument this does not know is a typo, and a typo that runs the live check
+# and reports a pass is how a caller loses the self-test without noticing.
+if [[ $# -gt 0 ]]; then
+  printf 'accessibility: unknown argument %s\n' "$1" >&2
+  printf '  the only one is --self-test\n' >&2
+  exit 1
+fi
+
 OUT_DIR="${OUT_DIR:-/tmp/keisen-check}"
 mkdir -p "${OUT_DIR}"
 
@@ -56,9 +125,15 @@ for f in tests/accessibility/*.typ; do
   ok=1
 
   while IFS= read -r assertion; do
-    [[ -z "${assertion}" ]] && continue
-    wanted="${assertion%% *}"
-    tag="${assertion#* }"
+    if ! read_back="$(read_assertion "${assertion}")"; then
+      ok=0
+      printf '  FAIL  accessibility  %s  an assertion is malformed\n' "${f}" >&2
+      printf '        read: // expect-tag: %s\n' "${assertion}" >&2
+      printf '        an assertion reads "// expect-tag: <count> <tag>"\n' >&2
+      continue
+    fi
+    wanted="$(head -1 <<<"${read_back}")"
+    tag="$(tail -n +2 <<<"${read_back}")"
 
     found="$(grep -c -x -F "${tag}" "${tags}" || true)"
     if [[ "${found}" -ne "${wanted}" ]]; then

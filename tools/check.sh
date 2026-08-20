@@ -332,6 +332,13 @@ fi
 
 # A column label is a header cell to a screen reader or it is not, and no
 # document can read its own tags back: this reads the PDF structure tree.
+#
+# Every fixture in the tree is well formed, so the shape guard runs against its
+# own strings: a malformed assertion used to be read as a pass.
+if ! tools/accessibility-check.sh --self-test; then
+  fail_check "accessibility self-test"
+fi
+
 if ! tools/accessibility-check.sh; then
   fail_check "accessibility"
 fi
