@@ -28,16 +28,22 @@
 #assert.eq(strip-comments("// \"x\"\na"), "\na")
 #assert.eq(strip-comments("x \"a//b\""), "x \"a")
 
-// A key is set where a test gives it a value: as a key of a theme dictionary,
-// which this package writes quoted, or as a named argument of `table-options`.
+// A key is set where a test gives it a value: as a quoted key, which is how a
+// theme dictionary and a serialised specification write one, or as a named
+// argument or a bare dictionary key.
 //
-// A named argument is counted only in a file that configures options at all,
-// which is one calling `table-options` or `build-spec`, or one passing a theme.
-// `key: value` is the shape of every named argument in Typst, and `breakable` is
-// one of `block`'s. Reading a key by name is not setting it:
-// `option(theme-compact(), "cell-inset")` asserts what the preset carries, and
-// the renderer could stop reading the key with that assertion still green, which
-// is what `test-options-read.typ` is for.
+// The unquoted form is counted only in a file that configures options at all,
+// which is one calling `table-options` or `build-spec`, or one passing a theme
+// or an option dictionary. `key: value` is the shape of every named argument in
+// Typst, and `breakable` is one of `block`'s. The gate is per file rather than
+// per call, so a file that both configures options and writes `block(breakable:
+// false)` would count `breakable` as set. It cannot pass silently: the assertion
+// at the end compares the whole set, so a wrong count fails the suite and asks
+// for this list to be edited.
+//
+// Reading a key by name is not setting it: `option(theme-compact(), "cell-inset")`
+// asserts what the preset carries, and the renderer could stop reading the key
+// with that assertion still green, which is what `test-options-read.typ` is for.
 //
 // Each name is anchored on the character before it, so a longer key ending in
 // this one is not a mention of it. Rust regex has no lookaround, so the anchor
@@ -56,6 +62,7 @@
     body.contains("table-options(")
       or body.contains("build-spec(")
       or body.contains(regex("theme\\s*:"))
+      or body.contains(regex("options\\s*:"))
   )
   configures and body.contains(regex("[^-\\w]" + name + "\\s*:"))
 }
@@ -66,6 +73,7 @@
 #assert(sets("k", "table-options(k: true)"))
 #assert(sets("k", "(\"k\": 1em)"))
 #assert(sets("k", "display-table(data, theme: (k: 1em))"))
+#assert(sets("k", "cell(directive, options: (k: 1em))"))
 #assert(not sets("k", "block(k: false)"))
 #assert(not sets("k", "option(theme-compact(), \"k\")"))
 #assert(not sets("k", "table-options(a-k: true)"))
@@ -79,37 +87,75 @@
   strip-comments(text)
 }
 
-// Every test and example that gives an option a value, each read on its own so
+// Every test and example that configures options at all, each read on its own so
 // no pattern matches across the boundary between two files. Typst cannot walk a
-// directory, so the list is explicit, and a test that starts setting an option
-// is added here.
+// directory, so the list is explicit. It is every file the markers above match,
+// which this finds:
+//
+//   grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples
 //
 // A file left out can only leave a key looking uncovered, so an omission cannot
-// loosen the assertion below. It can leave the record stale instead: a key
-// covered tomorrow in a file nobody added here stays written down as covered by
-// nothing. The list holds for the files named, and for no others.
-//
-// `examples/table-spec.json` carries no options today. It is read because a
-// serialised specification is the one other place an option can be set, and a
-// JSON key is quoted, so the scan reads it as it stands.
+// loosen the assertion below. It leaves the record stale instead: a key covered
+// tomorrow in a file nobody added here stays written down as covered by nothing.
+// The list holds for the files named, and for no others.
 #let sources = (
+  source("../expect-fail/align-combine-source.typ"),
+  source("../expect-fail/align-hidden-column.typ"),
+  source("../expect-fail/align-indented-stub.typ"),
+  source("../expect-fail/align-stub-group-column.typ"),
+  source("../expect-fail/align-unknown-column-in-array.typ"),
+  source("../expect-fail/align-unknown-column-with-stub.typ"),
+  source("../expect-fail/move-anchor-hidden-after.typ"),
+  source("../expect-fail/move-anchor-hidden-before.typ"),
+  source("../expect-fail/move-anchor-stub.typ"),
+  source("../expect-fail/move-duplicate-column.typ"),
+  source("../expect-fail/move-unknown-column.typ"),
+  source("../expect-fail/options-unknown-option.typ"),
+  source("../expect-fail/theme-not-a-dictionary.typ"),
+  source("../expect-fail/theme-unknown-option.typ"),
   source("../probe/row-border-body-edges.typ"),
   source("../probe/striping.typ"),
   source("../probe/table-rules-with-notes.typ"),
   source("../probe/table-rules.typ"),
   source("../probe/theme-borders.typ"),
+  source("test-columns-combine.typ"),
   source("test-direction.typ"),
+  source("test-directive-order.typ"),
+  source("test-display-table.typ"),
   source("test-format-number-defaults.typ"),
+  source("test-format-number-limits.typ"),
+  source("test-group-label-numeric.typ"),
   source("test-label-alignment.typ"),
+  source("test-locations-footnotes.typ"),
+  source("test-locations.typ"),
+  source("test-marks-order.typ"),
+  source("test-marks.typ"),
+  source("test-nanoplot.typ"),
   source("test-options.typ"),
+  source("test-row-groups.typ"),
+  source("test-row-plan.typ"),
+  source("test-selector-names.typ"),
+  source("test-serialised-surface.typ"),
   source("test-serialised.typ"),
+  source("test-spanners.typ"),
   source("test-spec.typ"),
+  source("test-stub-groups.typ"),
   source("test-stub.typ"),
+  source("test-style.typ"),
+  source("test-summaries-precision.typ"),
+  source("test-summaries.typ"),
+  source("test-summary-format.typ"),
+  source("test-summary-locations.typ"),
   source("test-theme-rounding.typ"),
+  source("../visual/combined.typ"),
   source("../visual/conventions.typ"),
+  source("../visual/dates-markup.typ"),
+  source("../visual/formatters.typ"),
   source("../visual/grouped.typ"),
   source("../visual/nanoplots.typ"),
-  source("../../examples/table-spec.json"),
+  source("../visual/row-groups.typ"),
+  source("../visual/rules.typ"),
+  source("../visual/summaries.typ"),
 )
 
 // The options no test gives a value, in the order they are declared.
