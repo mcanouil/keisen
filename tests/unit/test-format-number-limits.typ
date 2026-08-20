@@ -3,6 +3,11 @@
 
 #import "../../src/format/number.typ": format-value, group-digits, round-decimal, to-decimal
 
+// The largest decimal, written here rather than imported: the module holds the
+// same constant, and a test that read it would agree with the module about a
+// value both of them could have wrong.
+#let largest = decimal("79228162514264337593543950335")
+
 // --- magnitude, both ends ---
 
 // Too large to construct.
@@ -65,18 +70,31 @@
   round-decimal(decimal("-12345"), 28, "half-up"),
 )
 
-// Either side of the boundary itself: at 22 places the largest value that can
-// still be shifted is 7922816.2514.., so one of these takes the shift and the
-// other takes the fallback. 7922817 is the one that holds a bound that is too
-// permissive, since that bound would shift it and raise; 7922816 only shows
-// that the boundary value itself still round-trips. Neither holds a bound that
-// is too strict, since the fallback returns both unchanged as well.
-#assert.eq(round-decimal(decimal("7922816"), 22, "half-even"), decimal("7922816"))
-#assert.eq(round-decimal(decimal("7922817"), 22, "half-even"), decimal("7922817"))
-#assert.eq(
-  round-decimal(decimal("7922817"), 22, "half-even"),
-  round-decimal(decimal("7922817"), 22, "half-up"),
-)
+// The boundary itself, at every place the contract allows, and at the full
+// precision the type carries. A whole number either side of it is too coarse:
+// at 22 places the boundary is 7922816.2514264337593543950335, so the window
+// between it and 7922817 goes unread, and the first value that overflows lives
+// in that window.
+//
+// The threshold is a quotient, so it is exact only while dividing by a power of
+// ten moves the point rather than dropping a digit. Rounded up, it would let
+// the first overflowing value through, which is what the first assertion holds.
+// One representable step above it must reach the fallback and stay there.
+#for digits in range(1, 29) {
+  let scale = calc.pow(decimal(10), digits)
+  let boundary = largest / scale
+  assert(
+    boundary * scale <= largest,
+    message: "the threshold rounded up at " + str(digits) + " places",
+  )
+  assert.eq(round-decimal(boundary, digits, "half-even"), boundary)
+
+  let above = boundary + decimal(1) / scale
+  assert.eq(
+    round-decimal(above, digits, "half-even"),
+    round-decimal(above, digits, "half-up"),
+  )
+}
 
 // A bound that is too strict is held by a tie at the same place, which only the
 // shift can find: 2.5 at the 23rd place rounds down to an even 2 here and up to
