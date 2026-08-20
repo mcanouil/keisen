@@ -429,6 +429,18 @@ fresh_assets() {
 
 fresh_assets
 
+# The renderer refuses a pair of visual tests whose names cannot be told apart,
+# and the packaging script refuses a payload entry that would ship nothing. This
+# tree holds neither shape, and `package.sh archive` is reached by no script
+# here, so both run against their own fixtures.
+if ! tools/render-docs-assets.sh --self-test; then
+  fail_check "assets self-test"
+fi
+
+if ! tools/package.sh --self-test; then
+  fail_check "package self-test"
+fi
+
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.
 if ! tools/quarto-check.sh; then
