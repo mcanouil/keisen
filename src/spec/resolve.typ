@@ -601,7 +601,7 @@
 
 // Options whose Typst value is not a JSON scalar. Everything else passes
 // through as written.
-#let _OPTION-KINDS = (
+#let OPTION-KINDS = (
   "prefix": "content",
   "suffix": "content",
   "symbol": "content",
@@ -619,7 +619,7 @@
   let options = (:)
   for (key, value) in descriptor {
     if key in ("name", "columns", "rows") { continue }
-    let kind = _OPTION-KINDS.at(key, default: none)
+    let kind = OPTION-KINDS.at(key, default: none)
     options.insert(
       key,
       if kind == "content" { _content(value) } else if kind == "alignment" {

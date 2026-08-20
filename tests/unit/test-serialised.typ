@@ -5,7 +5,8 @@
 #import "../../src/format/apply.typ": formatter-for
 #import "../../src/spec.typ": build-spec
 #import "../../src/render/layout.typ": column-cells
-#import "../../src/spec/resolve.typ": resolve-predicate, resolve-serialised
+#import "../../src/parts/substitutions.typ": substitute-zero
+#import "../../src/spec/resolve.typ": OPTION-KINDS, resolve-predicate, resolve-serialised
 
 // --- predicates ---
 
@@ -99,6 +100,113 @@
 
 // And the whole thing renders through the same pipeline as a hand-built table.
 #assert.eq(type(display-table(spec: spec)), content)
+
+// --- substitutions and grand summaries, which a generator writes as data ---
+//
+// `test-serialised-surface.typ` runs the resolver for every key and fails when
+// one produces no directive, so a deleted loop is caught already. What it cannot
+// see is which directive came out: the two summary loops could swap their scope,
+// or a substitution could lose its test, its columns or its replacement, and the
+// count would be right either way.
+
+#let blocks = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((region: "North", units: 1250), (region: "South", units: none)),
+    stub: (rowname: none, group: "region", label: none, indent: none),
+    substitutions: ((test: "missing", columns: "units", replacement: "n/a"),),
+    summaries: ((name: "aggregate-sum", label: "Subtotal", columns: ("units",)),),
+    "grand-summaries": ((name: "aggregate-sum", label: "Total", columns: ("units",)),),
+  ),
+  build-spec,
+)
+
+#assert.eq(blocks.substitutions.len(), 1)
+#assert.eq(blocks.substitutions.first().test, "missing")
+#assert.eq(blocks.substitutions.first().columns, "units")
+
+// The replacement is written as a string and arrives as content, since that is
+// what a cell holds.
+#assert.eq(blocks.substitutions.first().replacement, [n/a])
+
+// The two summary loops answer for their own key alone, so neither can stand in
+// for the other. The label names the row and the aggregation is read from a
+// table of names, so the function is called rather than counted.
+#assert.eq(blocks.summaries.len(), 1)
+#assert.eq(blocks.summaries.first().scope, "group")
+#assert.eq(blocks.summaries.first().functions.keys(), ("Subtotal",))
+#assert.eq((blocks.summaries.first().functions.Subtotal)((1, 2)), 3)
+#assert.eq(blocks.grand-summaries.len(), 1)
+#assert.eq(blocks.grand-summaries.first().scope, "grand")
+#assert.eq(blocks.grand-summaries.first().functions.keys(), ("Total",))
+#assert.eq((blocks.grand-summaries.first().functions.Total)((1, 2)), 3)
+
+// A substitution left without a replacement takes the same default the written
+// directive takes. The resolver spells that default itself, so the two are
+// independent, and this holds them equal rather than removing the duplication.
+#let dashed = resolve-serialised(
+  (
+    kind: "display-table",
+    data: ((units: none),),
+    substitutions: ((test: "zero", columns: "units"),),
+  ),
+  build-spec,
+)
+#assert.eq(dashed.substitutions.first().test, "zero")
+#assert.eq(dashed.substitutions.first().replacement, substitute-zero("units").replacement)
+
+// --- the formatter options JSON cannot spell ---
+//
+// Most options pass through as written. Five cannot: `prefix`, `suffix`,
+// `symbol` and `infinity` are content, and `position` is an alignment, so each
+// arrives as a string and is read into the value the formatter expects. Handed
+// on as a string, a symbol was drawn as the characters of its own name, and a
+// position was refused by the formatter it was written for.
+//
+// A resolved directive carries the formatter rather than the options it was
+// built from, so each conversion is read where it shows: in the cell.
+
+#let converted = resolve-serialised(
+  (
+    kind: "display-table",
+    data: (price: (1234.5,), share: (0.5,), rate: (float.inf,)),
+    formats: (
+      (name: "format-currency", columns: "price", symbol: "EUR", position: "end"),
+      (name: "format-number", columns: "share", prefix: "~", suffix: " of it"),
+      (name: "format-number", columns: "rate", infinity: "inf"),
+    ),
+  ),
+  build-spec,
+)
+
+// Looked up by the column it names rather than by position, so the assertions
+// below do not depend on the order the formats were written in. A name the
+// formats do not carry is a mistake in the test, and it says so here rather than
+// failing inside the formatter.
+#let cell-for(name) = {
+  let directive = converted.formats.find(directive => directive.columns == name)
+  assert(directive != none, message: "no format names the column " + name)
+  (formatter-for(directive, converted.options))(converted.data.first().at(name))
+}
+
+// Read as the alignment `end`, the symbol follows the number, against a space
+// that does not break. Left as the string "end", the formatter refuses it.
+#assert.eq(cell-for("price").prefix, none)
+#assert.eq(cell-for("price").suffix, sym.space.nobreak + [EUR])
+
+// A prefix and a suffix are content wherever they are written, rather than the
+// characters of a string set as a value.
+#assert.eq(cell-for("share").prefix, [#"~"])
+#assert.eq(cell-for("share").suffix, [#" of it"])
+
+// An infinity is written as whatever the caller said to write, and it is the
+// whole cell: there are no digits to pad a column against.
+#assert.eq(cell-for("rate"), [#"inf"])
+
+// The five above are every conversion the resolver declares. A sixth added
+// tomorrow arrives as a string with nothing to notice, so it is covered here or
+// this fails.
+#assert.eq(OPTION-KINDS.keys().sorted(), ("infinity", "position", "prefix", "suffix", "symbol"))
 
 // --- significant digits are nameable wherever the formatter takes them ---
 //
