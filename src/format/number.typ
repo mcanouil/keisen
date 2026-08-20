@@ -58,9 +58,13 @@
 //
 // It must lie within -28 to 28, which is what a decimal holds as places: the
 // scale below is ten to its magnitude, and a wider one raises before anything
-// here can report it. Every caller bounds it before arriving, `resolve-decimals`
-// for a written count and `_decimals-for-significant` for a resolved place, so
-// the bound is stated here rather than checked twice.
+// here can report it.
+//
+// A written count is bounded by `resolve-decimals`. A resolved place is bounded
+// by the check in `_decimals-for-significant`, which reads the first of its two
+// measurements; the second is what arrives here, and it cannot be wider, since
+// rounding to the first place never pushes the place out. That is a proof rather
+// than a check, and the bound is stated here rather than tested twice.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))

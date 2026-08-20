@@ -83,11 +83,12 @@
 // the first overflowing value through, which is what the first assertion holds.
 // A value above it must reach the fallback and stay there.
 //
-// The step is written as one unit of the last place, which is the smallest step
-// at 27 places and fewer. At 28 the boundary already carries the largest
-// mantissa the type has, so the addition rescales and lands further up than a
-// step. That still sits above the boundary, which is all the case needs, and
-// the assertion below says so rather than leaving it to be assumed.
+// Dividing by a power of ten moves the scale and leaves the mantissa alone, so
+// the boundary carries the largest mantissa the type has at every place here.
+// Adding to it therefore rescales rather than stepping by one unit of the last
+// place, and lands somewhere above the boundary instead. That is all the case
+// needs, since no decimal is representable in between, and the assertion below
+// says so rather than leaving it to be assumed.
 #for digits in range(1, 29) {
   let scale = calc.pow(decimal(10), digits)
   let boundary = largest / scale
