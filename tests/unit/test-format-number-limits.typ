@@ -33,8 +33,12 @@
 
 // --- half-even beyond the integer range ---
 
-// The tie test goes through calc.trunc, which is an int, so very large values
-// fall back to the plain rounding they cannot have ties at anyway.
+// The tie test goes through calc.trunc, which is an int, so a shifted value
+// beyond the integer range takes plain rounding instead.
+//
+// The value below does sit on a tie, and half-even owes it ..890. What is
+// pinned here is the known limitation, not the right answer: the fallback gives
+// the half-up result. It is filed, and this assertion changes when it closes.
 #assert.eq(
   round-decimal(decimal("12345678901234567890.5"), 0, "half-even"),
   decimal("12345678901234567891"),
