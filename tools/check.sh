@@ -148,18 +148,21 @@ fitted_pages() {
     fi
   done
 
+  # Both lists before the return, so a tree with one of each fault is one run
+  # rather than two.
   if [[ ${#unruled[@]} -gt 0 ]]; then
     printf 'page size: a rendered test sets no page at all\n' >&2
     printf '  %s\n' "${unruled[@]}" >&2
-    printf '  every visual test and example carries the page rule; see CONTRIBUTING.md\n' >&2
-    fail_check "pages"
-    return
+    printf '  a visual test and an example carry the page rule; see CONTRIBUTING.md\n' >&2
   fi
 
   if [[ ${#offenders[@]} -gt 0 ]]; then
     printf 'page size: a test page does not grow to fit its content\n' >&2
     printf '  %s\n' "${offenders[@]}" >&2
     printf '  use #set page(width: auto, height: auto, margin: ..)\n' >&2
+  fi
+
+  if [[ ${#unruled[@]} -gt 0 || ${#offenders[@]} -gt 0 ]]; then
     fail_check "pages"
     return
   fi
@@ -189,7 +192,6 @@ expect_fail() {
 
   for f in tests/expect-fail/*.typ; do
     label_total=$((label_total + 1))
-    compiles=$((compiles + 1))
 
     local expected=()
     while IFS= read -r line; do
@@ -234,6 +236,7 @@ expect_fail() {
     done
 
     local output
+    compiles=$((compiles + 1))
     if output="$(typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>&1)"; then
       documents_failed=$((documents_failed + 1))
       printf '  FAIL  expect-fail  %s  compiled, but should not have\n' "${f}"

@@ -58,12 +58,12 @@ if [[ "${1:-}" == "--self-test" ]]; then
       return
     fi
     [[ "${wanted}" -ne 0 ]] && return
-    if [[ "$(head -1 <<<"${read_back}")" != "${count}" ]]; then
+    if [[ "${read_back%%$'\n'*}" != "${count}" ]]; then
       bad=$((bad + 1))
       printf '  FAIL  self-test  %s  wanted the count %s\n' "${name}" "${count}" >&2
       return
     fi
-    if [[ "$(tail -n +2 <<<"${read_back}")" != "${tag}" ]]; then
+    if [[ "${read_back#*$'\n'}" != "${tag}" ]]; then
       bad=$((bad + 1))
       printf '  FAIL  self-test  %s  wanted the tag %s\n' "${name}" "${tag}" >&2
     fi
@@ -132,8 +132,8 @@ for f in tests/accessibility/*.typ; do
       printf '        an assertion reads "// expect-tag: <count> <tag>"\n' >&2
       continue
     fi
-    wanted="$(head -1 <<<"${read_back}")"
-    tag="$(tail -n +2 <<<"${read_back}")"
+    wanted="${read_back%%$'\n'*}"
+    tag="${read_back#*$'\n'}"
 
     found="$(grep -c -x -F "${tag}" "${tags}" || true)"
     if [[ "${found}" -ne "${wanted}" ]]; then

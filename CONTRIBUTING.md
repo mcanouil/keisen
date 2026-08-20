@@ -78,7 +78,9 @@ Set every test page to grow with what it holds, so a rendered image is the table
 #set page(width: auto, height: auto, margin: 0.5cm)
 ```
 
-Every page fits its width, with no exception. `tests/visual/breakable.typ` fixes its height alone, because a page that grows never breaks and breaking is what it tests.
+A visual test and an example carry the rule, and `tools/check.sh` requires it of them.
+A unit test or an expect-fail fixture renders nothing anyone looks at, so it may leave the page alone; where it sets one, the same rule holds.
+`tests/visual/breakable.typ` fixes its height alone, because a page that grows never breaks and breaking is what it tests.
 
 After changing a visual test, regenerate the images the documentation shows:
 
