@@ -102,10 +102,11 @@
 
 // --- substitutions and grand summaries, which a generator writes as data ---
 //
-// Both are resolved by a loop of their own, and both loops could be made to
-// produce nothing at all: `examples/table-spec.json` carries the two keys and
-// `examples/serialised.typ` only compiles it, so a whole block of a generator's
-// output was dropped without a word.
+// `test-serialised-surface.typ` runs the resolver for every key and fails when
+// one produces no directive, so a deleted loop is caught already. What it cannot
+// see is which directive came out: the two summary loops could swap their scope,
+// or a substitution could lose its test, its columns or its replacement, and the
+// count would be right either way.
 
 #let blocks = resolve-serialised(
   (
@@ -128,13 +129,16 @@
 #assert.eq(blocks.substitutions.first().replacement, [n/a])
 
 // The two summary loops answer for their own key alone, so neither can stand in
-// for the other.
+// for the other. The label names the row and the aggregation is read from a
+// table of names, so the function is called rather than counted.
 #assert.eq(blocks.summaries.len(), 1)
 #assert.eq(blocks.summaries.first().scope, "group")
 #assert.eq(blocks.summaries.first().functions.keys(), ("Subtotal",))
+#assert.eq((blocks.summaries.first().functions.Subtotal)((1, 2)), 3)
 #assert.eq(blocks.grand-summaries.len(), 1)
 #assert.eq(blocks.grand-summaries.first().scope, "grand")
 #assert.eq(blocks.grand-summaries.first().functions.keys(), ("Total",))
+#assert.eq((blocks.grand-summaries.first().functions.Total)((1, 2)), 3)
 
 // A substitution left without a replacement takes the package's own dash rather
 // than nothing, which is the value a generator omits the key to get.
@@ -175,24 +179,24 @@
 
 // Looked up by the column it names rather than by position, so the assertions
 // below do not depend on the order the formats were written in.
-#let cell(name) = {
+#let slots-for(name) = {
   let directive = converted.formats.find(directive => directive.columns == name)
   (formatter-for(directive, converted.options))(converted.data.first().at(name))
 }
 
 // Read as the alignment `end`, the symbol follows the number, against a space
 // that does not break. Left as the string "end", the formatter refuses it.
-#assert.eq(cell("price").prefix, none)
-#assert.eq(cell("price").suffix, sym.space.nobreak + [EUR])
+#assert.eq(slots-for("price").prefix, none)
+#assert.eq(slots-for("price").suffix, sym.space.nobreak + [EUR])
 
 // A prefix and a suffix are content wherever they are written, rather than the
 // characters of a string set as a value.
-#assert.eq(cell("share").prefix, [#"~"])
-#assert.eq(cell("share").suffix, [#" of it"])
+#assert.eq(slots-for("share").prefix, [#"~"])
+#assert.eq(slots-for("share").suffix, [#" of it"])
 
 // An infinity is written as whatever the caller said to write, and it is the
 // whole cell: there are no digits to pad a column against.
-#assert.eq(cell("rate"), [#"inf"])
+#assert.eq(slots-for("rate"), [#"inf"])
 
 // --- significant digits are nameable wherever the formatter takes them ---
 //
