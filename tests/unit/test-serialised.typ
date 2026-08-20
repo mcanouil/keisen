@@ -6,7 +6,7 @@
 #import "../../src/spec.typ": build-spec
 #import "../../src/render/layout.typ": column-cells
 #import "../../src/parts/substitutions.typ": substitute-zero
-#import "../../src/spec/resolve.typ": _OPTION-KINDS, resolve-predicate, resolve-serialised
+#import "../../src/spec/resolve.typ": OPTION-KINDS, resolve-predicate, resolve-serialised
 
 // --- predicates ---
 
@@ -142,8 +142,8 @@
 #assert.eq((blocks.grand-summaries.first().functions.Total)((1, 2)), 3)
 
 // A substitution left without a replacement takes the same default the written
-// directive takes, rather than one spelled again in the resolver: the two
-// defaults are held together here, so neither can drift from the other.
+// directive takes. The resolver spells that default itself, so the two are
+// independent, and this holds them equal rather than removing the duplication.
 #let dashed = resolve-serialised(
   (
     kind: "display-table",
@@ -180,30 +180,33 @@
 )
 
 // Looked up by the column it names rather than by position, so the assertions
-// below do not depend on the order the formats were written in.
-#let slots-for(name) = {
+// below do not depend on the order the formats were written in. A name the
+// formats do not carry is a mistake in the test, and it says so here rather than
+// failing inside the formatter.
+#let cell-for(name) = {
   let directive = converted.formats.find(directive => directive.columns == name)
+  assert(directive != none, message: "no format names the column " + name)
   (formatter-for(directive, converted.options))(converted.data.first().at(name))
 }
 
 // Read as the alignment `end`, the symbol follows the number, against a space
 // that does not break. Left as the string "end", the formatter refuses it.
-#assert.eq(slots-for("price").prefix, none)
-#assert.eq(slots-for("price").suffix, sym.space.nobreak + [EUR])
+#assert.eq(cell-for("price").prefix, none)
+#assert.eq(cell-for("price").suffix, sym.space.nobreak + [EUR])
 
 // A prefix and a suffix are content wherever they are written, rather than the
 // characters of a string set as a value.
-#assert.eq(slots-for("share").prefix, [#"~"])
-#assert.eq(slots-for("share").suffix, [#" of it"])
+#assert.eq(cell-for("share").prefix, [#"~"])
+#assert.eq(cell-for("share").suffix, [#" of it"])
 
 // An infinity is written as whatever the caller said to write, and it is the
 // whole cell: there are no digits to pad a column against.
-#assert.eq(slots-for("rate"), [#"inf"])
+#assert.eq(cell-for("rate"), [#"inf"])
 
 // The five above are every conversion the resolver declares. A sixth added
 // tomorrow arrives as a string with nothing to notice, so it is covered here or
 // this fails.
-#assert.eq(_OPTION-KINDS.keys().sorted(), ("infinity", "position", "prefix", "suffix", "symbol"))
+#assert.eq(OPTION-KINDS.keys().sorted(), ("infinity", "position", "prefix", "suffix", "symbol"))
 
 // --- significant digits are nameable wherever the formatter takes them ---
 //
