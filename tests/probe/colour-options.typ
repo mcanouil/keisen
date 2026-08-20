@@ -32,6 +32,10 @@
 //
 // The cell with no value takes the missing fill.
 // expect-svg: fill="#00ffff"
+//
+// And it follows the target as any other cell does: named for the glyph, the
+// gap colours its glyph rather than its cell, so this one draws no white either.
+// expect-svg: fill="#402020"
 
 #import "../../lib.typ": *
 
@@ -81,4 +85,14 @@
   // Light enough that its own cell reads in black, so the white the table above
   // rejects is drawn nowhere in this render.
   data-colour(rgb("#dddddd"), columns: "units", missing: rgb("#00ffff")),
+)
+
+// The gap reads the target too. A substitution gives it a glyph to colour, and
+// this missing colour is dark enough that filling the cell would ask for a white
+// one instead, which the render draws nowhere.
+#display-table(
+  (product: ("Bolt", "Nut"), units: (10, none)),
+  columns-label(units: [Units]),
+  substitute-missing("units", replacement: [#sym.dash.em]),
+  data-colour(rgb("#7f0000"), columns: "units", target: "text", missing: rgb("#402020")),
 )
