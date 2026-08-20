@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Compiles every Typst unit test, visual test, and example from the project root.
-# Also enforces the import boundary: no @preview import anywhere under src,
+# Also enforces the import boundary: no package import from any namespace under
+# src,
 # holds the version to the same value everywhere it is written, runs the
 # expect-fail suite, where a document that compiles is the failure, the probes,
 # which read the rendered output for what a theme promises, the accessibility

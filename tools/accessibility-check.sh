@@ -62,7 +62,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   if [[ $# -gt 1 ]]; then
     printf 'accessibility: unknown argument %s\n' "$2" >&2
     printf '  the only one is --self-test\n' >&2
-    exit 1
+    exit 2
   fi
 
   fixtures="$(mktemp -d)"
@@ -136,7 +136,7 @@ fi
 if [[ $# -gt 0 ]]; then
   printf 'accessibility: unknown argument %s\n' "$1" >&2
   printf '  the only one is --self-test\n' >&2
-  exit 1
+  exit 2
 fi
 
 OUT_DIR="${OUT_DIR:-/tmp/keisen-check}"

@@ -21,7 +21,7 @@ cd "${REPO_ROOT}"
 # nothing and reported ok.
 boundary_scan() {
   local root="$1"
-  local files offenders
+  local files offenders=() file
 
   files="$(find "${root}" -type f -name '*.typ' 2>/dev/null || true)"
   if [[ -z "${files}" ]]; then
@@ -30,11 +30,20 @@ boundary_scan() {
     return 1
   fi
 
-  offenders="$(grep -rlE '^[[:space:]]*#(import|include)[[:space:]]+"@[A-Za-z0-9_-]+/' \
-    "${root}" --include='*.typ' || true)"
-  if [[ -n "${offenders}" ]]; then
+  # Comments are cut before the match, so a namespace named in prose is prose.
+  # The keyword carries the rest: an import is `import` or `include` followed by
+  # the quoted path, with or without the leading hash and wherever on the line it
+  # sits, since code mode writes it without one.
+  while IFS= read -r file; do
+    if sed 's|//.*||' "${file}" |
+      grep -qE '(^|[^[:alnum:]_-])(import|include)[[:space:]]*"@[A-Za-z0-9_-]+/'; then
+      offenders+=("${file}")
+    fi
+  done <<<"${files}"
+
+  if [[ ${#offenders[@]} -gt 0 ]]; then
     printf 'import boundary: a package import under %s\n' "${root}" >&2
-    printf '  %s\n' "${offenders}" >&2
+    printf '  %s\n' "${offenders[@]}" >&2
     printf '  the core is dependency-free, in every namespace\n' >&2
     return 1
   fi
@@ -46,7 +55,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   if [[ $# -gt 1 ]]; then
     printf 'import boundary: unknown argument %s\n' "$2" >&2
     printf '  the only one is --self-test\n' >&2
-    exit 1
+    exit 2
   fi
 
   fixtures="$(mktemp -d)"
@@ -89,6 +98,11 @@ if [[ "${1:-}" == "--self-test" ]]; then
   expect 1 "a package import" "an @preview import" "#import \"${ns}/other:0.1.0\": *"
   expect 1 "a package import" "an @local import" '#import "@local/other:0.1.0": *'
   expect 1 "a package import" "an include" "#include \"${ns}/other:0.1.0\""
+  expect 1 "a package import" "an import in code mode" "#{
+  import \"${ns}/other:0.1.0\": *
+}"
+  expect 1 "a package import" "an import written mid-line" "#let read = { import \"${ns}/other:0.1.0\": * }"
+  expect 1 "a package import" "an import with no space after the keyword" "#import\"${ns}/other:0.1.0\": *"
   expect 0 "" "a namespace named in a comment" "// The install line reads ${ns}/keisen:0.1.0"
   expect 0 "" "a namespace quoted in a message" "#let hint = \"write ${ns}/keisen:0.1.0\""
   expect 1 "no Typst file was read" "a tree holding no Typst file"
@@ -115,7 +129,7 @@ fi
 if [[ $# -gt 0 ]]; then
   printf 'import boundary: unknown argument %s\n' "$1" >&2
   printf '  the only one is --self-test\n' >&2
-  exit 1
+  exit 2
 fi
 
 boundary_scan src
