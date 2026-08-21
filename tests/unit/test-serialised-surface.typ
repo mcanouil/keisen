@@ -6,8 +6,8 @@
 #import "../../lib.typ" as keisen
 #import "../../src/spec.typ": HANDLED-KINDS
 #import "../../src/spec/serialised.typ": (
-  AGGREGATIONS, ALIGNMENTS, FORMAT-OPTIONS, FORMATTERS, INSET-SIDES, LOCATION-KEYS, SERIALISED-KEYS,
-  UNITS, VERTICAL-ALIGNMENTS,
+  AGGREGATIONS, ALIGNMENTS, FORMAT-OPTIONS, FORMATTERS, INSET-SIDES, LOCATION-KEYS, POSITIONS,
+  SERIALISED-KEYS, UNITS, VERTICAL-ALIGNMENTS,
 )
 
 // A formatter with no entry in FORMAT-OPTIONS fails on the lookup that checks
@@ -205,6 +205,11 @@
 // and an alignment names itself.
 #assert.eq(UNITS.keys().sorted(), ("%", "cm", "em", "fr", "in", "mm", "pt"))
 #assert.eq(ALIGNMENTS.keys().sorted(), ("center", "end", "left", "right", "start"))
+
+// A currency symbol takes two of the five, since it sits at one end of its
+// number, and the reference names the pair rather than sending a reader to the
+// sentence above it.
+#assert.eq(POSITIONS.keys().sorted(), ("end", "start"))
 
 // A cell style places itself on both axes, and reads an inset per side. Both
 // vocabularies are written out on the reference page, so both are held to it.

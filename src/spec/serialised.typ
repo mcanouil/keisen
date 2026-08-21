@@ -11,9 +11,10 @@
 ///!
 ///! A failure here is scoped to the directive the key resolves into, so a
 ///! reader can look the name up: `combines` gives `combine`, and `colours`
-///! gives `data-colour`. Where that name is already taken by a public directive
-///! that cannot fail this way, the scope becomes `display-table` and the key
-///! opens the problem instead. That is `format`, `style` and `align` today.
+///! gives `data-colour`. Where that name is taken by something else, a public
+///! directive that cannot fail this way or a Typst built-in, the scope becomes
+///! `display-table` and the key opens the problem instead. That is `format`,
+///! `style`, `align` and `inset` today.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -69,9 +70,9 @@
 // keys it must. They sit together because a directive is usually held to both,
 // and because a reader looking for one goes looking for the other.
 // `subject` names the descriptor the key was written in, for the callers whose
-// scope is the directive rather than the key. Three of them share the scope
-// `display-table`, and without it a bad key in a format, in a style and in an
-// inset all read the same.
+// scope is the directive rather than the key. Several of them share the scope
+// `display-table`, and without it a bad key in a format, a style, an inset, an
+// alignment or the specification itself would all read the same.
 #let _keys(descriptor, allowed, scope, subject: none) = {
   for key in descriptor.keys() {
     if key not in allowed {
@@ -168,9 +169,9 @@
 }
 
 // `subject` names the descriptor, as in `_keys`, for the caller whose scope is
-// the directive rather than the key. It comes with `what`, since a message that
-// names the key must also say what the name it wanted stands for.
-#let _named(table, descriptor, scope, what, subject: none) = {
+// the directive rather than the key. It travels with `what`, since a message
+// that names the key must also say what the name it wanted stands for.
+#let _named(table, descriptor, scope, subject: none, what: none) = {
   if "name" not in descriptor {
     fail(
       scope,
@@ -455,7 +456,7 @@
 )
 
 #let _format(descriptor) = {
-  let builder = _named(FORMATTERS, descriptor, "display-table", "formatter", subject: "format")
+  let builder = _named(FORMATTERS, descriptor, "display-table", subject: "format", what: "formatter")
   _keys(
     descriptor,
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
@@ -519,7 +520,7 @@
   (
   kind: "summary",
   scope: scope,
-  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary", "aggregation")),
+  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary")),
   columns: _selector(descriptor.at("columns", default: auto)),
   groups: _selector(descriptor.at("groups", default: auto)),
   format: none,
@@ -582,15 +583,7 @@
 // through the same path as a hand-written table, so the two cannot drift: there
 // is one pipeline, entered two ways.
 #let resolve-serialised(serialised, build, theme: (:)) = {
-  for key in serialised.keys() {
-    if key not in SERIALISED-KEYS {
-      fail(
-        "display-table",
-        "unknown key " + key + " in the specification",
-        hint: "Known keys: " + SERIALISED-KEYS.join(", ") + ".",
-      )
-    }
-  }
+  _keys(serialised, SERIALISED-KEYS, "display-table", subject: "the specification")
 
   let directives = ()
 
