@@ -9,12 +9,13 @@
 ///! Typst literal specification, which keeps this from drifting into an
 ///! expression language nobody wanted to write.
 ///!
-///! A failure here is scoped to the directive the key resolves into, so a
-///! reader can look the name up: `combines` gives `combine`, and `colours`
-///! gives `data-colour`. Where that name is taken by something else, a public
+///! A failure here names the directive the key resolves into, so a reader can
+///! look the name up: `combines` gives `combine`, and `colours` gives
+///! `data-colour`. Where that name is taken by something else, a public
 ///! directive that cannot fail this way or a Typst built-in, the scope becomes
-///! `display-table` and the key opens the problem instead. That is `format`,
-///! `style`, `align` and `inset` today.
+///! `display-table` and the key opens the problem instead: `format`, `style`,
+///! `align` and `inset`. A few keys still carry a shorter name of their own,
+///! `width` and `move` among them, which is not yet either of the two.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -171,7 +172,7 @@
 // `subject` names the descriptor, as in `_keys`, for the caller whose scope is
 // the directive rather than the key. It travels with `what`, since a message
 // that names the key must also say what the name it wanted stands for.
-#let _named(table, descriptor, scope, subject: none, what: none) = {
+#let _named(table, descriptor, scope, subject: none, what: "built-in") = {
   if "name" not in descriptor {
     fail(
       scope,

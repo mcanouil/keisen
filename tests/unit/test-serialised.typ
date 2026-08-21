@@ -158,10 +158,11 @@
 // --- the formatter options JSON cannot spell ---
 //
 // Most options pass through as written. Five cannot: `prefix`, `suffix`,
-// `symbol` and `infinity` are content, and `position` is an alignment, so each
-// arrives as a string and is read into the value the formatter expects. Handed
-// on as a string, a symbol was drawn as the characters of its own name, and a
-// position was refused by the formatter it was written for.
+// `symbol` and `infinity` are content, and `position` is one of the two names a
+// currency symbol takes, so each arrives as a string and is read into the value
+// the formatter expects. Handed on as a string, a symbol was drawn as the
+// characters of its own name, and a position was refused by the formatter it
+// was written for.
 //
 // A resolved directive carries the formatter rather than the options it was
 // built from, so each conversion is read where it shows: in the cell.
