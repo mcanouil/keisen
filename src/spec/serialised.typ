@@ -10,11 +10,10 @@
 ///! expression language nobody wanted to write.
 ///!
 ///! A failure here is scoped to the directive the key resolves into, so a
-///! reader can look the name up. Where that name is already taken by a public
-///! directive that cannot fail this way, or by a Typst built-in, the scope
-///! becomes `display-table` and the key opens the problem instead: that is
-///! `format`, `style` and `align`. The rest keep the name their key resolves
-///! into, as `combines` gives `combine` and `colours` gives `data-colour`.
+///! reader can look the name up: `combines` gives `combine`, and `colours`
+///! gives `data-colour`. Where that name is already taken by a public directive
+///! that cannot fail this way, the scope becomes `display-table` and the key
+///! opens the problem instead. That is `format`, `style` and `align` today.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -168,11 +167,14 @@
   }
 }
 
-#let _named(table, descriptor, scope) = {
+// `subject` names the descriptor, as in `_keys`, for the caller whose scope is
+// the directive rather than the key. It comes with `what`, since a message that
+// names the key must also say what the name it wanted stands for.
+#let _named(table, descriptor, scope, what, subject: none) = {
   if "name" not in descriptor {
     fail(
       scope,
-      "no name given",
+      if subject == none { "no name given" } else { subject + " names no " + what },
       value: descriptor,
       hint: "Name the built-in: (name: \"" + table.keys().first() + "\", ..).",
     )
@@ -181,7 +183,7 @@
   if name not in table {
     fail(
       scope,
-      "unknown name",
+      if subject == none { "unknown name" } else { subject + " names an unknown " + what },
       value: name,
       hint: "Known names: " + table.keys().join(", ") + ".",
     )
@@ -235,14 +237,21 @@
   "right": right,
 )
 
+// A currency symbol sits at one end of its number, so `format-currency` reads
+// two of the five names. The serialised path refuses the other three here rather
+// than passing them on, which would report them a second time, under the
+// formatter's scope and against a shorter list than the one just offered.
+#let POSITIONS = ("start": start, "end": end)
+
 // `key` is the key the caller wrote, since one directive spells this `alignment`
 // and a currency option spells it `position`, and the scope names neither.
-#let _alignment(value, scope, key) = {
+// `names` is what that key takes, which is not the same set for the two.
+#let _alignment(value, scope, key, names: ALIGNMENTS) = {
   if type(value) != str { return value }
-  if value not in ALIGNMENTS {
-    fail-enum(scope, key, value, ALIGNMENTS.keys())
+  if value not in names {
+    fail-enum(scope, key, value, names.keys())
   }
-  ALIGNMENTS.at(value)
+  names.at(value)
 }
 
 // A cell places itself on both axes, unlike a column: the renderer takes an
@@ -445,28 +454,8 @@
   "position": "alignment",
 )
 
-// The name is read here rather than through `_named`, because the two messages
-// say different things now: a summary reports under `summary`, which is its own
-// key, while `format` is both a key here and a public directive that fails no
-// such way. So this one reports under the directive and names the key.
 #let _format(descriptor) = {
-  if "name" not in descriptor {
-    fail(
-      "display-table",
-      "format names no formatter",
-      value: descriptor,
-      hint: "Name the built-in: (name: \"" + FORMATTERS.keys().first() + "\", ..).",
-    )
-  }
-  if descriptor.name not in FORMATTERS {
-    fail(
-      "display-table",
-      "format names an unknown formatter",
-      value: descriptor.name,
-      hint: "Known names: " + FORMATTERS.keys().join(", ") + ".",
-    )
-  }
-  let builder = FORMATTERS.at(descriptor.name)
+  let builder = _named(FORMATTERS, descriptor, "display-table", "formatter", subject: "format")
   _keys(
     descriptor,
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
@@ -480,7 +469,7 @@
     options.insert(
       key,
       if kind == "content" { _content(value) } else if kind == "alignment" {
-        _alignment(value, "display-table", key)
+        _alignment(value, "display-table", key, names: POSITIONS)
       } else { value },
     )
   }
@@ -530,7 +519,7 @@
   (
   kind: "summary",
   scope: scope,
-  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary")),
+  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary", "aggregation")),
   columns: _selector(descriptor.at("columns", default: auto)),
   groups: _selector(descriptor.at("groups", default: auto)),
   format: none,
@@ -753,8 +742,9 @@
         hint: "Give one hex string, or an array of them for a gradient.",
       )
     }
-    // The palette itself needs no work here: data-colour already reads a hex
-    // string, which is the one spelling JSON has for a colour.
+    // A hex string is the one spelling JSON has for a colour, and `data-colour`
+    // hands it to `rgb` as written, so a string that is not one is read here.
+    // Left to the renderer it would be reported in Typst's words.
     directives.push((
       kind: "colour",
       palette: {

@@ -1,7 +1,7 @@
 // A currency symbol is placed by name, and the message names the key the caller
 // wrote rather than the axis it sets, since `position` is what a specification
-// spells.
-// expect: display-table: position must be one of "start", "end", "center", "left", "right"
+// spells. The list is what `format-currency` takes, not what an alignment holds.
+// expect: display-table: position must be one of "start", "end"
 // expect: got "middle"
 
 #import "../../src/spec.typ": build-spec
