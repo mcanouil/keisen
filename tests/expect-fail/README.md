@@ -10,7 +10,7 @@ Typst has no `try`, so a panic cannot be asserted from inside a document.
 The error grammar is `<scope>: <problem>; got <repr(value)>. <hint>`, and a fixture pins each part its message carries on a line of its own:
 
 ```typst
-// expect: style: not an inset
+// expect: display-table: not an inset
 // expect: got "4px"
 // expect: Write a number and one of pt, mm, cm, in, em, fr, %, or "auto".
 ```

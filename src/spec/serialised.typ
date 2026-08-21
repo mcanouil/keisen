@@ -193,11 +193,15 @@
 
 // Colours arrive as strings too, since JSON has no way to spell rgb(). A
 // string that is not a colour is reported here rather than inside the renderer.
+//
+// The scope is the directive the caller wrote, `display-table`, and the key it
+// wrote opens the problem. Scoping this to `style` named a public function that
+// has no such failure, and sent a reader to the wrong page.
 #let _colour(value, key) = {
   if type(value) != str { return value }
   if not _is-colour(value) {
     fail(
-      "style",
+      "display-table",
       key + " is not a colour",
       value: value,
       hint: "Write it as a hex string, for example \"#08519c\".",
@@ -219,10 +223,12 @@
   "right": right,
 )
 
-#let _alignment(value, scope) = {
+// `key` is the key the caller wrote, since one directive spells this `alignment`
+// and a currency option spells it `position`, and the scope names neither.
+#let _alignment(value, scope, key) = {
   if type(value) != str { return value }
   if value not in ALIGNMENTS {
-    fail-enum(scope, "alignment", value, ALIGNMENTS.keys())
+    fail-enum(scope, key, value, ALIGNMENTS.keys())
   }
   ALIGNMENTS.at(value)
 }
@@ -242,21 +248,21 @@
   let names = value.split("+").map(name => name.trim())
   let known = ALIGNMENTS + VERTICAL-ALIGNMENTS
   for name in names {
-    if name not in known { fail-enum("style", "alignment", name, known.keys()) }
+    if name not in known { fail-enum("display-table", "align", name, known.keys()) }
   }
   // One name per axis. Two horizontal names are a contradiction rather than a
   // sum, and Typst reports the sum in its own words.
   check(
     names.filter(name => name in ALIGNMENTS).len() <= 1,
-    "style",
-    "alignment names two horizontal edges",
+    "display-table",
+    "align names two horizontal edges",
     value: value,
     hint: "Write one of " + ALIGNMENTS.keys().join(", ") + ", optionally added to a vertical name.",
   )
   check(
     names.filter(name => name in VERTICAL-ALIGNMENTS).len() <= 1,
-    "style",
-    "alignment names two vertical edges",
+    "display-table",
+    "align names two vertical edges",
     value: value,
     hint: "Write one of " + VERTICAL-ALIGNMENTS.keys().join(", ") + ", optionally added to a horizontal name.",
   )
@@ -309,11 +315,11 @@
 
 // An inset is one length, or one per side, and each side is a length.
 #let _inset(value) = {
-  if type(value) != dictionary { return _length(value, "style", what: "an inset") }
-  _keys(value, INSET-SIDES, "style")
+  if type(value) != dictionary { return _length(value, "display-table", what: "an inset") }
+  _keys(value, INSET-SIDES, "display-table")
   let out = (:)
   for (side, length) in value {
-    out.insert(side, _length(length, "style", what: "an inset"))
+    out.insert(side, _length(length, "display-table", what: "an inset"))
   }
   out
 }
@@ -326,17 +332,17 @@
   if value == none { return none }
   if type(value) == str {
     return if _is-colour(value) { _colour(value, "stroke") } else {
-      _length(value, "style", what: "a thickness")
+      _length(value, "display-table", what: "a thickness")
     }
   }
   // A bare number is a thickness with no unit, which is refused rather than
   // guessed at, exactly as a bare width is.
-  if type(value) in (int, float) { return _length(value, "style", what: "a thickness") }
+  if type(value) in (int, float) { return _length(value, "display-table", what: "a thickness") }
   if type(value) != dictionary { return value }
   let out = value
   if "paint" in out { out.insert("paint", _colour(out.paint, "stroke paint")) }
   if "thickness" in out {
-    out.insert("thickness", _length(out.thickness, "style", what: "a thickness"))
+    out.insert("thickness", _length(out.thickness, "display-table", what: "a thickness"))
   }
   out
 }
@@ -365,7 +371,7 @@
         let inner = value
         if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
         if "size" in inner {
-          inner.insert("size", _length(inner.size, "style", what: "a text size"))
+          inner.insert("size", _length(inner.size, "display-table", what: "a text size"))
         }
         inner
       } else { value },
@@ -425,12 +431,32 @@
   "position": "alignment",
 )
 
+// The name is read here rather than through `_named`, because the two messages
+// say different things now: a summary reports under `summary`, which is its own
+// key, while `format` is both a key here and a public directive that fails no
+// such way. So this one reports under the directive and names the key.
 #let _format(descriptor) = {
-  let builder = _named(FORMATTERS, descriptor, "format")
+  if "name" not in descriptor {
+    fail(
+      "display-table",
+      "format names no formatter",
+      value: descriptor,
+      hint: "Name the built-in: (name: \"" + FORMATTERS.keys().first() + "\", ..).",
+    )
+  }
+  if descriptor.name not in FORMATTERS {
+    fail(
+      "display-table",
+      "format names an unknown formatter",
+      value: descriptor.name,
+      hint: "Known names: " + FORMATTERS.keys().join(", ") + ".",
+    )
+  }
+  let builder = FORMATTERS.at(descriptor.name)
   _keys(
     descriptor,
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
-    "format",
+    "display-table",
   )
   let options = (:)
   for (key, value) in descriptor {
@@ -439,7 +465,7 @@
     options.insert(
       key,
       if kind == "content" { _content(value) } else if kind == "alignment" {
-        _alignment(value, "format")
+        _alignment(value, "display-table", key)
       } else { value },
     )
   }
@@ -476,7 +502,7 @@
 )
 
 #let _style(descriptor) = {
-  _keys(descriptor, ("style",) + LOCATION-KEYS, "style")
+  _keys(descriptor, ("style",) + LOCATION-KEYS, "display-table")
   (
   kind: "style",
   style: _properties(descriptor.at("style", default: (:))),
@@ -665,10 +691,10 @@
   }
 
   for descriptor in serialised.at("alignments", default: ()) {
-    _keys(descriptor, ("alignment", "columns"), "align")
+    _keys(descriptor, ("alignment", "columns"), "display-table")
     if "alignment" not in descriptor {
       fail(
-        "align",
+        "display-table",
         "no alignment given",
         value: descriptor,
         hint: "Name one of " + ALIGNMENTS.keys().join(", ") + ".",
@@ -676,7 +702,7 @@
     }
     directives.push((
       kind: "align",
-      alignment: _alignment(descriptor.alignment, "align"),
+      alignment: _alignment(descriptor.alignment, "display-table", "alignment"),
       columns: _selector(descriptor.at("columns", default: auto)),
     ))
   }

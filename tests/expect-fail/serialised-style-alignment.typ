@@ -2,7 +2,7 @@
 // does not carry is reported against the names it does. It used to reach the
 // renderer as a string and fail there, as a Typst type error pointing into the
 // package rather than at the specification.
-// expect: style: alignment must be one of "start", "end", "center", "left", "right", "top", "horizon", "bottom"
+// expect: display-table: align must be one of "start", "end", "center", "left", "right", "top", "horizon", "bottom"
 // expect: got "middle"
 
 #import "../../src/spec.typ": build-spec
