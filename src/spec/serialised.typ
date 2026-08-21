@@ -59,6 +59,31 @@
 
 #let OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
 
+// The two halves of one reading of a descriptor: the keys it may carry, and the
+// keys it must. They sit together because a directive is usually held to both,
+// and because a reader looking for one goes looking for the other.
+#let _keys(descriptor, allowed, scope) = {
+  for key in descriptor.keys() {
+    if key not in allowed {
+      fail(
+        scope,
+        "unknown key " + key,
+        hint: "Known keys: " + allowed.join(", ") + ".",
+      )
+    }
+  }
+}
+
+// The hint belongs to the caller, since each descriptor says a different thing
+// about what it needs.
+#let _required(descriptor, keys, scope, hint) = {
+  for key in keys {
+    if key not in descriptor {
+      fail(scope, "missing " + key, value: descriptor, hint: hint)
+    }
+  }
+}
+
 // A comparison, or and/or/not over comparisons, as a one-argument predicate.
 // Anything that is already a selector in its own right passes straight through,
 // so an index or an array of indices means what it means everywhere else.
@@ -78,16 +103,12 @@
     return row => not inner(row)
   }
 
-  for key in ("column", "op", "value") {
-    if key not in descriptor {
-      fail(
-        "predicate",
-        "missing " + key,
-        value: descriptor,
-        hint: "A comparison is (column: .., op: .., value: ..), composed with and, or, not.",
-      )
-    }
-  }
+  _required(
+    descriptor,
+    ("column", "op", "value"),
+    "predicate",
+    "A comparison is (column: .., op: .., value: ..), composed with and, or, not.",
+  )
 
   // Reported while resolving, not on the first row: a location matching no rows
   // would otherwise never reach the comparison and never complain.
@@ -133,18 +154,6 @@
     }
 
     _compare(descriptor.op, value, descriptor.value)
-  }
-}
-
-#let _keys(descriptor, allowed, scope) = {
-  for key in descriptor.keys() {
-    if key not in allowed {
-      fail(
-        scope,
-        "unknown key " + key,
-        hint: "Known keys: " + allowed.join(", ") + ".",
-      )
-    }
   }
 }
 
@@ -579,16 +588,12 @@
 
   for descriptor in serialised.at("row-groups", default: ()) {
     _keys(descriptor, ("label", "rows"), "row-group")
-    for key in ("label", "rows") {
-      if key not in descriptor {
-        fail(
-          "row-group",
-          "missing " + key,
-          value: descriptor,
-          hint: "A declared group needs a label and the rows it claims.",
-        )
-      }
-    }
+    _required(
+      descriptor,
+      ("label", "rows"),
+      "row-group",
+      "A declared group needs a label and the rows it claims.",
+    )
     directives.push((
       kind: "row-group",
       label: _content(descriptor.label),
@@ -609,16 +614,12 @@
 
   for descriptor in serialised.at("combines", default: ()) {
     _keys(descriptor, ("into", "from", "pattern", "label", "hide-sources"), "combine")
-    for key in ("into", "from", "pattern") {
-      if key not in descriptor {
-        fail(
-          "combine",
-          "missing " + key,
-          value: descriptor,
-          hint: "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
-        )
-      }
-    }
+    _required(
+      descriptor,
+      ("into", "from", "pattern"),
+      "combine",
+      "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
+    )
     directives.push((
       kind: "combine",
       into: descriptor.into,
@@ -642,11 +643,12 @@
 
   for spanner in serialised.at("spanners", default: ()) {
     _keys(spanner, ("label", "columns", "level"), "spanner")
-    for key in ("label", "columns") {
-      if key not in spanner {
-        fail("spanner", "missing " + key, value: spanner, hint: "A spanner needs a label and the columns it covers.")
-      }
-    }
+    _required(
+      spanner,
+      ("label", "columns"),
+      "spanner",
+      "A spanner needs a label and the columns it covers.",
+    )
     directives.push((
       kind: "spanner",
       label: _content(spanner.label),
