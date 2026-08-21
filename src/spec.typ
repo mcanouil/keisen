@@ -10,7 +10,7 @@
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
 #import "format/apply.typ": matches-column, matches-label, matches-row, named, nanoplot-columns
-#import "spec/resolve.typ": apply-alignments, apply-combines, apply-moves
+#import "spec/order.typ": apply-alignments, apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/columns.typ": check-addressable
 #import "utils/errors.typ": check, check-column, fail

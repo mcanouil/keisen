@@ -13,7 +13,7 @@
   columns: columns.pos(),
 )
 
-// Reordering is recorded here and resolved in src/spec/resolve.typ once every
+// Reordering is recorded here and resolved in src/spec/order.typ once every
 // directive has landed, so a move reads the same wherever it is written.
 #let columns-move(..columns, before: none, after: none) = (
   kind: "move",
