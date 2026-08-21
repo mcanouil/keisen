@@ -70,12 +70,16 @@
 // The two halves of one reading of a descriptor: the keys it may carry, and the
 // keys it must. They sit together because a directive is usually held to both,
 // and because a reader looking for one goes looking for the other.
-#let _keys(descriptor, allowed, scope) = {
+// `subject` names the descriptor the key was written in, for the callers whose
+// scope is the directive rather than the key. Three of them share the scope
+// `display-table`, and without it a bad key in a format, in a style and in an
+// inset all read the same.
+#let _keys(descriptor, allowed, scope, subject: none) = {
   for key in descriptor.keys() {
     if key not in allowed {
       fail(
         scope,
-        "unknown key " + key,
+        if subject == none { "unknown key " + key } else { subject + " has an unknown key " + key },
         hint: "Known keys: " + allowed.join(", ") + ".",
       )
     }
@@ -324,7 +328,7 @@
 // An inset is one length, or one per side, and each side is a length.
 #let _inset(value) = {
   if type(value) != dictionary { return _length(value, "display-table", what: "an inset") }
-  _keys(value, INSET-SIDES, "display-table")
+  _keys(value, INSET-SIDES, "display-table", subject: "inset")
   let out = (:)
   for (side, length) in value {
     out.insert(side, _length(length, "display-table", what: "an inset"))
@@ -465,6 +469,7 @@
     descriptor,
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
     "display-table",
+    subject: "format",
   )
   let options = (:)
   for (key, value) in descriptor {
@@ -510,7 +515,7 @@
 )
 
 #let _style(descriptor) = {
-  _keys(descriptor, ("style",) + LOCATION-KEYS, "display-table")
+  _keys(descriptor, ("style",) + LOCATION-KEYS, "display-table", subject: "style")
   (
   kind: "style",
   style: _properties(descriptor.at("style", default: (:))),
@@ -699,7 +704,7 @@
   }
 
   for descriptor in serialised.at("alignments", default: ()) {
-    _keys(descriptor, ("alignment", "columns"), "display-table")
+    _keys(descriptor, ("alignment", "columns"), "display-table", subject: "align")
     if "alignment" not in descriptor {
       fail(
         "display-table",
