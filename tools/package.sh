@@ -27,12 +27,79 @@ read_version() {
   awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml
 }
 
+# What ships, named once. `verify_coverage` reads this list and `stage` copies
+# it, so a name declared here and shipped by nobody is not expressible. The two
+# were separate lists, a string the check trusted and a `cp` beside it, and only
+# the check read the string: a file could be declared and never shipped.
+PAYLOAD=(typst.toml lib.typ LICENSE README.md src)
+
+# The one file that is rewritten on its way into the payload, named here rather
+# than tested for as a literal beside the copy: renamed in the list alone, it
+# would have fallen through to a plain `cp` and shipped the repository's own
+# README, badges and contributing sections and all.
+README_NAME="README.md"
+
+# The tracked files under a payload directory, null-separated for tar.
+#
+# The list is read before it is used, because a directory holding no tracked
+# file makes an empty archive that bsdtar extracts to nothing: the entry would
+# be declared, copied, and absent from the package, which is the shape this pass
+# set out to remove.
+tracked_under() {
+  local entry="$1"
+  local listing tracked=() path
+
+  # Written to a file rather than to a variable, because a command substitution
+  # drops the null bytes that separate the names, and read before it is split,
+  # so git failing is reported as git failing rather than as a directory that
+  # tracks nothing.
+  listing="$(mktemp)"
+  if ! git ls-files -z -- "${entry}" >"${listing}"; then
+    rm -f "${listing}"
+    printf 'package: git could not read the tracked files under %s\n' "${entry}" >&2
+    return 1
+  fi
+
+  while IFS= read -r -d '' path; do tracked+=("${path}"); done <"${listing}"
+  rm -f "${listing}"
+  if [[ ${#tracked[@]} -eq 0 ]]; then
+    printf 'package: the payload names %s, which holds no tracked file\n' "${entry}" >&2
+    return 1
+  fi
+  printf '%s\0' "${tracked[@]}"
+}
+
+# What a payload entry is, so `stage` copies it the one right way and a name
+# that is none of the three is refused rather than skipped.
+payload_kind() {
+  local entry="$1"
+  if [[ "${entry}" == "${README_NAME}" ]]; then
+    [[ -f "${entry}" ]] || return 1
+    printf 'readme\n'
+  elif [[ -d "${entry}" ]]; then
+    printf 'directory\n'
+  elif [[ -f "${entry}" ]]; then
+    printf 'file\n'
+  else
+    return 1
+  fi
+}
+
+# The staging directory an archive builds in, named at this level because the
+# trap that removes it runs after the frame that made it has gone.
+STAGE_TMP=""
+
+remove_stage() {
+  [[ -n "${STAGE_TMP}" ]] && rm -rf "${STAGE_TMP}"
+  return 0
+}
+
 # What ships is decided twice: by the payload this script copies, and by
 # `exclude` in typst.toml, which is what Typst Universe reads. A file named by
 # neither ships without anyone having decided that it should, which is how a
 # repository's own housekeeping ends up published.
 verify_coverage() {
-  local excluded payload=" typst.toml lib.typ LICENSE README.md src "
+  local excluded payload=" ${PAYLOAD[*]} "
   excluded=" $(awk '/^exclude[[:space:]]*=/, /\]/' typst.toml |
     grep -oE '"[^"]+"' | tr -d '"' | tr '\n' ' ')"
 
@@ -59,12 +126,29 @@ stage() {
   verify_coverage
 
   mkdir -p "${dest}"
-  cp typst.toml lib.typ LICENSE "${dest}/"
-  tools/stage-readme.sh README.md "${dest}"
-  # Tracked files only, at their working-tree state. A plain `cp -r` would
-  # sweep ignored strays into the payload, so what shipped would depend on
-  # what happened to be lying in the tree.
-  git ls-files -z -- src | tar -cf - --null -T - | tar -xf - -C "${dest}"
+
+  local entry kind
+  for entry in "${PAYLOAD[@]}"; do
+    if ! kind="$(payload_kind "${entry}")"; then
+      printf 'package: the payload names %s, which is neither a file nor a directory\n' "${entry}" >&2
+      exit 1
+    fi
+
+    case "${kind}" in
+    readme)
+      # The published README is the stripped one: the badges and the sections
+      # about developing the package are repository furniture.
+      tools/stage-readme.sh "${README_NAME}" "${dest}"
+      ;;
+    *)
+      # Tracked files only, at their working-tree state, and at their paths. A
+      # plain `cp` would sweep in a file git does not track, so what shipped
+      # would depend on what happened to be lying in the tree, and it would
+      # flatten a nested entry into the root of the payload.
+      tracked_under "${entry}" | tar -cf - --null -T - | tar -xf - -C "${dest}"
+      ;;
+    esac
+  done
 
   if [[ -n "${version}" ]]; then
     local commit date_utc
@@ -95,18 +179,157 @@ archive() {
   }
   [[ -n "${basename}" ]] || basename="keisen-${version}"
 
-  local tmp leaf
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp}"' RETURN
+  local leaf
+  STAGE_TMP="$(mktemp -d "${TMPDIR:-/tmp}/keisen-package.XXXXXX")"
+  # On EXIT rather than RETURN: `stage` below exits through `verify_coverage`
+  # when the payload and `exclude` disagree, and an `exit` unwinding the frame
+  # runs no RETURN trap, so a failed archive left its staging directory behind.
+  trap remove_stage EXIT
   leaf="keisen-${version}"
-  stage "${tmp}/${leaf}" "${override}"
+  stage "${STAGE_TMP}/${leaf}" "${override}"
 
   mkdir -p "${out_dir}"
   out_dir="$(cd "${out_dir}" && pwd)"
   rm -f "${out_dir}/${basename}.tar.gz" "${out_dir}/${basename}.zip"
-  tar -czf "${out_dir}/${basename}.tar.gz" -C "${tmp}" "${leaf}"
-  (cd "${tmp}" && zip -qr "${out_dir}/${basename}.zip" "${leaf}")
+  tar -czf "${out_dir}/${basename}.tar.gz" -C "${STAGE_TMP}" "${leaf}"
+  (cd "${STAGE_TMP}" && zip -qr "${out_dir}/${basename}.zip" "${leaf}")
 }
+
+# Every branch of the two rules above, against the payload as it stands and
+# against names that are not in it. `archive` is reached by no script here, so
+# without this the staging cleanup would run nowhere at all.
+if [[ "${1:-}" == "--self-test" ]]; then
+  cases=0
+  bad=0
+
+  check() {
+    local name="$1" held="$2"
+    cases=$((cases + 1))
+    [[ "${held}" == "yes" ]] && return 0
+    bad=$((bad + 1))
+    printf '  FAIL  self-test  %s\n' "${name}" >&2
+  }
+
+  kind_is() {
+    local wanted="$1" entry="$2" name="$3"
+    local got=""
+    got="$(payload_kind "${entry}")" || got="refused"
+    if [[ "${got}" == "${wanted}" ]]; then
+      check "${name}" yes
+    else
+      check "${name}: wanted ${wanted}, got ${got}" no
+    fi
+  }
+
+  # Every entry of the payload is one of the three shapes `stage` can copy.
+  for entry in "${PAYLOAD[@]}"; do
+    if payload_kind "${entry}" >/dev/null; then
+      check "the payload names ${entry}" yes
+    else
+      check "the payload names ${entry}, which is neither a file nor a directory" no
+    fi
+  done
+
+  kind_is readme "${README_NAME}" 'the README is rewritten rather than copied'
+  kind_is directory src 'a directory ships its tracked files'
+  kind_is file typst.toml 'a file is copied'
+  kind_is refused no-such-file.md 'a name that is not there is refused'
+
+  # The README is rewritten by name, so a README that is not there is refused by
+  # the same rule as any other missing entry rather than reported as covered.
+  if (
+    README_NAME="no-such-readme.md"
+    payload_kind "no-such-readme.md"
+  ) >/dev/null 2>&1; then
+    check 'a README that is not there is refused' no
+  else
+    check 'a README that is not there is refused' yes
+  fi
+
+  # A directory ships the files it tracks, and one that tracks none is refused
+  # rather than copied as an empty archive.
+  if tracked_under src >/dev/null 2>&1; then
+    check 'a tracked directory names its files' yes
+  else
+    check 'a tracked directory names its files' no
+  fi
+
+  if tracked_under .git >/dev/null 2>&1; then
+    check 'a directory holding no tracked file is refused' no
+  else
+    check 'a directory holding no tracked file is refused' yes
+  fi
+
+  # A file is copied by the same rule, so one git does not track is refused
+  # rather than shipped.
+  if tracked_under .git/config >/dev/null 2>&1; then
+    check 'a file git does not track is refused' no
+  else
+    check 'a file git does not track is refused' yes
+  fi
+
+  # The staging directory goes, however the archive ended.
+  probe="$(mktemp -d)"
+  STAGE_TMP="${probe}"
+  remove_stage
+  if [[ -d "${probe}" ]]; then
+    check 'the staging directory is removed' no
+    rm -rf "${probe}"
+  else
+    check 'the staging directory is removed' yes
+  fi
+
+  STAGE_TMP=""
+  remove_stage
+  check 'no staging directory is nothing to remove' yes
+
+  # And an archive whose stage refuses leaves none behind. The payload is cut to
+  # one name, so `verify_coverage` reports every other tracked name and exits.
+  sandbox="$(mktemp -d)"
+  # The payload is cut inside the subshell on purpose, so the run below refuses
+  # and every case after this one reads the real list.
+  # shellcheck disable=SC2030
+  (
+    TMPDIR="${sandbox}"
+    PAYLOAD=(typst.toml)
+    archive "${sandbox}/out"
+  ) >/dev/null 2>&1 || true
+  left="$(find "${sandbox}" -maxdepth 1 -type d -name 'keisen-package.*' | wc -l | tr -d ' ')"
+  rm -rf "${sandbox}"
+  if [[ "${left}" -eq 0 ]]; then
+    check 'a refused archive leaves no staging directory' yes
+  else
+    check 'a refused archive leaves no staging directory' no
+  fi
+
+  # The payload as it stands, staged into a temporary directory. The copy loop
+  # is where the two lists used to disagree, and nothing here reached it: only
+  # the release rehearsal stages, and it is not run before a commit.
+  staged="$(mktemp -d)"
+  if (stage "${staged}/payload") >/dev/null 2>&1; then
+    absent=()
+    # shellcheck disable=SC2031
+    for entry in "${PAYLOAD[@]}"; do
+      [[ -e "${staged}/payload/${entry}" ]] || absent+=("${entry}")
+    done
+    if [[ ${#absent[@]} -eq 0 ]]; then
+      check 'every payload entry lands in the staged copy' yes
+    else
+      check "the staged copy is missing ${absent[*]}" no
+    fi
+  else
+    check 'the payload stages' no
+  fi
+  rm -rf "${staged}"
+
+  if [[ ${bad} -gt 0 ]]; then
+    printf 'package: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
+    exit 1
+  fi
+
+  printf 'package:  self-test %d/%d\n' "${cases}" "${cases}"
+  exit 0
+fi
 
 cmd="${1:-}"
 case "${cmd}" in
@@ -119,7 +342,7 @@ archive)
   archive "$@"
   ;;
 *)
-  echo "usage: package.sh {stage <dest-dir> [version] | archive <out-dir> [basename] [version]}" >&2
+  echo "usage: package.sh {stage <dest-dir> [version] | archive <out-dir> [basename] [version] | --self-test}" >&2
   exit 1
   ;;
 esac
