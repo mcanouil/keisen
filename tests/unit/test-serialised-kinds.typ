@@ -3,7 +3,7 @@
 // omission rather than by nature.
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/spec/resolve.typ": resolve-serialised
+#import "../../src/spec/serialised.typ": resolve-serialised
 
 #let spec = resolve-serialised(
   (

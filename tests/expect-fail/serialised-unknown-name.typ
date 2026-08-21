@@ -3,7 +3,7 @@
 // expect: Known names: format-number, format-integer, format-percent, format-currency, format-scientific, format-bytes, format-date, format-markup.
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/spec/resolve.typ": resolve-serialised
+#import "../../src/spec/serialised.typ": resolve-serialised
 
 #resolve-serialised(
   (

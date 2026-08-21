@@ -3,6 +3,6 @@
 // expect: predicate: op must be one of "<", "<=", ">", ">=", "==", "!="
 // expect: got "=<"
 
-#import "../../src/spec/resolve.typ": resolve-predicate
+#import "../../src/spec/serialised.typ": resolve-predicate
 
 #resolve-predicate((column: "margin", op: "=<", value: 0.05))

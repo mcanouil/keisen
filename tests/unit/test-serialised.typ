@@ -6,7 +6,7 @@
 #import "../../src/spec.typ": build-spec
 #import "../../src/render/layout.typ": column-cells
 #import "../../src/parts/substitutions.typ": substitute-zero
-#import "../../src/spec/resolve.typ": OPTION-KINDS, resolve-predicate, resolve-serialised
+#import "../../src/spec/serialised.typ": OPTION-KINDS, resolve-predicate, resolve-serialised
 
 // --- predicates ---
 

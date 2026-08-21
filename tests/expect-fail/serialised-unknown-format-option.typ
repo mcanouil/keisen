@@ -4,7 +4,7 @@
 // expect: Known keys: name, columns, rows, decimals, significant, grouping, group-separator, decimal-separator, scale, sign, rounding, negative-zero, prefix, suffix, infinity.
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/spec/resolve.typ": resolve-serialised
+#import "../../src/spec/serialised.typ": resolve-serialised
 
 #resolve-serialised(
   (

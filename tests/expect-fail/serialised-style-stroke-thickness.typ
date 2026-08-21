@@ -6,7 +6,7 @@
 // expect: Write a number and one of pt, mm, cm, in, em, fr, %, or "auto".
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/spec/resolve.typ": resolve-serialised
+#import "../../src/spec/serialised.typ": resolve-serialised
 
 #resolve-serialised(
   (

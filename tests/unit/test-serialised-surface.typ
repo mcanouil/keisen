@@ -5,7 +5,7 @@
 
 #import "../../lib.typ" as keisen
 #import "../../src/spec.typ": HANDLED-KINDS
-#import "../../src/spec/resolve.typ": (
+#import "../../src/spec/serialised.typ": (
   AGGREGATIONS, ALIGNMENTS, FORMAT-OPTIONS, FORMATTERS, INSET-SIDES, LOCATION-KEYS, SERIALISED-KEYS,
   UNITS, VERTICAL-ALIGNMENTS,
 )

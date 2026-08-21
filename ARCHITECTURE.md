@@ -34,7 +34,8 @@ Entry points trace the same path:
 | `src/locations.typ` | The location DSL and its expansion to cell addresses, with `PARTS` as the addressable vocabulary. |
 | `src/style.typ` | The style builder, style resolution into a dictionary keyed by cell address, and the merge order. |
 | `src/spec.typ` | Directive folding into the spec dictionary, and the validation that reads the whole table at once: the columns a directive names, group and spanner adjacency, and location ranges. |
-| `src/spec/` | Late resolution: column ordering, combine placement, which column each alignment lands on, and the serialised subset that resolves a JSON specification into directives. |
+| `src/spec/order.typ` | Late resolution: column ordering, combine placement, and which column each alignment lands on. A move sees the columns the table actually has, because it runs after every directive is recorded. |
+| `src/spec/serialised.typ` | The serialised subset: a specification that reached Typst as data names what it wants, and the names are resolved here into the directives a Typst caller would have written. |
 | `src/parts/` | The table parts: header, stub, columns, spanners, summaries, notes, marks, substitutions, colour. Each exports the directive constructors that build it. |
 | `src/format/` | Value formatters, the selector matching they share, decimal alignment, and the nanoplot renderers. |
 | `src/render/` | The row plan, the layout decisions taken before any cell exists, and the assembly of those into one native table. |

@@ -4,7 +4,7 @@
 // expect: Known keys: left, right, top, bottom, x, y, rest.
 
 #import "../../src/spec.typ": build-spec
-#import "../../src/spec/resolve.typ": resolve-serialised
+#import "../../src/spec/serialised.typ": resolve-serialised
 
 #resolve-serialised(
   (

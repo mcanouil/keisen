@@ -10,7 +10,7 @@
 ///! tests/unit/test-exports.typ holds the rest of the surface to the grammar.
 
 #import "src/spec.typ": build-spec as _build-spec
-#import "src/spec/resolve.typ": resolve-serialised as _resolve-serialised
+#import "src/spec/serialised.typ": resolve-serialised as _resolve-serialised
 #import "src/render/assemble.typ": assemble as _assemble
 #import "src/theme/presets.typ": theme-booktabs, theme-compact, theme-default, theme-minimal
 #import "src/theme/options.typ": table-options
