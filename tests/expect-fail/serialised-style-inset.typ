@@ -1,6 +1,6 @@
 // An inset is a length written as a string, as a column width is, so a unit the
 // package does not carry is reported here rather than inside the renderer.
-// expect: style: not an inset
+// expect: display-table: not an inset
 // expect: got "4px".
 // expect: Write a number and one of pt, mm, cm, in, em, fr, %, or "auto".
 

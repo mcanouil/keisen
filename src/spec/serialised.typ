@@ -8,6 +8,14 @@
 ///! not, and built-ins named as strings. Anything more expressive belongs in a
 ///! Typst literal specification, which keeps this from drifting into an
 ///! expression language nobody wanted to write.
+///!
+///! A failure here names the directive the key resolves into, so a reader can
+///! look the name up: `combines` gives `combine`, and `colours` gives
+///! `data-colour`. Where that name is taken by something else, a public
+///! directive that cannot fail this way or a Typst built-in, the scope becomes
+///! `display-table` and the key opens the problem instead: `format`, `style`,
+///! `align` and `inset`. A few keys still carry a shorter name of their own,
+///! `width` and `move` among them, which is not yet either of the two.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -59,6 +67,35 @@
 
 #let OPERATORS = ("<", "<=", ">", ">=", "==", "!=")
 
+// The two halves of one reading of a descriptor: the keys it may carry, and the
+// keys it must. They sit together because a directive is usually held to both,
+// and because a reader looking for one goes looking for the other.
+// `subject` names the descriptor the key was written in, for the callers whose
+// scope is the directive rather than the key. Several of them share the scope
+// `display-table`, and without it a bad key in a format, a style, an inset, an
+// alignment or the specification itself would all read the same.
+#let _keys(descriptor, allowed, scope, subject: none) = {
+  for key in descriptor.keys() {
+    if key not in allowed {
+      fail(
+        scope,
+        if subject == none { "unknown key " + key } else { subject + " has an unknown key " + key },
+        hint: "Known keys: " + allowed.join(", ") + ".",
+      )
+    }
+  }
+}
+
+// The hint belongs to the caller, since each descriptor says a different thing
+// about what it needs.
+#let _required(descriptor, keys, scope, hint) = {
+  for key in keys {
+    if key not in descriptor {
+      fail(scope, "missing " + key, value: descriptor, hint: hint)
+    }
+  }
+}
+
 // A comparison, or and/or/not over comparisons, as a one-argument predicate.
 // Anything that is already a selector in its own right passes straight through,
 // so an index or an array of indices means what it means everywhere else.
@@ -78,16 +115,12 @@
     return row => not inner(row)
   }
 
-  for key in ("column", "op", "value") {
-    if key not in descriptor {
-      fail(
-        "predicate",
-        "missing " + key,
-        value: descriptor,
-        hint: "A comparison is (column: .., op: .., value: ..), composed with and, or, not.",
-      )
-    }
-  }
+  _required(
+    descriptor,
+    ("column", "op", "value"),
+    "predicate",
+    "A comparison is (column: .., op: .., value: ..), composed with and, or, not.",
+  )
 
   // Reported while resolving, not on the first row: a location matching no rows
   // would otherwise never reach the comparison and never complain.
@@ -136,23 +169,14 @@
   }
 }
 
-#let _keys(descriptor, allowed, scope) = {
-  for key in descriptor.keys() {
-    if key not in allowed {
-      fail(
-        scope,
-        "unknown key " + key,
-        hint: "Known keys: " + allowed.join(", ") + ".",
-      )
-    }
-  }
-}
-
-#let _named(table, descriptor, scope) = {
+// `subject` names the descriptor, as in `_keys`, for the caller whose scope is
+// the directive rather than the key. It travels with `what`, since a message
+// that names the key must also say what the name it wanted stands for.
+#let _named(table, descriptor, scope, subject: none, what: "built-in") = {
   if "name" not in descriptor {
     fail(
       scope,
-      "no name given",
+      if subject == none { "no name given" } else { subject + " names no " + what },
       value: descriptor,
       hint: "Name the built-in: (name: \"" + table.keys().first() + "\", ..).",
     )
@@ -161,7 +185,8 @@
   if name not in table {
     fail(
       scope,
-      "unknown name " + repr(name),
+      if subject == none { "unknown name" } else { subject + " names an unknown " + what },
+      value: name,
       hint: "Known names: " + table.keys().join(", ") + ".",
     )
   }
@@ -184,11 +209,15 @@
 
 // Colours arrive as strings too, since JSON has no way to spell rgb(). A
 // string that is not a colour is reported here rather than inside the renderer.
-#let _colour(value, key) = {
+//
+// The scope is the caller's, since a palette belongs to `data-colour` while a
+// fill belongs to no public directive at all. `key` names the key the caller
+// wrote, which is what tells one colour in a style from another.
+#let _colour(value, scope, key) = {
   if type(value) != str { return value }
   if not _is-colour(value) {
     fail(
-      "style",
+      scope,
       key + " is not a colour",
       value: value,
       hint: "Write it as a hex string, for example \"#08519c\".",
@@ -210,12 +239,21 @@
   "right": right,
 )
 
-#let _alignment(value, scope) = {
+// A currency symbol sits at one end of its number, so `format-currency` reads
+// two of the five names. The serialised path refuses the other three here rather
+// than passing them on, which would report them a second time, under the
+// formatter's scope and against a shorter list than the one just offered.
+#let POSITIONS = ("start": start, "end": end)
+
+// `key` is the key the caller wrote, since one directive spells this `alignment`
+// and a currency option spells it `position`, and the scope names neither.
+// `names` is what that key takes, which is not the same set for the two.
+#let _alignment(value, scope, key, names: ALIGNMENTS) = {
   if type(value) != str { return value }
-  if value not in ALIGNMENTS {
-    fail-enum(scope, "alignment", value, ALIGNMENTS.keys())
+  if value not in names {
+    fail-enum(scope, key, value, names.keys())
   }
-  ALIGNMENTS.at(value)
+  names.at(value)
 }
 
 // A cell places itself on both axes, unlike a column: the renderer takes an
@@ -233,21 +271,21 @@
   let names = value.split("+").map(name => name.trim())
   let known = ALIGNMENTS + VERTICAL-ALIGNMENTS
   for name in names {
-    if name not in known { fail-enum("style", "alignment", name, known.keys()) }
+    if name not in known { fail-enum("display-table", "align", name, known.keys()) }
   }
   // One name per axis. Two horizontal names are a contradiction rather than a
   // sum, and Typst reports the sum in its own words.
   check(
     names.filter(name => name in ALIGNMENTS).len() <= 1,
-    "style",
-    "alignment names two horizontal edges",
+    "display-table",
+    "align names two horizontal edges",
     value: value,
     hint: "Write one of " + ALIGNMENTS.keys().join(", ") + ", optionally added to a vertical name.",
   )
   check(
     names.filter(name => name in VERTICAL-ALIGNMENTS).len() <= 1,
-    "style",
-    "alignment names two vertical edges",
+    "display-table",
+    "align names two vertical edges",
     value: value,
     hint: "Write one of " + VERTICAL-ALIGNMENTS.keys().join(", ") + ", optionally added to a horizontal name.",
   )
@@ -300,11 +338,11 @@
 
 // An inset is one length, or one per side, and each side is a length.
 #let _inset(value) = {
-  if type(value) != dictionary { return _length(value, "style", what: "an inset") }
-  _keys(value, INSET-SIDES, "style")
+  if type(value) != dictionary { return _length(value, "display-table", what: "an inset") }
+  _keys(value, INSET-SIDES, "display-table", subject: "inset")
   let out = (:)
   for (side, length) in value {
-    out.insert(side, _length(length, "style", what: "an inset"))
+    out.insert(side, _length(length, "display-table", what: "an inset"))
   }
   out
 }
@@ -316,18 +354,20 @@
 #let _stroke(value) = {
   if value == none { return none }
   if type(value) == str {
-    return if _is-colour(value) { _colour(value, "stroke") } else {
-      _length(value, "style", what: "a thickness")
+    // `rgb` rather than `_colour`: the string was just read as a colour, so the
+    // check `_colour` would run again cannot fail.
+    return if _is-colour(value) { rgb(value) } else {
+      _length(value, "display-table", what: "a thickness")
     }
   }
   // A bare number is a thickness with no unit, which is refused rather than
   // guessed at, exactly as a bare width is.
-  if type(value) in (int, float) { return _length(value, "style", what: "a thickness") }
+  if type(value) in (int, float) { return _length(value, "display-table", what: "a thickness") }
   if type(value) != dictionary { return value }
   let out = value
-  if "paint" in out { out.insert("paint", _colour(out.paint, "stroke paint")) }
+  if "paint" in out { out.insert("paint", _colour(out.paint, "display-table", "stroke paint")) }
   if "thickness" in out {
-    out.insert("thickness", _length(out.thickness, "style", what: "a thickness"))
+    out.insert("thickness", _length(out.thickness, "display-table", what: "a thickness"))
   }
   out
 }
@@ -343,7 +383,7 @@
     out.insert(
       key,
       if key == "fill" {
-        _colour(value, "fill")
+        _colour(value, "display-table", "fill")
       } else if key == "align" {
         _cell-alignment(value)
       } else if key == "inset" {
@@ -354,9 +394,9 @@
         // The two properties inside `text` that JSON cannot spell: a colour and
         // a length. Everything else Typst reads as written.
         let inner = value
-        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
+        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "display-table", "text fill")) }
         if "size" in inner {
-          inner.insert("size", _length(inner.size, "style", what: "a text size"))
+          inner.insert("size", _length(inner.size, "display-table", what: "a text size"))
         }
         inner
       } else { value },
@@ -417,11 +457,12 @@
 )
 
 #let _format(descriptor) = {
-  let builder = _named(FORMATTERS, descriptor, "format")
+  let builder = _named(FORMATTERS, descriptor, "display-table", subject: "format", what: "formatter")
   _keys(
     descriptor,
     ("name", "columns", "rows") + FORMAT-OPTIONS.at(descriptor.name),
-    "format",
+    "display-table",
+    subject: "format",
   )
   let options = (:)
   for (key, value) in descriptor {
@@ -430,7 +471,7 @@
     options.insert(
       key,
       if kind == "content" { _content(value) } else if kind == "alignment" {
-        _alignment(value, "format")
+        _alignment(value, "display-table", key, names: POSITIONS)
       } else { value },
     )
   }
@@ -467,7 +508,7 @@
 )
 
 #let _style(descriptor) = {
-  _keys(descriptor, ("style",) + LOCATION-KEYS, "style")
+  _keys(descriptor, ("style",) + LOCATION-KEYS, "display-table", subject: "style")
   (
   kind: "style",
   style: _properties(descriptor.at("style", default: (:))),
@@ -543,15 +584,7 @@
 // through the same path as a hand-written table, so the two cannot drift: there
 // is one pipeline, entered two ways.
 #let resolve-serialised(serialised, build, theme: (:)) = {
-  for key in serialised.keys() {
-    if key not in SERIALISED-KEYS {
-      fail(
-        "display-table",
-        "unknown key " + key + " in the specification",
-        hint: "Known keys: " + SERIALISED-KEYS.join(", ") + ".",
-      )
-    }
-  }
+  _keys(serialised, SERIALISED-KEYS, "display-table", subject: "the specification")
 
   let directives = ()
 
@@ -579,16 +612,12 @@
 
   for descriptor in serialised.at("row-groups", default: ()) {
     _keys(descriptor, ("label", "rows"), "row-group")
-    for key in ("label", "rows") {
-      if key not in descriptor {
-        fail(
-          "row-group",
-          "missing " + key,
-          value: descriptor,
-          hint: "A declared group needs a label and the rows it claims.",
-        )
-      }
-    }
+    _required(
+      descriptor,
+      ("label", "rows"),
+      "row-group",
+      "A declared group needs a label and the rows it claims.",
+    )
     directives.push((
       kind: "row-group",
       label: _content(descriptor.label),
@@ -609,16 +638,12 @@
 
   for descriptor in serialised.at("combines", default: ()) {
     _keys(descriptor, ("into", "from", "pattern", "label", "hide-sources"), "combine")
-    for key in ("into", "from", "pattern") {
-      if key not in descriptor {
-        fail(
-          "combine",
-          "missing " + key,
-          value: descriptor,
-          hint: "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
-        )
-      }
-    }
+    _required(
+      descriptor,
+      ("into", "from", "pattern"),
+      "combine",
+      "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
+    )
     directives.push((
       kind: "combine",
       into: descriptor.into,
@@ -642,11 +667,12 @@
 
   for spanner in serialised.at("spanners", default: ()) {
     _keys(spanner, ("label", "columns", "level"), "spanner")
-    for key in ("label", "columns") {
-      if key not in spanner {
-        fail("spanner", "missing " + key, value: spanner, hint: "A spanner needs a label and the columns it covers.")
-      }
-    }
+    _required(
+      spanner,
+      ("label", "columns"),
+      "spanner",
+      "A spanner needs a label and the columns it covers.",
+    )
     directives.push((
       kind: "spanner",
       label: _content(spanner.label),
@@ -663,18 +689,18 @@
   }
 
   for descriptor in serialised.at("alignments", default: ()) {
-    _keys(descriptor, ("alignment", "columns"), "align")
+    _keys(descriptor, ("alignment", "columns"), "display-table", subject: "align")
     if "alignment" not in descriptor {
       fail(
-        "align",
-        "no alignment given",
+        "display-table",
+        "align names no alignment",
         value: descriptor,
         hint: "Name one of " + ALIGNMENTS.keys().join(", ") + ".",
       )
     }
     directives.push((
       kind: "align",
-      alignment: _alignment(descriptor.alignment, "align"),
+      alignment: _alignment(descriptor.alignment, "display-table", "alignment"),
       columns: _selector(descriptor.at("columns", default: auto)),
     ))
   }
@@ -710,14 +736,15 @@
         hint: "Give one hex string, or an array of them for a gradient.",
       )
     }
-    // The palette itself needs no work here: data-colour already reads a hex
-    // string, which is the one spelling JSON has for a colour.
+    // A hex string is the one spelling JSON has for a colour, and `data-colour`
+    // hands it to `rgb` as written, so a string that is not one is read here.
+    // Left to the renderer it would be reported in Typst's words.
     directives.push((
       kind: "colour",
       palette: {
         let given = descriptor.palette
         let stops = if type(given) == array { given } else { (given,) }
-        stops.map(stop => _colour(stop, "palette"))
+        stops.map(stop => _colour(stop, "data-colour", "palette"))
       },
       columns: _selector(descriptor.at("columns", default: auto)),
       rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
@@ -725,7 +752,7 @@
       target: descriptor.at("target", default: "fill"),
       missing: {
         let given = descriptor.at("missing", default: none)
-        if given == none { none } else { _colour(given, "missing") }
+        if given == none { none } else { _colour(given, "data-colour", "missing") }
       },
       reverse: descriptor.at("reverse", default: false),
     ))
