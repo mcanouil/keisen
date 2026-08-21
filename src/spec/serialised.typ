@@ -8,6 +8,14 @@
 ///! not, and built-ins named as strings. Anything more expressive belongs in a
 ///! Typst literal specification, which keeps this from drifting into an
 ///! expression language nobody wanted to write.
+///!
+///! A failure here is scoped to the JSON key it came from, since that is what
+///! the caller wrote, except where the key already names something else: a
+///! public keisen directive that cannot fail that way, or a Typst built-in. So
+///! `format`, `style` and `align` report under `display-table` and name their
+///! key in the problem, while `combine`, `spanner`, `width` and the rest keep
+///! their own. `data-colour` and `display-table` keep theirs because there the
+///! key resolves into exactly that directive.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -194,14 +202,14 @@
 // Colours arrive as strings too, since JSON has no way to spell rgb(). A
 // string that is not a colour is reported here rather than inside the renderer.
 //
-// The scope is the directive the caller wrote, `display-table`, and the key it
-// wrote opens the problem. Scoping this to `style` named a public function that
-// has no such failure, and sent a reader to the wrong page.
-#let _colour(value, key) = {
+// The scope is the caller's, since a palette belongs to `data-colour` while a
+// fill belongs to no public directive at all. `key` names the key the caller
+// wrote, which is what tells one colour in a style from another.
+#let _colour(value, scope, key) = {
   if type(value) != str { return value }
   if not _is-colour(value) {
     fail(
-      "display-table",
+      scope,
       key + " is not a colour",
       value: value,
       hint: "Write it as a hex string, for example \"#08519c\".",
@@ -331,7 +339,7 @@
 #let _stroke(value) = {
   if value == none { return none }
   if type(value) == str {
-    return if _is-colour(value) { _colour(value, "stroke") } else {
+    return if _is-colour(value) { _colour(value, "display-table", "stroke") } else {
       _length(value, "display-table", what: "a thickness")
     }
   }
@@ -340,7 +348,7 @@
   if type(value) in (int, float) { return _length(value, "display-table", what: "a thickness") }
   if type(value) != dictionary { return value }
   let out = value
-  if "paint" in out { out.insert("paint", _colour(out.paint, "stroke paint")) }
+  if "paint" in out { out.insert("paint", _colour(out.paint, "display-table", "stroke paint")) }
   if "thickness" in out {
     out.insert("thickness", _length(out.thickness, "display-table", what: "a thickness"))
   }
@@ -358,7 +366,7 @@
     out.insert(
       key,
       if key == "fill" {
-        _colour(value, "fill")
+        _colour(value, "display-table", "fill")
       } else if key == "align" {
         _cell-alignment(value)
       } else if key == "inset" {
@@ -369,7 +377,7 @@
         // The two properties inside `text` that JSON cannot spell: a colour and
         // a length. Everything else Typst reads as written.
         let inner = value
-        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "text fill")) }
+        if "fill" in inner { inner.insert("fill", _colour(inner.fill, "display-table", "text fill")) }
         if "size" in inner {
           inner.insert("size", _length(inner.size, "display-table", what: "a text size"))
         }
@@ -745,7 +753,7 @@
       palette: {
         let given = descriptor.palette
         let stops = if type(given) == array { given } else { (given,) }
-        stops.map(stop => _colour(stop, "palette"))
+        stops.map(stop => _colour(stop, "data-colour", "palette"))
       },
       columns: _selector(descriptor.at("columns", default: auto)),
       rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
@@ -753,7 +761,7 @@
       target: descriptor.at("target", default: "fill"),
       missing: {
         let given = descriptor.at("missing", default: none)
-        if given == none { none } else { _colour(given, "missing") }
+        if given == none { none } else { _colour(given, "data-colour", "missing") }
       },
       reverse: descriptor.at("reverse", default: false),
     ))
