@@ -9,13 +9,12 @@
 ///! Typst literal specification, which keeps this from drifting into an
 ///! expression language nobody wanted to write.
 ///!
-///! A failure here is scoped to the JSON key it came from, since that is what
-///! the caller wrote, except where the key already names something else: a
-///! public keisen directive that cannot fail that way, or a Typst built-in. So
-///! `format`, `style` and `align` report under `display-table` and name their
-///! key in the problem, while `combine`, `spanner`, `width` and the rest keep
-///! their own. `data-colour` and `display-table` keep theirs because there the
-///! key resolves into exactly that directive.
+///! A failure here is scoped to the directive the key resolves into, so a
+///! reader can look the name up. Where that name is already taken by a public
+///! directive that cannot fail this way, or by a Typst built-in, the scope
+///! becomes `display-table` and the key opens the problem instead: that is
+///! `format`, `style` and `align`. The rest keep the name their key resolves
+///! into, as `combines` gives `combine` and `colours` gives `data-colour`.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -182,7 +181,8 @@
   if name not in table {
     fail(
       scope,
-      "unknown name " + repr(name),
+      "unknown name",
+      value: name,
       hint: "Known names: " + table.keys().join(", ") + ".",
     )
   }
@@ -343,7 +343,9 @@
 #let _stroke(value) = {
   if value == none { return none }
   if type(value) == str {
-    return if _is-colour(value) { _colour(value, "display-table", "stroke") } else {
+    // `rgb` rather than `_colour`: the string was just read as a colour, so the
+    // check `_colour` would run again cannot fail.
+    return if _is-colour(value) { rgb(value) } else {
       _length(value, "display-table", what: "a thickness")
     }
   }
@@ -708,7 +710,7 @@
     if "alignment" not in descriptor {
       fail(
         "display-table",
-        "no alignment given",
+        "align names no alignment",
         value: descriptor,
         hint: "Name one of " + ALIGNMENTS.keys().join(", ") + ".",
       )

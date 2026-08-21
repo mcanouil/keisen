@@ -1,5 +1,5 @@
-// A summary descriptor with no name. The scope is the key the caller wrote,
-// which no public directive is called, so it stays as written.
+// A summary descriptor with no name. The scope is the directive the key
+// resolves into, and no public function is called `summary`, so it stays.
 // expect: summary: no name given
 // expect: got (label: "Total", columns: "units").
 // expect: Name the built-in: (name: "aggregate-sum", ..).

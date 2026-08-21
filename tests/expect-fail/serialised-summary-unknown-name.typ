@@ -1,6 +1,7 @@
 // An aggregation the package does not have, named where a closure cannot be
 // written.
-// expect: summary: unknown name "aggregate-mode"
+// expect: summary: unknown name
+// expect: got "aggregate-mode".
 // expect: Known names: aggregate-sum, aggregate-mean, aggregate-median, aggregate-min, aggregate-max, aggregate-count, aggregate-standard-deviation.
 
 #import "../../src/spec.typ": build-spec
