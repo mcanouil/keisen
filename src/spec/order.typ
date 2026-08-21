@@ -15,7 +15,6 @@
 #import "../utils/columns.typ": check-addressable
 #import "../utils/errors.typ": check, check-column
 
-
 #let _check-visible(spec, name) = check-addressable(
   name,
   "columns-move",

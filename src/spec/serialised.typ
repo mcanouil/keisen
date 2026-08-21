@@ -9,7 +9,6 @@
 ///! Typst literal specification, which keeps this from drifting into an
 ///! expression language nobody wanted to write.
 
-#import "../format/apply.typ": named
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
 #import "../format/date.typ": format-date
