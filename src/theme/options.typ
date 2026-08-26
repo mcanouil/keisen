@@ -76,17 +76,11 @@
   "footer-border-top": none,
 )
 
-// A theme is an option dictionary, so it is checked exactly as table-options
-// checks its keys: a preset passed uncalled, or a typo in a hand-written theme,
-// is reported rather than ignored.
+// One reading of "that is not an option", shared by a theme and by a
+// table-options() call: a typo in either is reported rather than ignored.
+// The caller holds `options` to a dictionary first, since the two paths differ
+// on what a reader wrote and so on what the hint should say.
 #let validate-options(options, scope) = {
-  check(
-    type(options) == dictionary,
-    scope,
-    "theme must be an option dictionary",
-    value: options,
-    hint: "Call the preset: theme: theme-booktabs().",
-  )
   for name in options.keys() {
     check(
       name in DEFAULTS,

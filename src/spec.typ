@@ -359,6 +359,13 @@
     column-names(spec.data)
   }
   spec.columns = spec.data-columns
+  check(
+    type(theme) == dictionary,
+    "display-table",
+    "theme must be an option dictionary",
+    value: theme,
+    hint: "Call the preset: theme: theme-booktabs().",
+  )
   spec.options = validate-options(theme, "display-table")
 
   for directive in directives {
