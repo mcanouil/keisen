@@ -66,18 +66,34 @@
 // rounding to the first place never pushes the place out. That is a proof rather
 // than a check, and the bound is stated here rather than tested twice.
 //
-// Two limits of the type are left open, and each is filed with a reproduction.
-// A place far below zero can carry into a magnitude no decimal holds, which the
-// un-shift below raises on. `options.scale` is what carries a value that far.
-// Half-up raises on the same input, so the two modes agree, and both raise
-// outside the project grammar.
+// A place below the point asks for a multiple of ten, and the one nearest a
+// large value can be larger than the type holds. The answer is measured against
+// the range before it is taken, in both modes: a decimal raises rather than
+// saturating, and Typst has no try. Dividing by the scale never raises, so the
+// quotient is the safe place to measure from.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))
   }
-  if mode == "half-up" { return calc.round(value, digits: digits) }
 
   let scale = calc.pow(decimal(10), calc.abs(digits))
+
+  // `rounded` is the answer in units of the scale, so the answer itself is that
+  // many times the scale and holds exactly while the count does.
+  let _check-holds(rounded) = check(
+    calc.abs(rounded) <= _decimal-max / scale,
+    "format-number",
+    // The count is written without its sign: str() spells a negative number
+    // with a minus sign a reader cannot type, and both callers are below zero.
+    "the answer " + str(calc.abs(digits)) + " places below the point is larger than a decimal holds",
+    value: value,
+    hint: "Round to a place nearer the point, or use format-scientific.",
+  )
+
+  if mode == "half-up" {
+    if digits < 0 { _check-holds(calc.round(value / scale, digits: 0)) }
+    return calc.round(value, digits: digits)
+  }
 
   // The shift is measured before it is taken: a decimal raises rather than
   // saturating, and Typst has no try, so an overflow cannot be caught after the
@@ -93,30 +109,36 @@
 
   let shifted = if digits < 0 { value / scale } else { value * scale }
 
-  // The tie test runs through calc.trunc, which returns an int, so a shifted
-  // value beyond the integer range takes plain rounding instead.
+  // Both halves of the tie test are read in decimal. Through an int they were
+  // held to the 64-bit range, and a shifted value past it took plain rounding:
+  // a value keeps a fractional part whenever its own scale runs past the place
+  // asked for, so one that large can still sit on a tie, and half-even then
+  // answered what half-up would.
   //
-  // This is a known limitation rather than a proof. A shifted value keeps a
-  // fractional part whenever the value's own scale runs past the place asked
-  // for, so one beyond the integer range can still sit on a tie, and half-even
-  // then answers what half-up would. It is reachable, it is written into the
-  // reference, and it is filed with its reproduction and a way to close it.
-  if calc.abs(shifted) >= decimal("9223372036854775807") {
-    return calc.round(value, digits: digits)
-  }
+  // calc.round takes a tie away from zero, so the gap to it is half a unit on a
+  // tie and nothing else reaches that. The two neighbours are then that answer
+  // and the one step back towards zero, and half-even keeps whichever is even.
+  let nearest = calc.round(shifted, digits: 0)
+  let gap = nearest - shifted
 
-  let truncated = calc.trunc(shifted)
-  let remainder = shifted - decimal(truncated)
+  // Even without an int to divide: halving an even number lands on a whole one,
+  // and doubling it back returns what it started as.
+  let is-even = value => calc.round(value / decimal(2), digits: 0) * decimal(2) == value
 
-  let rounded = if remainder == decimal("0.5") {
-    if calc.rem(truncated, 2) == 0 { truncated } else { truncated + 1 }
-  } else if remainder == decimal("-0.5") {
-    if calc.rem(truncated, 2) == 0 { truncated } else { truncated - 1 }
+  let rounded = if gap == decimal("0.5") {
+    if is-even(nearest) { nearest } else { nearest - decimal(1) }
+  } else if gap == decimal("-0.5") {
+    if is-even(nearest) { nearest } else { nearest + decimal(1) }
   } else {
-    calc.round(shifted, digits: 0)
+    nearest
   }
 
-  if digits < 0 { decimal(rounded) * scale } else { decimal(rounded) / scale }
+  if digits < 0 {
+    _check-holds(rounded)
+    rounded * scale
+  } else {
+    rounded / scale
+  }
 }
 
 // A size of `none` or anything below one means no grouping; a size of zero

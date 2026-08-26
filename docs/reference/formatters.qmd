@@ -43,8 +43,7 @@ A count inside them is refused as well where the value is small enough to carry 
 
 All rounding and scaling happen in Typst's `decimal` type, which is fixed-point, so `0.145` at two decimals is not at the mercy of binary representation.
 `rounding: "half-up"` matches `calc.round`, and `"half-even"` is implemented in the package for anyone expecting R's behaviour.
-Half-even has one limit: the tie it looks for is found through a whole number, so a value that passes the 64-bit integer range once shifted to the place asked for is given the half-up answer instead.
-It takes a value of about 9.2 quintillion at the shifted place to reach it.
+Half-even reads the tie in `decimal` as well, so the size of a value says nothing about which answer it gets.
 `rounding: auto` takes whichever the theme names in `number-rounding`, which is `"half-up"` unless a theme says otherwise.
 Substitutions run before formatting, so a gap never reaches a formatter that would refuse it.
 

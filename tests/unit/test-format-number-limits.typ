@@ -40,15 +40,28 @@
 
 // --- half-even beyond the integer range ---
 
-// The tie test goes through calc.trunc, which is an int, so a shifted value
-// beyond the integer range takes plain rounding instead.
-//
-// The value below does sit on a tie, and half-even owes it ..890. What is
-// pinned here is the known limitation, not the right answer: the fallback gives
-// the half-up result. It is filed, and this assertion changes when it closes.
+// The tie test used to go through calc.trunc, which is an int, so a shifted
+// value beyond the integer range took plain rounding and answered half-up. Both
+// halves of the test are read in decimal now, so the size of the value says
+// nothing about which answer it gets.
 #assert.eq(
   round-decimal(decimal("12345678901234567890.5"), 0, "half-even"),
-  decimal("12345678901234567891"),
+  decimal("12345678901234567890"),
+)
+#assert.eq(
+  round-decimal(decimal("12345678901234567891.5"), 0, "half-even"),
+  decimal("12345678901234567892"),
+)
+#assert.eq(
+  round-decimal(decimal("-12345678901234567890.5"), 0, "half-even"),
+  decimal("-12345678901234567890"),
+)
+
+// The reproduction the defect was filed with: the shift lands one unit past the
+// largest integer, which is where the int test gave up.
+#assert.eq(
+  round-decimal(decimal("922337203685477580.85"), 1, "half-even"),
+  decimal("922337203685477580.8"),
 )
 #assert.eq(round-decimal(decimal("2.5"), 0, "half-even"), decimal("2"))
 
