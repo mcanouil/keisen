@@ -4,7 +4,9 @@
 ///! final column order, so it is checked once on the folded spec: a
 ///! `columns-move` may legally be written after the spanner it rearranges.
 
-#import "../utils/errors.typ": check, check-column
+#import "../parts/stub.typ": stub-column-names
+#import "../utils/columns.typ": check-addressable
+#import "../utils/errors.typ": check
 
 // `level` 1 sits directly above the column labels; higher levels stack above,
 // so a spanner can span other spanners.
@@ -49,15 +51,15 @@
     )
 
     for name in spanner.columns {
-      // A hidden column exists; saying "unknown" would send the reader hunting
-      // for a typo that is not there.
-      check(
-        name not in spec.hidden,
+      check-addressable(
+        name,
         "table-spanner",
-        "column " + name + " is hidden",
-        hint: "Drop the columns-hide, or drop the column from the spanner.",
+        columns: spec.columns,
+        hidden: spec.hidden,
+        stub: stub-column-names(spec.stub),
+        hidden-hint: "Drop the columns-hide, or drop the column from the spanner.",
+        stub-hint: "A spanner labels the columns beside the stub; the stub is not one of them.",
       )
-      check-column(spec.columns, "table-spanner", name)
 
       let key = str(spanner.level) + ":" + name
       check(

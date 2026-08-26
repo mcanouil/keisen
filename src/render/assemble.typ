@@ -146,12 +146,15 @@
     // A summary cell takes its marks like any other: the label cell through the
     // stub address, the rest by column.
     let marked(body, column) = _marked(body, marks-for(footnotes, part, row-key, column))
+    // The label follows the edge of the column it sits in, as every other cell
+    // in that column does: the stub where there is one, the first column where
+    // there is not.
+    let label-align = if has-stub { stub-align } else { alignments.at(0) }
     if has-stub {
-      // The label sits in the stub column, so it follows that column's edge.
       cells.push(_cell(
         style-for(index, part, row-key, none),
         marked(label, none),
-        align: stub-align,
+        align: label-align,
         fill: setting("summary-fill"),
         stroke: rule,
       ))
@@ -161,7 +164,7 @@
         cells.push(_cell(
           style-for(index, part, row-key, name),
           marked(label, name),
-          align: start,
+          align: label-align,
           fill: setting("summary-fill"),
           stroke: rule,
         ))
