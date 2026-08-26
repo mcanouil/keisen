@@ -76,40 +76,11 @@
   "footer-border-top": none,
 )
 
-#let table-options(..keys) = {
-  check(
-    keys.pos().len() == 0,
-    "table-options",
-    "options are named, not positional",
-    hint: "Write table-options(row-striping: true).",
-  )
-  let named = keys.named()
-  for name in named.keys() {
-    check(
-      name in DEFAULTS,
-      "table-options",
-      "unknown option " + name,
-      hint: "See the reference for the option names this version reads.",
-    )
-  }
-  (kind: "options", options: named)
-}
-
-// An option read through here always has a value, so the renderer never carries
-// a default of its own.
-#let option(options, name) = options.at(name, default: DEFAULTS.at(name))
-
-// A theme is an option dictionary, so it is checked exactly as table-options
-// checks its keys: a preset passed uncalled, or a typo in a hand-written theme,
-// is reported rather than ignored.
+// One reading of "that is not an option", shared by a theme and by a
+// table-options() call: a typo in either is reported rather than ignored.
+// The caller holds `options` to a dictionary first, since the two paths differ
+// on what a reader wrote and so on what the hint should say.
 #let validate-options(options, scope) = {
-  check(
-    type(options) == dictionary,
-    scope,
-    "theme must be an option dictionary",
-    value: options,
-    hint: "Call the preset: theme: theme-booktabs().",
-  )
   for name in options.keys() {
     check(
       name in DEFAULTS,
@@ -120,3 +91,17 @@
   }
   options
 }
+
+#let table-options(..keys) = {
+  check(
+    keys.pos().len() == 0,
+    "table-options",
+    "options are named, not positional",
+    hint: "Write table-options(row-striping: true).",
+  )
+  (kind: "options", options: validate-options(keys.named(), "table-options"))
+}
+
+// An option read through here always has a value, so the renderer never carries
+// a default of its own.
+#let option(options, name) = options.at(name, default: DEFAULTS.at(name))

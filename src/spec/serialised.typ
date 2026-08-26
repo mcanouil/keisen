@@ -55,13 +55,14 @@
   "aggregate-standard-deviation": aggregate-standard-deviation,
 )
 
+// `op` is one of OPERATORS, held to it by resolve-predicate before the closure
+// that calls this is built. A caller that skips that check reads none rather
+// than a boolean, so the check belongs there and is not repeated here.
 #let _compare(op, left, right) = {
   if op == "<" { left < right } else if op == "<=" { left <= right } else if op == ">" {
     left > right
   } else if op == ">=" { left >= right } else if op == "==" { left == right } else if op == "!=" {
     left != right
-  } else {
-    fail-enum("predicate", "op", op, ("<", "<=", ">", ">=", "==", "!="))
   }
 }
 

@@ -15,7 +15,7 @@
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
 #import "layout.typ": (
-  column-alignments, column-cells, infer-alignment, label-alignment, metrics, slots-to-content,
+  column-alignments, column-cells, label-alignment, metrics, slots-to-content,
   stub-alignment, stub-body, stub-cells, stub-depths, summarised,
 )
 #import "plan.typ": build-plan

@@ -1,7 +1,7 @@
 ///! Data-driven colour across a column.
 
 #import "../data.typ": column
-#import "../format/apply.typ": matches-column, matches-row
+#import "../format/apply.typ": matches-row
 #import "../utils/colour.typ": fraction-of, readable-on, sample-palette
 #import "../utils/errors.typ": check
 
@@ -44,9 +44,7 @@
 // keeps one rule rather than adding an option.
 #let _domain(directive, rows, name) = {
   if directive.domain != auto { return directive.domain }
-  let values = rows
-    .filter(row => matches-row(directive.rows, row))
-    .map(row => row.at(name, default: none))
+  let values = column(rows.filter(row => matches-row(directive.rows, row)), name)
     .filter(value => type(value) in (int, float, decimal))
     .map(value => if type(value) == decimal { float(value) } else { value })
   if values.len() == 0 { return none }

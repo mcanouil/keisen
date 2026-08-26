@@ -6,7 +6,7 @@
 ///! its position in the input data, so predicates can read position without a
 ///! second parameter.
 
-#import "utils/errors.typ": check, fail, fail-type
+#import "utils/errors.typ": check, fail-type
 
 #let _from-columns(data) = {
   let names = data.keys()
