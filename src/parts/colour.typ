@@ -54,15 +54,11 @@
 // Styles for one column, keyed by row position, so the caller merges them into
 // the style index like any other source of cell styling.
 #let colour-styles(directive, rows, name) = {
-  check(
-    directive.target in ("fill", "text"),
-    "data-colour",
-    "target must be fill or text",
-    value: directive.target,
-  )
-
+  // A column the scale can place nothing in has no domain, and every matching
+  // row in it is a gap: `_domain` reads the same rows this loop does, so a
+  // column with a domain of none holds no number for the loop to place. The
+  // missing colour still applies, which is why there is no early return here.
   let domain = _domain(directive, rows, name)
-  if domain == none { return (:) }
 
   let styles = (:)
   for row in rows {

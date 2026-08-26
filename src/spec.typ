@@ -342,6 +342,15 @@
     }
   }
   for directive in spec.colours {
+    // The target is read here rather than where the colour is drawn, because a
+    // hidden column and the stub leave spec.columns and so are drawn by nobody.
+    // A misspelling on one of those used to be read by nobody either.
+    check(
+      directive.target in ("fill", "text"),
+      "data-colour",
+      "target must be fill or text",
+      value: directive.target,
+    )
     for name in named(directive.columns, str) { check-column(known, "data-colour", name) }
   }
 
