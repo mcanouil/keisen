@@ -80,17 +80,21 @@
 #assert.eq(with-missing.keys(), ("0", "1"))
 #assert.eq(with-missing.at("1").fill.to-hex(), "#00ffff")
 
-// A column with nothing to place drops the colour altogether, because the span
-// of the column is asked for before the gaps are coloured. That is `zsam`, and
-// this assertion holds today's answer so the change has something to break.
-#assert.eq(
-  colour-styles(
-    data-colour(palette, columns: "units", missing: rgb("#00ffff")),
-    normalise((units: (none, none))),
-    "units",
-  ),
-  (:),
+// A column the scale can place nothing in is still a column with gaps in it, so
+// every cell takes the missing colour. A filtered table that lost its last
+// number is exactly where a reader needs the gaps marked.
+#let all-gaps = normalise((units: (none, none)))
+#let every-gap = colour-styles(
+  data-colour(palette, columns: "units", missing: rgb("#00ffff")),
+  all-gaps,
+  "units",
 )
+#assert.eq(every-gap.keys(), ("0", "1"))
+#assert.eq(every-gap.at("0").fill.to-hex(), "#00ffff")
+#assert.eq(every-gap.at("1").fill.to-hex(), "#00ffff")
+
+// Without a missing colour there is still nothing to say about such a column.
+#assert.eq(colour-styles(data-colour(palette, columns: "units"), all-gaps, "units"), (:))
 
 // --- rows narrows the directive to part of the column ---
 //

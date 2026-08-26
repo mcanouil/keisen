@@ -342,6 +342,29 @@
     }
   }
   for directive in spec.colours {
+    // The target is read here rather than where the colour is drawn, because a
+    // hidden column and the stub leave spec.columns and so are drawn by nobody.
+    // A misspelling on one of those used to be read by nobody either.
+    check(
+      directive.target in ("fill", "text"),
+      "data-colour",
+      "target must be fill or text",
+      value: directive.target,
+    )
+    // The palette is stretched over the domain, so it takes a low and a high.
+    // Anything else was dropped without a word, and the column came out plain.
+    check(
+      directive.domain == auto
+        or (
+          type(directive.domain) == array
+            and directive.domain.len() == 2
+            and directive.domain.all(edge => type(edge) in (int, float, decimal))
+        ),
+      "data-colour",
+      "domain must be auto or a low and a high",
+      value: directive.domain,
+      hint: "Write domain: (0, 100), or leave it auto to span the data.",
+    )
     for name in named(directive.columns, str) { check-column(known, "data-colour", name) }
   }
 
