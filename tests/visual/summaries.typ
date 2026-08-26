@@ -46,3 +46,17 @@
   table-source-note([Source: internal ledger.]),
   theme: theme-booktabs(),
 )
+
+#v(1em)
+
+// With no stub the summary label takes the first column, and it follows that
+// column's edge as every other cell in it does. Here the first column is set
+// against the end edge, so a label drawn at the start edge sits opposite the
+// names above it.
+#display-table(
+  (product: ("Bolt", "Nut"), units: (1250, 860)),
+  table-header(title: [No stub, first column at the end edge]),
+  columns-align(end, columns: "product"),
+  format-integer("units"),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units",)),
+)

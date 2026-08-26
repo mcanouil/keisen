@@ -16,7 +16,7 @@
 #import "../theme/options.typ": option
 #import "layout.typ": (
   column-alignments, column-cells, label-alignment, metrics, slots-to-content,
-  stub-alignment, stub-body, stub-cells, stub-depths, summarised,
+  stub-alignment, stub-body, stub-cells, stub-depths, summarised, summary-label-alignment,
 )
 #import "plan.typ": build-plan
 
@@ -146,12 +146,12 @@
     // A summary cell takes its marks like any other: the label cell through the
     // stub address, the rest by column.
     let marked(body, column) = _marked(body, marks-for(footnotes, part, row-key, column))
+    let label-align = summary-label-alignment(alignments, has-stub, stub-align)
     if has-stub {
-      // The label sits in the stub column, so it follows that column's edge.
       cells.push(_cell(
         style-for(index, part, row-key, none),
         marked(label, none),
-        align: stub-align,
+        align: label-align,
         fill: setting("summary-fill"),
         stroke: rule,
       ))
@@ -161,7 +161,7 @@
         cells.push(_cell(
           style-for(index, part, row-key, name),
           marked(label, name),
-          align: start,
+          align: label-align,
           fill: setting("summary-fill"),
           stroke: rule,
         ))

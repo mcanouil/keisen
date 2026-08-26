@@ -40,7 +40,7 @@ A subtotal is addressed like any other cell, through `cells-summary` and `cells-
 )
 ```
 
-![A sales table where the product names, the Product stubhead and the Subtotal and Total labels all sit against the end edge, both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two.](../assets/examples/summaries.png)
+![Two tables. In the first, a sales table, the product names, the Product stubhead and the Subtotal and Total labels all sit against the end edge, both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two. In the second, a table with no stub, the product names sit against the end edge and the Total label beneath them sits against the same edge.](../assets/examples/summaries.png)
 
 `columns-align` names the stub here, so each total's label sits beside the figures it totals rather than a column away from them.
 The stubhead follows the same edge, since a header on the opposite side from its column reads as a mistake.
@@ -50,3 +50,18 @@ The stubhead follows the same edge, since a header on the opposite side from its
 
 A summary row answers to its label as readily as to its position, so `rows: "Subtotal"` says what `rows: 0` says.
 The label is the better of the two: it survives a row being added above it.
+
+## Without a stub
+
+With no stub the label takes the first column instead, and follows that column's edge as every other cell in it does.
+The second table in the picture above is this one.
+
+```typst
+#display-table(
+  (product: ("Bolt", "Nut"), units: (1250, 860)),
+  table-header(title: [No stub, first column at the end edge]),
+  columns-align(end, columns: "product"),
+  format-integer("units"),
+  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units",)),
+)
+```

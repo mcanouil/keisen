@@ -68,6 +68,17 @@
 // it from here rather than each spelling it.
 #let label-alignment(named, fallback) = if named == auto { fallback } else { named }
 
+// A summary label sits in the stub where there is one and in the first column
+// where there is not, and follows that column's edge as every other cell in the
+// column does. Both summary-label cells read it from here, so the two answers
+// agree by construction rather than by two people writing the same thing.
+// A table whose every column is hidden still draws a grand summary, and there
+// is then no column for the label to follow, so it takes the start edge.
+#let summary-label-alignment(alignments, has-stub, stub-align) = {
+  if has-stub { return stub-align }
+  alignments.at(0, default: start)
+}
+
 // Built-in formatters return the alignment dictionary rather than content, so
 // the slots can be padded to line a column up on its separator. Always returns
 // content: a cell holds content, and an unformatted column still carries
