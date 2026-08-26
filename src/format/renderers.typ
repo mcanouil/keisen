@@ -48,14 +48,15 @@
   place(top + left, dx: width * fx - radius, dy: height * fy - radius, circle(radius: radius, fill: paint))
 }
 
-// A sparkline: the shape of a series, without axes or labels.
-#let nanoplot-line(numbers, domain: none, width: 4em, height: 0.8em, stroke: auto, thickness: 0.6pt) = {
+// The frame every renderer draws in: the numbers, the empty-series answer, the
+// domain, and the box the contents are clipped to. `draw(values, low, high)`
+// supplies the contents, and runs inside the context this opens, so `_ink`
+// resolves `text.fill` there as it would written out here.
+#let _canvas(numbers, domain, width, height, draw) = {
   let values = _numbers(numbers)
   if values.len() == 0 { return box(width: width, height: height) }
   context {
     let (low, high) = _range(values, domain)
-    let fractions = _fractions(values, low, high)
-    let paint = _ink(stroke)
     box(
       width: width,
       height: height,
@@ -63,22 +64,31 @@
       // across whatever sits beside it. An explicit domain is a choice to look
       // at one window of the data, so what falls outside it is not drawn.
       clip: true,
-      // A single reading has no line to draw, so it draws as the point it is.
-      if fractions.len() == 1 {
-        _dot(fractions.first(), width, height, thickness, paint)
-      } else {
-        curve(
-          stroke: thickness + paint,
-          ..fractions
-            .enumerate()
-            .map(((index, fraction)) => {
-              let point = (width * fraction.first(), height * fraction.last())
-              if index == 0 { curve.move(point) } else { curve.line(point) }
-            }),
-        )
-      },
+      draw(values, low, high),
     )
   }
+}
+
+// A sparkline: the shape of a series, without axes or labels.
+#let nanoplot-line(numbers, domain: none, width: 4em, height: 0.8em, stroke: auto, thickness: 0.6pt) = {
+  _canvas(numbers, domain, width, height, (values, low, high) => {
+    let fractions = _fractions(values, low, high)
+    let paint = _ink(stroke)
+    // A single reading has no line to draw, so it draws as the point it is.
+    if fractions.len() == 1 {
+      _dot(fractions.first(), width, height, thickness, paint)
+    } else {
+      curve(
+        stroke: thickness + paint,
+        ..fractions
+          .enumerate()
+          .map(((index, fraction)) => {
+            let point = (width * fraction.first(), height * fraction.last())
+            if index == 0 { curve.move(point) } else { curve.line(point) }
+          }),
+      )
+    }
+  })
 }
 
 // A trend with its readings marked, for series short enough to show both.
@@ -91,31 +101,20 @@
   thickness: 0.6pt,
   radius: 1pt,
 ) = {
-  let values = _numbers(numbers)
-  if values.len() == 0 { return box(width: width, height: height) }
-  context {
-    let (low, high) = _range(values, domain)
+  _canvas(numbers, domain, width, height, (values, low, high) => {
     let paint = _ink(stroke)
-    box(
+    // The line is drawn by the renderer above, in a box of the same size, so
+    // the marks laid over it land on the same coordinates.
+    place(top + left, nanoplot-line(
+      values,
+      domain: (low, high),
       width: width,
       height: height,
-      // A value outside the domain would otherwise be drawn outside the cell,
-      // across whatever sits beside it. An explicit domain is a choice to look
-      // at one window of the data, so what falls outside it is not drawn.
-      clip: true,
-      // The line is drawn by the renderer above, in a box of the same size, so
-      // the marks laid over it land on the same coordinates.
-      place(top + left, nanoplot-line(
-        values,
-        domain: (low, high),
-        width: width,
-        height: height,
-        stroke: paint,
-        thickness: thickness,
-      ))
-        + _fractions(values, low, high).map(fraction => _dot(fraction, width, height, radius, paint)).join(),
-    )
-  }
+      stroke: paint,
+      thickness: thickness,
+    ))
+    _fractions(values, low, high).map(fraction => _dot(fraction, width, height, radius, paint)).join()
+  })
 }
 
 // The same series as bars, for counts rather than a trend.
@@ -125,53 +124,46 @@
 // shared domain exists to prevent. The line renderers scale to the domain
 // instead, because a trend is about shape rather than magnitude.
 #let nanoplot-bar(numbers, domain: none, width: 4em, height: 0.8em, fill: auto, gap: 30%) = {
-  let values = _numbers(numbers)
-  if values.len() == 0 { return box(width: width, height: height) }
-  check(
-    gap >= 0% and gap < 100%,
-    "nanoplot-bar",
-    "gap must leave the bars some width",
-    value: gap,
-    hint: "Give a percentage of the bar pitch below 100%.",
-  )
-  context {
-    let (low, high) = _range(values, domain)
+  // A series with no readings has no bars for the gap to leave room between, so
+  // it answers with the empty box every renderer answers with. `_numbers` keeps
+  // every element it is given, so an empty series is empty here too.
+  if numbers.len() != 0 {
+    check(
+      gap >= 0% and gap < 100%,
+      "nanoplot-bar",
+      "gap must leave the bars some width",
+      value: gap,
+      hint: "Give a percentage of the bar pitch below 100%.",
+    )
+  }
+  _canvas(numbers, domain, width, height, (values, low, high) => {
     let base = calc.min(0.0, low)
     let peak = calc.max(0.0, high)
     let span = peak - base
-    let count = values.len()
-    let pitch = 1 / count
+    let pitch = 1 / values.len()
     let thick = pitch * (1 - gap / 100%)
     let paint = _ink(fill)
-    box(
-      width: width,
-      height: height,
-      // A value outside the domain would otherwise be drawn outside the cell,
-      // across whatever sits beside it. An explicit domain is a choice to look
-      // at one window of the data, so what falls outside it is not drawn.
-      clip: true,
-      // Every reading is zero, so every bar is, and there is no span to measure
-      // against either.
-      if span == 0 { [] } else {
-        let zero = 1 - (0 - base) / span
-        values
-          .enumerate()
-          .map(((index, value)) => {
-            let level = 1 - (value - base) / span
-            place(
-              top + left,
-              dx: width * (pitch * index + (pitch - thick) / 2),
-              dy: height * calc.min(level, zero),
-              rect(
-                width: width * thick,
-                height: height * calc.abs(level - zero),
-                fill: paint,
-                stroke: none,
-              ),
-            )
-          })
-          .join()
-      },
-    )
-  }
+    // Every reading is zero, so every bar is, and there is no span to measure
+    // against either.
+    if span == 0 { [] } else {
+      let zero = 1 - (0 - base) / span
+      values
+        .enumerate()
+        .map(((index, value)) => {
+          let level = 1 - (value - base) / span
+          place(
+            top + left,
+            dx: width * (pitch * index + (pitch - thick) / 2),
+            dy: height * calc.min(level, zero),
+            rect(
+              width: width * thick,
+              height: height * calc.abs(level - zero),
+              fill: paint,
+              stroke: none,
+            ),
+          )
+        })
+        .join()
+    }
+  })
 }
