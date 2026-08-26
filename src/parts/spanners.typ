@@ -4,9 +4,9 @@
 ///! final column order, so it is checked once on the folded spec: a
 ///! `columns-move` may legally be written after the spanner it rearranges.
 
-#import "../parts/stub.typ": stub-column-names
 #import "../utils/columns.typ": check-addressable
 #import "../utils/errors.typ": check
+#import "stub.typ": stub-column-names
 
 // `level` 1 sits directly above the column labels; higher levels stack above,
 // so a spanner can span other spanners.
