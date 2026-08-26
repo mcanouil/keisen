@@ -88,3 +88,9 @@
   // A renderer called by hand, outside format-nanoplot, has no shared domain.
   assert.eq(type(plot((1.0, 2.0, 1.5), width: 4em, height: 0.8em)), content)
 }
+
+// An empty series is answered before the gap is read, so a bad gap on a series
+// with no bars in it draws the same empty box as any other empty series.
+// tests/expect-fail/nanoplot-bar-bad-gap.typ holds the other half: the same gap
+// on a series with bars is refused.
+#assert.eq(type(nanoplot-bar((), gap: 200%, width: 4em, height: 0.8em)), content)
