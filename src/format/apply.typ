@@ -21,7 +21,13 @@
   } else if type(selector) == function {
     selector(name)
   } else {
-    fail-type("columns", "selector", selector, "auto, a name, an array of names, or a predicate")
+    fail-type(
+      "columns",
+      "selector",
+      selector,
+      "auto, a name, an array of names, or a predicate",
+      hint: "Write \"units\", (\"units\", \"price\"), or name => name != \"units\".",
+    )
   }
 }
 
@@ -35,7 +41,13 @@
   } else if type(selector) == function {
     selector(row)
   } else {
-    fail-type("rows", "selector", selector, "auto, an index, an array of indices, or a predicate")
+    fail-type(
+      "rows",
+      "selector",
+      selector,
+      "auto, an index, an array of indices, or a predicate",
+      hint: "Write 0, (0, 2), or row => row.units > 100.",
+    )
   }
 }
 

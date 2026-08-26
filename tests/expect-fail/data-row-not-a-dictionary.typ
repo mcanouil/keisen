@@ -2,7 +2,8 @@
 // type failed wherever a column was first read from it, which is far from the
 // row that caused it, so the row is named here.
 // expect: data: row 1 must be a dictionary
-// expect: got "price"
+// expect: got "price".
+// expect: A row maps each column name to its value: (units: 1, price: 2.5).
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(

@@ -22,8 +22,13 @@
   panic(message(scope, problem, value: value, hint: hint))
 }
 
-#let fail-type(scope, name, value, expected) = {
-  fail(scope, name + " must be " + expected, value: value)
+// A hint says what to write instead.
+// Give one wherever naming the type does not show how to write one.
+// An integer shows itself, so `decimals` and `significant` carry no hint.
+// A selector, a renderer, a style, a row store and a date do not, so each of
+// those names an example.
+#let fail-type(scope, name, value, expected, hint: none) = {
+  fail(scope, name + " must be " + expected, value: value, hint: hint)
 }
 
 #let fail-enum(scope, name, value, valid) = {

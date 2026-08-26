@@ -17,7 +17,13 @@
   value => {
     if type(value) == content { return value }
     if type(value) != str {
-      fail-type("format-markup", "value", value, "a string of Typst markup, or content")
+      fail-type(
+        "format-markup",
+        "value",
+        value,
+        "a string of Typst markup, or content",
+        hint: "Write \"*Bolt*\" in the data, or [*Bolt*].",
+      )
     }
     if value == "" { return [] }
     eval(value, mode: "markup")

@@ -41,13 +41,25 @@
 #let normalise(data) = {
   let rows = if type(data) == dictionary { _from-columns(data) } else { data }
   if type(rows) != array {
-    fail-type("data", "data", data, "an array of rows or a dictionary of columns")
+    fail-type(
+      "data",
+      "data",
+      data,
+      "an array of rows or a dictionary of columns",
+      hint: "Write an array of row dictionaries, or a dictionary of column arrays.",
+    )
   }
   rows
     .enumerate()
     .map(((index, row)) => {
       if type(row) != dictionary {
-        fail-type("data", "row " + str(index), row, "a dictionary")
+        fail-type(
+          "data",
+          "row " + str(index),
+          row,
+          "a dictionary",
+          hint: "A row maps each column name to its value: (units: 1, price: 2.5).",
+        )
       }
       check(
         "_index" not in row,
