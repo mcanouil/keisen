@@ -39,7 +39,7 @@
 // look numeric, since nothing in it was `none`, so a column holding nothing sat
 // against the end edge.
 #let infer-alignment(rows, name) = {
-  let values = rows.map(row => row.at(name, default: none)).filter(value => not is-missing(value))
+  let values = column(rows, name).filter(value => not is-missing(value))
   if values.len() == 0 { return start }
   if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
 }

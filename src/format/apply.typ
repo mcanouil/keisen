@@ -5,6 +5,7 @@
 ///! people write. Row position travels on the reserved `_index` key instead of
 ///! a second parameter.
 
+#import "../data.typ": column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
 #import "../utils/errors.typ": fail-type
@@ -131,7 +132,7 @@
 }
 
 #let apply-formats(rows, formats, name, substitutions: (), options: (:)) = {
-  let values = rows.map(row => row.at(name, default: none))
+  let values = column(rows, name)
   // Which directives name this column does not vary by row, and a nanoplot's
   // domain does not vary by cell, so both are settled once for the column.
   let applicable = formats.filter(directive => matches-column(directive.columns, name))

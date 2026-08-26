@@ -20,7 +20,7 @@
 // styled cell is drawn in that cell's colour rather than in a fixed black.
 #let _ink(given) = if given == auto { text.fill } else { given }
 
-#let _numbers(values) = values.map(value => if type(value) == decimal { float(value) } else { float(value) })
+#let _numbers(values) = values.map(float)
 
 // Falls back to the series' own range, so a renderer called by hand outside
 // `format-nanoplot` still draws. Inside it, the domain always spans the column.

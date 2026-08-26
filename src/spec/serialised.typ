@@ -60,8 +60,6 @@
     left > right
   } else if op == ">=" { left >= right } else if op == "==" { left == right } else if op == "!=" {
     left != right
-  } else {
-    fail-enum("predicate", "op", op, ("<", "<=", ">", ">=", "==", "!="))
   }
 }
 
