@@ -66,7 +66,7 @@
 // rounding to the first place never pushes the place out. That is a proof rather
 // than a check, and the bound is stated here rather than tested twice.
 //
-// A place below the point asks for a multiple of ten, and the one nearest a
+// A place above the point asks for a multiple of ten, and the one nearest a
 // large value can be larger than the type holds. The answer is measured against
 // the range before it is taken, in both modes: a decimal raises rather than
 // saturating, and Typst has no try. Dividing by the scale never raises, so the
@@ -84,8 +84,9 @@
     calc.abs(rounded) <= _decimal-max / scale,
     "format-number",
     // The count is written without its sign: str() spells a negative number
-    // with a minus sign a reader cannot type, and both callers are below zero.
-    "the answer " + str(calc.abs(digits)) + " places below the point is larger than a decimal holds",
+    // with a minus sign a reader cannot type, and a negative count is what
+    // rounding to a place above the point is written as.
+    "the answer " + str(calc.abs(digits)) + " places above the point is larger than a decimal holds",
     value: value,
     hint: "Round to a place nearer the point, or use format-scientific.",
   )
@@ -123,7 +124,7 @@
 
   // Even without an int to divide: halving an even number lands on a whole one,
   // and doubling it back returns what it started as.
-  let is-even = value => calc.round(value / decimal(2), digits: 0) * decimal(2) == value
+  let is-even = whole => calc.round(whole / decimal(2), digits: 0) * decimal(2) == whole
 
   let rounded = if gap == decimal("0.5") {
     if is-even(nearest) { nearest } else { nearest - decimal(1) }

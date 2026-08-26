@@ -141,6 +141,39 @@
 #assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
 #assert.eq(round-decimal(decimal("1.5"), 0, "half-even"), decimal("2"))
 
+// --- the range of the answer, at every place above the point ---
+
+// A place above the point asks for a multiple of ten, and the largest one a
+// decimal holds is smaller than the largest decimal. Both modes measure the
+// answer before taking it, and the two expect-fail fixtures hold the refusal at
+// the far end. What is swept here is the passing side, which a bound that was
+// too strict would take away: the largest multiple at each place must come back
+// unchanged, since a multiple of the scale is already rounded to it.
+//
+// The multiple is built from the digits of `largest` rather than by dividing,
+// which would need a whole number to truncate and put the 64-bit range back in.
+#for place in range(1, 29) {
+  let digits = str(largest)
+  let top = decimal(digits.slice(0, digits.len() - place) + "0" * place)
+  assert(top <= largest, message: "the multiple ran past the largest decimal at " + str(place))
+  assert.eq(round-decimal(top, -place, "half-up"), top)
+  assert.eq(round-decimal(top, -place, "half-even"), top)
+}
+
+// --- a quotient that cannot be held exactly ---
+
+// The answer is measured in units of the scale, and at a far place that
+// quotient needs more than the 28 fractional digits a decimal holds. The
+// division rounds, and a value just above a tie then reads as one.
+//
+// Typst's own rounding reads it the same way, so both modes answer alike and
+// half-even is not the odd one out. The true answer is 1e28 and both give zero.
+// Filed as `fn2a`; pinned here so a change to either mode is seen.
+#let past-a-tie = decimal("5000000000000000000000000000.5")
+#assert.eq(past-a-tie / calc.pow(decimal(10), 28), decimal("0.5"))
+#assert.eq(round-decimal(past-a-tie, -28, "half-even"), decimal("0"))
+#assert.eq(round-decimal(past-a-tie, -28, "half-up"), decimal("0"))
+
 // --- the directive, which is the path a caller takes ---
 
 // The reproduction the defect was filed with went through the formatter, and
