@@ -57,7 +57,13 @@
   scope: "format-date",
   value => {
     if type(value) != datetime and type(value) != str {
-      fail-type("format-date", "value", value, "a datetime or an ISO-8601 string")
+      fail-type(
+        "format-date",
+        "value",
+        value,
+        "a datetime or an ISO-8601 string",
+        hint: "Write \"2026-08-26\" in the data, or datetime(year: 2026, month: 8, day: 26).",
+      )
     }
     let moment = to-datetime(value)
     if moment == none {

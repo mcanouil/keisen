@@ -21,7 +21,13 @@
 
 #let table-style(properties, locations: none) = {
   if type(properties) != dictionary {
-    fail-type("table-style", "style", properties, "a dictionary built with style()")
+    fail-type(
+      "table-style",
+      "style",
+      properties,
+      "a dictionary built with style()",
+      hint: "Write table-style(style(fill: aqua)).",
+    )
   }
   (
     kind: "style",

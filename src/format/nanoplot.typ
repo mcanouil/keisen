@@ -51,7 +51,13 @@
   domain: auto,
 ) = {
   if type(plot) != function {
-    fail-type("format-nanoplot", "plot", plot, "a renderer function")
+    fail-type(
+      "format-nanoplot",
+      "plot",
+      plot,
+      "a renderer function",
+      hint: "Pass nanoplot-line, nanoplot-bar, nanoplot-points, or a renderer of the same shape.",
+    )
   }
   // A fractional width would have to be resolved inside the cell with layout(),
   // which forbids page breaking there; em and pt need no such thing.

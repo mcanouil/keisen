@@ -22,10 +22,11 @@
   panic(message(scope, problem, value: value, hint: hint))
 }
 
-// The expected shape is the problem, so a hint is what to write instead. It is
-// optional because naming the shape is enough where the caller is already
-// holding the value the shape describes; it is not, where the reader is meeting
-// the package for the first time.
+// A hint says what to write instead.
+// Give one wherever naming the type does not show how to write one.
+// An integer shows itself, so `decimals` and `significant` carry no hint.
+// A selector, a renderer, a style, a row store and a date do not, so each of
+// those names an example.
 #let fail-type(scope, name, value, expected, hint: none) = {
   fail(scope, name + " must be " + expected, value: value, hint: hint)
 }
