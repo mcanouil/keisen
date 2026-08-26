@@ -22,8 +22,12 @@
   panic(message(scope, problem, value: value, hint: hint))
 }
 
-#let fail-type(scope, name, value, expected) = {
-  fail(scope, name + " must be " + expected, value: value)
+// The expected shape is the problem, so a hint is what to write instead. It is
+// optional because naming the shape is enough where the caller is already
+// holding the value the shape describes; it is not, where the reader is meeting
+// the package for the first time.
+#let fail-type(scope, name, value, expected, hint: none) = {
+  fail(scope, name + " must be " + expected, value: value, hint: hint)
 }
 
 #let fail-enum(scope, name, value, valid) = {
