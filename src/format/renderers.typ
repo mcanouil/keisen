@@ -53,8 +53,8 @@
 // supplies the contents, and runs inside the context this opens, so `_ink`
 // resolves `text.fill` there as it would written out here.
 #let _canvas(numbers, domain, width, height, draw) = {
+  if numbers.len() == 0 { return box(width: width, height: height) }
   let values = _numbers(numbers)
-  if values.len() == 0 { return box(width: width, height: height) }
   context {
     let (low, high) = _range(values, domain)
     box(
@@ -125,8 +125,8 @@
 // instead, because a trend is about shape rather than magnitude.
 #let nanoplot-bar(numbers, domain: none, width: 4em, height: 0.8em, fill: auto, gap: 30%) = {
   // A series with no readings has no bars for the gap to leave room between, so
-  // it answers with the empty box every renderer answers with. `_numbers` keeps
-  // every element it is given, so an empty series is empty here too.
+  // it answers with the empty box every renderer answers with, and the gap goes
+  // unread. `_canvas` asks the same question of the same value.
   if numbers.len() != 0 {
     check(
       gap >= 0% and gap < 100%,

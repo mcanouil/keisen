@@ -93,4 +93,4 @@
 // with no bars in it draws the same empty box as any other empty series.
 // tests/expect-fail/nanoplot-bar-bad-gap.typ holds the other half: the same gap
 // on a series with bars is refused.
-#assert.eq(type(nanoplot-bar((), gap: 200%, width: 4em, height: 0.8em)), content)
+#assert.eq(nanoplot-bar((), gap: 200%, width: 4em, height: 0.8em), box(width: 4em, height: 0.8em))
