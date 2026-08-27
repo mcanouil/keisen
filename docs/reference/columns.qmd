@@ -10,10 +10,14 @@ description: "Keisen's column directives: columns-label, columns-align, columns-
 | `columns-align(alignment, columns: auto)` | Sets alignment, direction-relative (`start`, `end`) or absolute. A name is held to the table; `auto` and a predicate filter the columns the table ends up with. |
 | `columns-width(widths)` | A dictionary of column name to length, fraction, or `auto`. |
 | `columns-hide(..columns)` | Removes columns from the table; they stay readable by predicates and formatters. |
-| `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. |
+| `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. The anchor names one column. |
 | `columns-combine(into, from, pattern, label: auto, hide-sources: true)` | Builds one column from several. `pattern` takes one argument per source, in `from` order. |
 
 : Column directives {.striped .hover tbl-colwidths="[45,55]"}
+
+`columns-hide` and `columns-move` take one column name per argument, and an array gives the names it holds.
+`columns-hide(("units", "price"))` says what `columns-hide("units", "price")` says.
+The `before` and `after` anchors of `columns-move` name one column each, so neither reads an array.
 
 `columns-combine` receives the **formatted** content of its sources, not their raw values, which is what makes `(estimate, error) => [#estimate (#error)]` read the way it is written: each source keeps whatever its own `format-*` directive gave it.
 The combined column takes the place of the first of its sources, and the sources are hidden rather than dropped, so predicates and formatters can still read them; `hide-sources: false` shows them as well.

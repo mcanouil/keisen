@@ -10,7 +10,7 @@
 ///! the hints are not, since what to do about a hidden column depends on what
 ///! the directive was trying to do with it.
 
-#import "errors.typ": check, check-column
+#import "errors.typ": check, check-column, column-name
 
 #let check-addressable(
   name,
@@ -24,13 +24,13 @@
   check(
     name not in hidden,
     scope,
-    "column " + name + " is hidden",
+    "column " + column-name(name) + " is hidden",
     hint: hidden-hint,
   )
   check(
     name not in stub,
     scope,
-    "column " + name + " is in the stub",
+    "column " + column-name(name) + " is in the stub",
     hint: stub-hint,
   )
   check-column(columns, scope, name)

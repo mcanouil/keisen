@@ -6,18 +6,35 @@
   labels: pairs.named(),
 )
 
+// Names are written one per argument, and an array contributes the names it
+// holds, so `columns-hide(("units", "price"))` says what `columns-hide("units",
+// "price")` says. Every `columns:` selector takes an array and so does the
+// serialised `hidden` key, so an array is the natural thing to write here. It
+// used to be neither read nor refused: it reached the error builder, which
+// added it to a string and died on a line of this package.
+#let _positional-names(arguments) = {
+  let names = ()
+  for argument in arguments {
+    if type(argument) == array { names += argument } else { names.push(argument) }
+  }
+  names
+}
+
 // Hidden columns leave the rendered table but stay in the data, so predicates
 // and formatters can still read them.
 #let columns-hide(..columns) = (
   kind: "hide",
-  columns: columns.pos(),
+  columns: _positional-names(columns.pos()),
 )
 
 // Reordering is recorded here and resolved in src/spec/order.typ once every
 // directive has landed, so a move reads the same wherever it is written.
+//
+// `before` and `after` name one column rather than a list, so neither reads an
+// array the way the positional names do.
 #let columns-move(..columns, before: none, after: none) = (
   kind: "move",
-  columns: columns.pos(),
+  columns: _positional-names(columns.pos()),
   before: before,
   after: after,
 )

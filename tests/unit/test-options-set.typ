@@ -131,6 +131,7 @@
   source("../probe/table-rules-with-notes.typ"),
   source("../probe/table-rules.typ"),
   source("../probe/theme-borders.typ"),
+  source("test-column-name-arguments.typ"),
   source("test-columns-align.typ"),
   source("test-columns-combine.typ"),
   source("test-direction.typ"),
