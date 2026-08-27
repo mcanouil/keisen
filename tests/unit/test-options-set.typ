@@ -51,6 +51,8 @@
 // case where the key opens the text.
 // Whether a source configures options at all, read once per file rather than
 // once per key: the answer is the same for all forty-six of them.
+// `option_setters` in tools/check.sh holds the sources list below to the files
+// these four markers find, so it spells them the same way. Edit the two together.
 #let configures(text) = (
   text.contains("table-options(")
     or text.contains("build-spec(")

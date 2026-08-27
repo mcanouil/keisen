@@ -193,14 +193,27 @@ option_scan() {
   # ../../ leaves tests, ../ leaves tests/unit, and a bare name stays in it.
   # The bare-name rule runs last and only on a path that carries no separator,
   # so it cannot prefix what the two rules above have already rewritten.
+  # Both sides are allowed to come back empty rather than killing the run: a
+  # grep that matches nothing exits 1, and under `set -e` with `pipefail` the
+  # assignment would end the script with no message and no named check. An empty
+  # side is a broken scan, so it is reported as one below.
   local listed found missing
   listed="$(
     grep -oE 'source\("[^"]+"\)' "${scanner}" |
       sed -E 's/^source\("//; s/"\)$//; s@^\.\./\.\./@@; s@^\.\./@tests/@' |
       sed -E '/\//!s@^@tests/unit/@' |
       sort
-  )"
-  found="$("$@" | sort)"
+  )" || true
+  found="$("$@" | sort)" || true
+
+  if [[ -z "${listed}" || -z "${found}" ]]; then
+    printf 'option scans: %s has nothing to compare\n' "${scanner}" >&2
+    printf '  the sources list holds %d paths and the tree walk found %d\n' \
+      "$(printf '%s' "${listed}" | grep -c . || true)" \
+      "$(printf '%s' "${found}" | grep -c . || true)" >&2
+    fail_check "option scans"
+    return
+  fi
 
   missing="$(comm -13 <(printf '%s\n' "${listed}") <(printf '%s\n' "${found}"))"
   if [[ -n "${missing}" ]]; then
@@ -216,17 +229,24 @@ option_scan() {
   printf 'scans:    %s ok\n' "${label}"
 }
 
-# A reader is a file that calls `option`. src/theme/options.typ defines it, so it
+# A reader is a file that calls `option` or `setting`, which are the two shapes
+# `read-by` in the scanner accepts. src/theme/options.typ defines `option`, so it
 # is the one file the grep names and the list does not want.
 option_readers() {
-  grep -rlE '(^|[^-[:alnum:]_])option\(' src --include='*.typ' |
+  grep -rlE '(^|[^-[:alnum:]_])(option|setting)\(' src --include='*.typ' |
     grep -v '^src/theme/options.typ$'
 }
 
-# The setters grep is the one written into the scanner it holds, which names the
-# scanner itself. That file is left out there on purpose, so it is left out here.
+# The markers `configures` in the scanner reads, spelled the way it spells them:
+# it matches `theme` and `options` followed by optional space and a colon, so a
+# grep holding it to the bare colon would leave a spaced one unlisted. Edit the
+# two together.
+#
+# The grep names the scanner itself, which is left out there on purpose and so is
+# left out here.
 option_setters() {
-  grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples --include='*.typ' |
+  grep -rlE 'table-options\(|build-spec\(|theme[[:space:]]*:|options[[:space:]]*:' \
+    tests examples --include='*.typ' |
     grep -v '^tests/unit/test-options-set.typ$'
 }
 

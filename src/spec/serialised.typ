@@ -19,14 +19,20 @@
 ///! `align` of a style is a property of `style()` rather than the directive
 ///! `columns-align`.
 ///!
-///! Eight keys still report under a shorter name of their own. Six of them name
-///! one public directive and could take it: `header`, `stub`, `row-group`,
-///! `combine`, `spanner` and `footnote` resolve into `table-header`,
-///! `table-stub`, `table-row-group`, `columns-combine`, `table-spanner` and
-///! `table-footnote`. Two answer to a pair rather than to one directive, so
-///! there is no single name to take: `summary` covers `summary-rows` and
+///! Eight keys still report under a shorter name of their own, and they are
+///! recorded here rather than moved because moving them is a change to eight
+///! messages and the fixtures that pin them, filed as its own piece of work.
+///!
+///! Six of them name one public directive and would take it: `header`, `stub`,
+///! `row-group`, `combine`, `spanner` and `footnote` resolve into
+///! `table-header`, `table-stub`, `table-row-group`, `columns-combine`,
+///! `table-spanner` and `table-footnote`.
+///!
+///! Two answer to a pair rather than to one directive, so the rule gives them no
+///! single name to take: `summary` covers `summary-rows` and
 ///! `grand-summary-rows`, and `substitution` covers `substitute-missing` and
-///! `substitute-zero`.
+///! `substitute-zero`. Which name those two should carry is a decision of its
+///! own.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
