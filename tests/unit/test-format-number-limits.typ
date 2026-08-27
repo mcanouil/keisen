@@ -40,15 +40,28 @@
 
 // --- half-even beyond the integer range ---
 
-// The tie test goes through calc.trunc, which is an int, so a shifted value
-// beyond the integer range takes plain rounding instead.
-//
-// The value below does sit on a tie, and half-even owes it ..890. What is
-// pinned here is the known limitation, not the right answer: the fallback gives
-// the half-up result. It is filed, and this assertion changes when it closes.
+// The tie test used to go through calc.trunc, which is an int, so a shifted
+// value beyond the integer range took plain rounding and answered half-up. Both
+// halves of the test are read in decimal now, so the size of the value says
+// nothing about which answer it gets.
 #assert.eq(
   round-decimal(decimal("12345678901234567890.5"), 0, "half-even"),
-  decimal("12345678901234567891"),
+  decimal("12345678901234567890"),
+)
+#assert.eq(
+  round-decimal(decimal("12345678901234567891.5"), 0, "half-even"),
+  decimal("12345678901234567892"),
+)
+#assert.eq(
+  round-decimal(decimal("-12345678901234567890.5"), 0, "half-even"),
+  decimal("-12345678901234567890"),
+)
+
+// The reproduction the defect was filed with: the shift lands one unit past the
+// largest integer, which is where the int test gave up.
+#assert.eq(
+  round-decimal(decimal("922337203685477580.85"), 1, "half-even"),
+  decimal("922337203685477580.8"),
 )
 #assert.eq(round-decimal(decimal("2.5"), 0, "half-even"), decimal("2"))
 
@@ -127,6 +140,39 @@
 // A tie at a place the shift still reaches is unaffected.
 #assert.eq(round-decimal(decimal("0.5"), 0, "half-even"), decimal("0"))
 #assert.eq(round-decimal(decimal("1.5"), 0, "half-even"), decimal("2"))
+
+// --- the range of the answer, at every place above the point ---
+
+// A place above the point asks for a multiple of ten, and the largest one a
+// decimal holds is smaller than the largest decimal. Both modes measure the
+// answer before taking it, and the two expect-fail fixtures hold the refusal at
+// the far end. What is swept here is the passing side, which a bound that was
+// too strict would take away: the largest multiple at each place must come back
+// unchanged, since a multiple of the scale is already rounded to it.
+//
+// The multiple is built from the digits of `largest` rather than by dividing,
+// which would need a whole number to truncate and put the 64-bit range back in.
+#for place in range(1, 29) {
+  let digits = str(largest)
+  let top = decimal(digits.slice(0, digits.len() - place) + "0" * place)
+  assert(top <= largest, message: "the multiple ran past the largest decimal at " + str(place))
+  assert.eq(round-decimal(top, -place, "half-up"), top)
+  assert.eq(round-decimal(top, -place, "half-even"), top)
+}
+
+// --- a quotient that cannot be held exactly ---
+
+// The answer is measured in units of the scale, and at a far place that
+// quotient needs more than the 28 fractional digits a decimal holds. The
+// division rounds, and a value just above a tie then reads as one.
+//
+// Typst's own rounding reads it the same way, so both modes answer alike and
+// half-even is not the odd one out. The true answer is 1e28 and both give zero.
+// Filed as `fn2a`; pinned here so a change to either mode is seen.
+#let past-a-tie = decimal("5000000000000000000000000000.5")
+#assert.eq(past-a-tie / calc.pow(decimal(10), 28), decimal("0.5"))
+#assert.eq(round-decimal(past-a-tie, -28, "half-even"), decimal("0"))
+#assert.eq(round-decimal(past-a-tie, -28, "half-up"), decimal("0"))
 
 // --- the directive, which is the path a caller takes ---
 
