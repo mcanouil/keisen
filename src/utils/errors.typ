@@ -54,6 +54,11 @@
 // Every directive that names a column reports an unknown one the same way. The
 // hint is built inside the failing branch, so listing the known columns costs
 // nothing on the path where the name is fine.
+//
+// The list is written through `column-name` for the same reason the problem
+// clause is: what a table knows about is not always a string. The stub carries
+// whatever name it was given, and alignment resolves before the folded spec is
+// validated, so a stub named by an integer reaches this hint first.
 #let check-column(known, scope, name) = {
   if name in known { return }
   fail(
@@ -62,7 +67,7 @@
     hint: if known.len() == 0 {
       "The table has no columns."
     } else {
-      "Known columns: " + known.join(", ") + "."
+      "Known columns: " + known.map(column-name).join(", ") + "."
     },
   )
 }
