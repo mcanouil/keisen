@@ -7,7 +7,7 @@
 ///! full, so the digits are always there to read.
 
 #import "../utils/errors.typ": fail, fail-enum
-#import "number.typ": format-family, format-value, resolve-decimals, unbounded
+#import "number.typ": convention, format-family, format-value, resolve-decimals, unbounded
 
 // A decimal holds 28 to 29 significant digits, and a mantissa needs far fewer,
 // so the digit run is cut to what can be constructed.
@@ -134,10 +134,10 @@
       // group and no separator to choose.
       grouping: none,
       group-separator: "",
-      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
+      decimal-separator: convention(decimal-separator, conventions.decimal),
       scale: 1,
       sign: sign,
-      rounding: if rounding == auto { conventions.rounding } else { rounding },
+      rounding: convention(rounding, conventions.rounding),
       negative-zero: negative-zero,
     )),
   )

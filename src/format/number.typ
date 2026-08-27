@@ -287,6 +287,15 @@
   scope: scope,
 )
 
+// What a directive was given, or what the theme says when it was given `auto`.
+// Written out at eight sites across this file, `scientific.typ` and `bytes.typ`,
+// which is enough of the same sentence to name once.
+//
+// The fallback is evaluated whether or not it is used, which costs nothing: a
+// convention is a field of the dictionary `formatter-for` builds, and reading it
+// neither fails nor computes anything.
+#let convention(given, fallback) = if given == auto { fallback } else { given }
+
 // A directive whose separators or rounding may be `auto`, meaning the theme
 // decides.
 //
@@ -439,11 +448,11 @@
         decimals: places,
         significant: significant,
         grouping: grouping,
-        group-separator: if group-separator == auto { conventions.group } else { group-separator },
-        decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
+        group-separator: convention(group-separator, conventions.group),
+        decimal-separator: convention(decimal-separator, conventions.decimal),
         scale: scale,
         sign: sign,
-        rounding: if rounding == auto { conventions.rounding } else { rounding },
+        rounding: convention(rounding, conventions.rounding),
         negative-zero: negative-zero,
       ),
     ),
