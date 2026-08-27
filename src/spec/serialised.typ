@@ -30,6 +30,12 @@
 ///!
 ///! No key reports under a name of its own invention. A scope here is a public
 ///! directive, or it is `display-table` with the key said in the problem.
+///!
+///! `predicate` is the one scope outside that rule, and it is not a key. A row
+///! predicate is a value the subset spells out, `(column: .., op: .., value:
+///! ..)`, where a Typst caller writes a closure and so has no name to share.
+///! The scope names what the reader wrote, which the reference calls a
+///! predicate too.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
