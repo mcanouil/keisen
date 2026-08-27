@@ -181,7 +181,7 @@
 }
 
 #let _check-notes(scope, selector, count) = {
-  for position in named(selector, int) {
+  for position in named(selector, int, field: "notes") {
     check(
       position >= 0 and position < count,
       scope,
@@ -344,7 +344,7 @@
     _check-notes("cells-source-notes", location.notes, spec.source-notes.len())
     spec.source-notes
       .enumerate()
-      .filter(((index, note)) => matches-row(location.notes, (_index: index)))
+      .filter(((index, note)) => matches-row(location.notes, (_index: index), field: "notes"))
       .map(((index, note)) => _address(PARTS.source-notes, row: index))
   } else if part == PARTS.footnotes {
     // How many rows the footer prints is settled by mark assignment, which
@@ -360,7 +360,7 @@
     }
     _check-notes("cells-footnotes", location.notes, spec.footnote-rows)
     range(spec.footnote-rows)
-      .filter(position => matches-row(location.notes, (_index: position)))
+      .filter(position => matches-row(location.notes, (_index: position), field: "notes"))
       .map(position => _address(PARTS.footnotes, row: position))
   } else {
     fail("locations", "unknown location part", value: part)
