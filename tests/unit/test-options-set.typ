@@ -156,6 +156,7 @@
   source("test-summaries-precision.typ"),
   source("test-summaries.typ"),
   source("test-summary-format.typ"),
+  source("test-summary-label-alignment.typ"),
   source("test-summary-locations.typ"),
   source("test-theme-rounding.typ"),
   source("../visual/combined.typ"),
