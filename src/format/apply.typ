@@ -103,8 +103,13 @@
 // A value that is neither the kind, an array, `auto` nor a predicate is refused
 // here rather than left to the matchers. They see one candidate at a time, so a
 // table with no notes, no rows or no columns never ran them and the selector
-// went unread: whether a selector is usable does not depend on what the table
+// went unread. Whether a selector is usable does not depend on what the table
 // turned out to hold, and an empty part is where a caller has least to go on.
+//
+// That holds for what is read here, which is every location selector and the
+// `columns` of a format, a substitution and a colour directive. The `rows` of
+// those three is still read one row at a time by `matches-row` alone, and
+// `table-row-group` writes its own reading of the same idea, both filed.
 //
 // The whole selector is reported rather than the one element, since that is what
 // was written, and the message is the one the matchers give. `field` is carried
