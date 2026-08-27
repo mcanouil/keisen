@@ -141,8 +141,18 @@
       hint: "Give a percentage of the bar pitch below 100%.",
     )
   }
+  // Two ends of one range, said apart: a gap at or above the pitch leaves no bar
+  // to draw, and a gap below zero would draw each bar over its neighbours. One
+  // message covering both described neither.
   check(
-    gap >= 0% and gap < 100%,
+    gap >= 0%,
+    "nanoplot-bar",
+    "gap cannot be negative",
+    value: gap,
+    hint: "A gap is the share of the bar pitch left empty between the bars.",
+  )
+  check(
+    gap < 100%,
     "nanoplot-bar",
     "gap must leave the bars some width",
     value: gap,
