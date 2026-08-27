@@ -279,7 +279,10 @@ option_scan_self_test() {
   _walk_listed() { printf 'src/a.typ\ntests/unit/b.typ\n'; }
   _walk_extra() { printf 'src/a.typ\nsrc/c.typ\ntests/unit/b.typ\n'; }
   _walk_empty() { return 1; }
-  _walk_broken() { printf 'src/a.typ\n'; return 2; }
+  _walk_broken() {
+    printf 'src/a.typ\n'
+    return 2
+  }
 
   local passed=0 total=0 out
   expect() {
