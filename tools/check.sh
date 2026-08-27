@@ -193,14 +193,39 @@ option_scan() {
   # ../../ leaves tests, ../ leaves tests/unit, and a bare name stays in it.
   # The bare-name rule runs last and only on a path that carries no separator,
   # so it cannot prefix what the two rules above have already rewritten.
-  local listed found missing
+  # Neither side may kill the run: a grep that matches nothing exits 1, and under
+  # `set -e` with `pipefail` the assignment would end the script with no message
+  # and no named check. Only that status is taken for "nothing matched"; anything
+  # above it is the walk itself failing, which can leave partial output on
+  # stdout, and a truncated list would otherwise read as a clean pass.
+  local listed found missing status
   listed="$(
     grep -oE 'source\("[^"]+"\)' "${scanner}" |
       sed -E 's/^source\("//; s/"\)$//; s@^\.\./\.\./@@; s@^\.\./@tests/@' |
       sed -E '/\//!s@^@tests/unit/@' |
       sort
-  )"
-  found="$("$@" | sort)"
+  )" && status=0 || status=$?
+  if [[ ${status} -gt 1 ]]; then
+    printf 'option scans: reading the sources of %s failed, exit %d\n' "${scanner}" "${status}" >&2
+    fail_check "option scans"
+    return 1
+  fi
+
+  found="$("$@" | sort)" && status=0 || status=$?
+  if [[ ${status} -gt 1 ]]; then
+    printf 'option scans: the tree walk for %s failed, exit %d\n' "${label}" "${status}" >&2
+    fail_check "option scans"
+    return 1
+  fi
+
+  if [[ -z "${listed}" || -z "${found}" ]]; then
+    printf 'option scans: %s has nothing to compare\n' "${scanner}" >&2
+    printf '  the sources list holds %d paths and the tree walk found %d\n' \
+      "$(printf '%s' "${listed}" | grep -c . || true)" \
+      "$(printf '%s' "${found}" | grep -c . || true)" >&2
+    fail_check "option scans"
+    return 1
+  fi
 
   missing="$(comm -13 <(printf '%s\n' "${listed}") <(printf '%s\n' "${found}"))"
   if [[ -n "${missing}" ]]; then
@@ -210,26 +235,86 @@ option_scan() {
       printf '  %s\n' "${path}" >&2
     done <<<"${missing}"
     fail_check "option scans"
-    return
+    return 1
   fi
 
   printf 'scans:    %s ok\n' "${label}"
 }
 
-# A reader is a file that calls `option`. src/theme/options.typ defines it, so it
+# A reader is a file that calls `option` or `setting`, which are the two shapes
+# `read-by` in the scanner accepts. src/theme/options.typ defines `option`, so it
 # is the one file the grep names and the list does not want.
 option_readers() {
-  grep -rlE '(^|[^-[:alnum:]_])option\(' src --include='*.typ' |
+  grep -rlE '(^|[^-[:alnum:]_])(option|setting)\(' src --include='*.typ' |
     grep -v '^src/theme/options.typ$'
 }
 
-# The setters grep is the one written into the scanner it holds, which names the
-# scanner itself. That file is left out there on purpose, so it is left out here.
+# The markers `configures` in the scanner reads, spelled the way it spells them:
+# it matches `theme` and `options` followed by optional space and a colon, so a
+# grep holding it to the bare colon would leave a spaced one unlisted. Edit the
+# two together.
+#
+# The grep names the scanner itself, which is left out there on purpose and so is
+# left out here.
 option_setters() {
-  grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples --include='*.typ' |
+  grep -rlE 'table-options\(|build-spec\(|theme[[:space:]]*:|options[[:space:]]*:' \
+    tests examples --include='*.typ' |
     grep -v '^tests/unit/test-options-set.typ$'
 }
 
+# Every answer the scan can give, against a tree written for the purpose. A guard
+# nothing exercises is a guard that passes because its pattern stopped matching,
+# which is the reason the boundary, the version and the asset checks each run
+# against their own fixtures too.
+#
+# Each case runs inside a command substitution, which is a subshell, so the
+# failures it reports there are read as text and do not count against this run.
+option_scan_self_test() {
+  local dir="${OUT_DIR}/option-scan-self-test"
+  rm -rf "${dir}"
+  mkdir -p "${dir}"
+  printf 'source("../../src/a.typ"),\nsource("b.typ"),\n' >"${dir}/listing.typ"
+  printf '// no sources here\n' >"${dir}/nothing.typ"
+
+  _walk_listed() { printf 'src/a.typ\ntests/unit/b.typ\n'; }
+  _walk_extra() { printf 'src/a.typ\nsrc/c.typ\ntests/unit/b.typ\n'; }
+  _walk_empty() { return 1; }
+  _walk_broken() {
+    printf 'src/a.typ\n'
+    return 2
+  }
+
+  local passed=0 total=0 out
+  expect() {
+    local wanted="$1" name="$2" scanner="$3" walker="$4"
+    total=$((total + 1))
+    out="$(option_scan "${name}" "${scanner}" "${walker}" 2>&1)" || true
+    if [[ "${out}" == *"${wanted}"* ]]; then
+      passed=$((passed + 1))
+    else
+      printf 'option scans self-test: %s did not say %s\n' "${name}" "${wanted}" >&2
+      printf '  it said: %s\n' "${out}" >&2
+    fi
+  }
+
+  # A list naming every path the walk finds.
+  expect "ok" "complete" "${dir}/listing.typ" _walk_listed
+  # A path in the tree and not in the list, which is the failure this exists for.
+  expect "src/c.typ" "stale" "${dir}/listing.typ" _walk_extra
+  # A walk that matches nothing, which `set -e` would otherwise end the run on.
+  expect "has nothing to compare" "empty-walk" "${dir}/listing.typ" _walk_empty
+  # A list that reads no sources, the same failure from the other side.
+  expect "has nothing to compare" "empty-list" "${dir}/nothing.typ" _walk_listed
+  # A walk that fails rather than finding nothing, with partial output on stdout.
+  expect "the tree walk for broken failed, exit 2" "broken" "${dir}/listing.typ" _walk_broken
+
+  if [[ ${passed} -ne ${total} ]]; then
+    fail_check "option scans self-test"
+  fi
+  printf 'scans:    self-test %d/%d\n' "${passed}" "${total}"
+}
+
+option_scan_self_test
 option_scan "readers" tests/unit/test-options-read.typ option_readers
 option_scan "setters" tests/unit/test-options-set.typ option_setters
 

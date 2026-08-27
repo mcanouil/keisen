@@ -51,6 +51,8 @@
 // case where the key opens the text.
 // Whether a source configures options at all, read once per file rather than
 // once per key: the answer is the same for all forty-six of them.
+// `option_setters` in tools/check.sh holds the sources list below to the files
+// these four markers find, so it spells them the same way. Edit the two together.
 #let configures(text) = (
   text.contains("table-options(")
     or text.contains("build-spec(")
@@ -96,11 +98,11 @@
 // Every test and example that configures options at all, each read on its own so
 // no pattern matches across the boundary between two files. Typst cannot walk a
 // directory, so the list is explicit. It is every file the markers above match,
-// which this finds:
+// and `option_setters` in tools/check.sh is the one place that walk is written:
+// it holds this list to what the markers find, so the spelling lives there
+// rather than being copied here to go stale.
 //
-//   grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples
-//
-// That grep names this file too, and it is left out on purpose: it sets no
+// That walk names this file too, and it is left out on purpose: it sets no
 // option outside the strings it tests `sets` against, and reading itself would
 // trip its own guard against `://`, which it carries as a literal.
 //
