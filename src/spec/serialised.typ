@@ -10,13 +10,23 @@
 ///! expression language nobody wanted to write.
 ///!
 ///! A failure here names the directive the key resolves into, so a reader can
-///! look the name up: `combines` gives `combine`, `colours` gives `data-colour`,
-///! and `widths`, `moves` and `alignments` give `columns-width`, `columns-move`
-///! and `columns-align`. Where no one directive answers to the key, the scope
-///! becomes `display-table` and the key opens the problem instead: `format`,
-///! `style` and `inset` each resolve into a family or into a property of one,
-///! and the `align` of a style is a property of `style()` rather than the
-///! directive `columns-align`.
+///! look the name up: `colours` gives `data-colour`, and `widths`, `moves` and
+///! `alignments` give `columns-width`, `columns-move` and `columns-align`.
+///!
+///! Where no one directive answers to the key, the scope becomes `display-table`
+///! and the key opens the problem instead. `format`, `style` and `inset` are
+///! there: each resolves into a family or into a property of one, and the
+///! `align` of a style is a property of `style()` rather than the directive
+///! `columns-align`.
+///!
+///! Eight keys still report under a shorter name of their own. Six of them name
+///! one public directive and could take it: `header`, `stub`, `row-group`,
+///! `combine`, `spanner` and `footnote` resolve into `table-header`,
+///! `table-stub`, `table-row-group`, `columns-combine`, `table-spanner` and
+///! `table-footnote`. Two answer to a pair rather than to one directive, so
+///! there is no single name to take: `summary` covers `summary-rows` and
+///! `grand-summary-rows`, and `substitution` covers `substitute-missing` and
+///! `substitute-zero`.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
