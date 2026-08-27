@@ -44,6 +44,7 @@
 #import "../format/number.typ": format-integer, format-number
 #import "../format/percent.typ": format-percent
 #import "../format/scientific.typ": format-scientific
+#import "../locations.typ": PARTS, TITLE-PARTS
 #import "../parts/substitutions.typ": is-missing
 #import "../parts/summaries.typ": (
   aggregate-count, aggregate-max, aggregate-mean, aggregate-median, aggregate-min,
@@ -509,7 +510,7 @@
 
 #let _location(descriptor) = (
   kind: "location",
-  part: descriptor.at("part", default: "body"),
+  part: descriptor.at("part", default: PARTS.body),
   columns: _selector(descriptor.at("columns", default: auto)),
   rows: resolve-predicate(_selector(descriptor.at("rows", default: auto))),
   groups: _selector(descriptor.at("groups", default: auto)),
@@ -523,7 +524,7 @@
   },
   notes: _selector(descriptor.at("notes", default: auto)),
   parts: {
-    let given = descriptor.at("parts", default: ("title", "subtitle"))
+    let given = descriptor.at("parts", default: TITLE-PARTS)
     if type(given) == array { given } else { (given,) }
   },
 )

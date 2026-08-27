@@ -1,5 +1,7 @@
 ///! Footnotes with marks, and source notes.
 
+#import "../locations.typ": PARTS
+
 // A source note carries no mark; it explains the table as a whole.
 #let table-source-note(note) = (
   kind: "source-note",
@@ -18,17 +20,22 @@
 // Marks in reading order: header, then column labels and spanners, then the
 // body in display order, then the footer. Identical notes share one mark, so
 // repeating the same caveat does not renumber the table.
+//
+// Named from PARTS, so an order naming a part the vocabulary does not have is a
+// compile error rather than a mark nothing ever reaches. `PARTS.footnotes` is
+// the one part left out: the footer rows are added to the spec after the marks
+// are assigned, so a footnote on a footnote has nothing to number.
 #let MARK-ORDER = (
-  "title",
-  "column-spanners",
-  "column-labels",
-  "stubhead",
-  "row-groups",
-  "stub",
-  "body",
-  "summary",
-  "grand-summary",
-  "source-notes",
+  PARTS.title,
+  PARTS.column-spanners,
+  PARTS.column-labels,
+  PARTS.stubhead,
+  PARTS.row-groups,
+  PARTS.stub,
+  PARTS.body,
+  PARTS.summary,
+  PARTS.grand-summary,
+  PARTS.source-notes,
 )
 
 #let numbering-of(style) = {
