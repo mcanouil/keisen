@@ -106,10 +106,11 @@
 // went unread. Whether a selector is usable does not depend on what the table
 // turned out to hold, and an empty part is where a caller has least to go on.
 //
-// That holds for what is read here, which is every location selector and the
-// `columns` of a format, a substitution and a colour directive. The `rows` of
-// those three is still read one row at a time by `matches-row` alone, and
-// `table-row-group` writes its own reading of the same idea, both filed.
+// That holds for every column selector a directive carries and for every
+// location selector. The `rows` of a format, a substitution and a colour
+// directive is the one left: it is read a row at a time by `matches-row` alone,
+// as is `table-row-group`, which writes its own reading of this idea. Both are
+// filed rather than swept in here.
 //
 // The whole selector is reported rather than the one element, since that is what
 // was written, and the message is the one the matchers give. `field` is carried

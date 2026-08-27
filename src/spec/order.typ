@@ -10,7 +10,7 @@
 ///! Ordering now happens here, once, after every directive has been recorded,
 ///! so a move sees the columns the table actually has.
 
-#import "../format/apply.typ": matches-column, named
+#import "../format/apply.typ": fail-selector, matches-column, named
 #import "../parts/stub.typ": stub-column-names
 #import "../utils/columns.typ": check-addressable
 #import "../utils/errors.typ": check, check-column
@@ -123,6 +123,13 @@
 
   for directive in out.alignments {
     let spelled = type(directive.columns) in (str, array)
+    // A selector that neither names nor filters is read before the filter runs.
+    // The filter sees one column at a time, so a table whose every column is
+    // hidden ran it against nothing and the selector went unread, which is the
+    // case `named` refuses on the spelled side.
+    if not spelled and directive.columns != auto and type(directive.columns) != function {
+      fail-selector("columns", directive.columns)
+    }
     let names = if spelled {
       named(directive.columns, str)
     } else {
