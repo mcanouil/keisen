@@ -10,12 +10,13 @@
 ///! expression language nobody wanted to write.
 ///!
 ///! A failure here names the directive the key resolves into, so a reader can
-///! look the name up: `combines` gives `combine`, and `colours` gives
-///! `data-colour`. Where that name is taken by something else, a public
-///! directive that cannot fail this way or a Typst built-in, the scope becomes
-///! `display-table` and the key opens the problem instead: `format`, `style`,
-///! `align` and `inset`. A few keys still carry a shorter name of their own,
-///! `width` and `move` among them, which is not yet either of the two.
+///! look the name up: `combines` gives `combine`, `colours` gives `data-colour`,
+///! and `widths`, `moves` and `alignments` give `columns-width`, `columns-move`
+///! and `columns-align`. Where no one directive answers to the key, the scope
+///! becomes `display-table` and the key opens the problem instead: `format`,
+///! `style` and `inset` each resolve into a family or into a property of one,
+///! and the `align` of a style is a property of `style()` rather than the
+///! directive `columns-align`.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -656,7 +657,7 @@
   }
 
   for descriptor in serialised.at("moves", default: ()) {
-    _keys(descriptor, ("columns", "before", "after"), "move")
+    _keys(descriptor, ("columns", "before", "after"), "columns-move")
     let columns = descriptor.at("columns", default: ())
     directives.push((
       kind: "move",
@@ -685,23 +686,23 @@
   let widths = serialised.at("widths", default: (:))
   if widths.len() > 0 {
     let mapped = (:)
-    for (name, given) in widths { mapped.insert(name, _length(given, "width")) }
+    for (name, given) in widths { mapped.insert(name, _length(given, "columns-width")) }
     directives.push((kind: "width", widths: mapped))
   }
 
   for descriptor in serialised.at("alignments", default: ()) {
-    _keys(descriptor, ("alignment", "columns"), "display-table", subject: "align")
+    _keys(descriptor, ("alignment", "columns"), "columns-align")
     if "alignment" not in descriptor {
       fail(
-        "display-table",
-        "align names no alignment",
+        "columns-align",
+        "no alignment named",
         value: descriptor,
         hint: "Name one of " + ALIGNMENTS.keys().join(", ") + ".",
       )
     }
     directives.push((
       kind: "align",
-      alignment: _alignment(descriptor.alignment, "display-table", "alignment"),
+      alignment: _alignment(descriptor.alignment, "columns-align", "alignment"),
       columns: _selector(descriptor.at("columns", default: auto)),
     ))
   }
