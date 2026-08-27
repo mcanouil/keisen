@@ -24,6 +24,10 @@ A column name, a group label, a spanner label, a summary label, a row index, and
 This is the rule the row-index case follows in [Table parts](table-parts.qmd), and it holds for the format and substitution directives too: `format-number("uints")` is reported rather than formatting nothing.
 A column that exists but sits in the stub, or that `columns-hide` removed, is reported as such rather than as unknown.
 
+An array holds the kind of name the field reads, and nothing else.
+`columns: ("units", 42)` is reported rather than aligning `units` alone, and `rows: (0, "2")` the same way.
+A summary row is the one name written either way, as its label or as its position, and both are read.
+
 A location expands against the table into `(part, row, column)` addresses.
 This is the part Typst show rules cannot express: they select by element type in document order and never see the row behind a cell.
 

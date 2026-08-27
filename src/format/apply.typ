@@ -80,14 +80,39 @@
 // silence, since a table built from filtered data legitimately has fewer rows on
 // some renderings than on others. Every directive that names something draws the
 // line here, so the location DSL and the format directives cannot disagree.
+// What a selector spells out is held to the kind the field reads. `matches-column`
+// and `matches-row` above already refuse a bare value of the wrong kind, and an
+// array of them used to be filtered instead: an index written among the column
+// names was dropped, so the directive landed on fewer columns than the caller
+// wrote and said nothing about why.
+//
+// The whole selector is reported rather than the one element, since that is what
+// was written, and the message is the one the bare value gives.
+//
+// Two messages for three fields: a note is addressed by position through
+// `matches-row` and a synthetic row, so a bare note selector of the wrong kind
+// has always been answered in the rows vocabulary. An array of them reads the
+// same rather than inventing a third wording the bare value would not give.
+#let _selector-kind(kind) = if kind == str {
+  (
+    scope: "columns",
+    expected: "auto, a name, an array of names, or a predicate",
+    hint: "Write \"units\", (\"units\", \"price\"), or name => name != \"units\".",
+  )
+} else {
+  (
+    scope: "rows",
+    expected: "auto, an index, an array of indices, or a predicate",
+    hint: "Write 0, (0, 2), or row => row.units > 100.",
+  )
+}
+
 #let named(selector, kind) = {
-  if type(selector) == kind {
-    (selector,)
-  } else if type(selector) == array {
-    selector.filter(candidate => type(candidate) == kind)
-  } else {
-    ()
-  }
+  if type(selector) == kind { return (selector,) }
+  if type(selector) != array { return () }
+  if selector.all(candidate => type(candidate) == kind) { return selector }
+  let (scope, expected, hint) = _selector-kind(kind)
+  fail-type(scope, "selector", selector, expected, hint: hint)
 }
 
 // The last matching directive wins for a given cell, which makes "format the
