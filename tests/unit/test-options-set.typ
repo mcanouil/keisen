@@ -120,6 +120,7 @@
   source("../expect-fail/move-anchor-stub.typ"),
   source("../expect-fail/move-duplicate-column.typ"),
   source("../expect-fail/move-unknown-column.typ"),
+  source("../expect-fail/options-positional.typ"),
   source("../expect-fail/options-unknown-option.typ"),
   source("../expect-fail/theme-not-a-dictionary.typ"),
   source("../expect-fail/theme-unknown-option.typ"),
