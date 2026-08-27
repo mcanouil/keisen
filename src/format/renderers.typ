@@ -14,7 +14,7 @@
 ///! `format-nanoplot` accepts any function of this shape, so a renderer written
 ///! in a document works exactly as well as these three.
 
-#import "../utils/errors.typ": check
+#import "../utils/errors.typ": check, fail-type
 
 // The ink follows the surrounding text unless a colour is given, so a plot in a
 // styled cell is drawn in that cell's colour rather than in a fixed black.
@@ -132,13 +132,15 @@
   //
   // The type is tested first, because the range test compares against a
   // percentage and anything else fails that comparison rather than this check.
-  check(
-    type(gap) == ratio,
-    "nanoplot-bar",
-    "gap must be a percentage of the bar pitch",
-    value: gap,
-    hint: "Give a percentage of the bar pitch below 100%.",
-  )
+  if type(gap) != ratio {
+    fail-type(
+      "nanoplot-bar",
+      "gap",
+      gap,
+      "a percentage of the bar pitch",
+      hint: "Give a percentage of the bar pitch below 100%.",
+    )
+  }
   check(
     gap >= 0% and gap < 100%,
     "nanoplot-bar",
