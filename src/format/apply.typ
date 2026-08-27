@@ -88,6 +88,11 @@
 //
 // The whole selector is reported rather than the one element, since that is what
 // was written, and the message is the one the bare value gives.
+//
+// Two messages for three fields: a note is addressed by position through
+// `matches-row` and a synthetic row, so a bare note selector of the wrong kind
+// has always been answered in the rows vocabulary. An array of them reads the
+// same rather than inventing a third wording the bare value would not give.
 #let _selector-kind(kind) = if kind == str {
   (
     scope: "columns",
