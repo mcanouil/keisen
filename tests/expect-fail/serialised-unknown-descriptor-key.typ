@@ -1,6 +1,6 @@
 // A typo inside a descriptor used to change the table rather than fail: a
 // misspelled columns key meant the subtotal spanned every column.
-// expect: summary: unknown key colums
+// expect: summary-rows: unknown key colums
 // expect: Known keys: name, label, columns, groups.
 
 #import "../../src/spec.typ": build-spec

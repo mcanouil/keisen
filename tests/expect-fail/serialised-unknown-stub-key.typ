@@ -1,6 +1,6 @@
 // The stub descriptor was one of three that never validated its keys, so a
 // plural typo rendered the table ungrouped without a word.
-// expect: stub: unknown key groups
+// expect: table-stub: unknown key groups
 // expect: Known keys: rowname, group, label, indent.
 
 #import "../../src/spec.typ": build-spec
