@@ -20,10 +20,13 @@
 #assert.eq(named(auto, int), ())
 #assert.eq(named(row => true, int), ())
 
-// A selector holding both kinds answers for whichever is asked about, so a
-// summary selector of a label and a position checks each against its own list.
-#assert.eq(named(("units", 0), str), ("units",))
-#assert.eq(named(("units", 0), int), (0,))
+// An array holds what the field reads and nothing else. A selector of a name and
+// a position is answered rather than filtered, and tests/expect-fail/ holds the
+// message for both kinds.
+//
+// A summary row is named by a label or by a position, and that selector is the
+// one place both are legitimate. It is read by _check-summary-rows rather than
+// here, and answers an unknown candidate whatever its type.
 
 // A predicate matching no column formats nothing and says nothing; building the
 // spec at all is the assertion.
@@ -46,6 +49,7 @@
 // A predicate matching nothing aligns nothing, in silence.
 #assert.eq(aligned((columns-align(end, columns: name => false),)), (:))
 
-// A selector holding both kinds answers for the names alone, exactly as a
-// summary selector does: an index addresses a row, never a column.
-#assert.eq(aligned((columns-align(end, columns: ("units", 3)),)), (units: end))
+// A selector holding a kind the field does not read is answered rather than
+// filtered: an index addresses a row, never a column, so writing one among the
+// column names is a typo. tests/expect-fail/align-selector-array-holds-a-number.typ
+// holds the message.
