@@ -43,6 +43,14 @@
   if not condition { fail(scope, problem, value: value, hint: hint) }
 }
 
+// A column name is written into the problem clause as it reads, so an unknown
+// `price` is reported as `unknown column price`. A name that is not a string
+// cannot be added to a string at all, and writing it as its repr is what lets
+// the builder report whatever it is handed: a directive that takes its names
+// positionally can pass one of any type, and the reader is owed the name they
+// wrote rather than a line of this package.
+#let column-name(name) = if type(name) == str { name } else { repr(name) }
+
 // Every directive that names a column reports an unknown one the same way. The
 // hint is built inside the failing branch, so listing the known columns costs
 // nothing on the path where the name is fine.
@@ -50,7 +58,7 @@
   if name in known { return }
   fail(
     scope,
-    "unknown column " + name,
+    "unknown column " + column-name(name),
     hint: if known.len() == 0 {
       "The table has no columns."
     } else {
