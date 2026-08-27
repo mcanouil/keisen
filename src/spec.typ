@@ -173,16 +173,6 @@
       hint: "Write (estimate, error) => [#estimate (#error)], one parameter per source.",
     )
     for name in directive.from { check-column(spec.data-columns, "columns-combine", name) }
-    // Checked before the message below is built: `check` evaluates its problem
-    // eagerly, so concatenating an `into` that is not a string would fail as a
-    // Typst type error rather than in this package's grammar.
-    check(
-      type(directive.into) == str,
-      "columns-combine",
-      "into must be the name of the column to build",
-      value: directive.into,
-      hint: "Give a column name as a string.",
-    )
     check(
       directive.into in directive.from or directive.into not in spec.data-columns,
       "columns-combine",
@@ -428,6 +418,17 @@
       spec.hidden = spec.hidden + directive.columns
       spec.columns = spec.columns.filter(name => name not in directive.columns)
     } else if directive.kind == "combine" {
+      // Checked here rather than in `_validate`: `into` is read as a dictionary
+      // key by the label below and by the ordering pass, both of which run
+      // first, so a value that is not a string fails as a Typst error before
+      // any check in `_validate` is reached.
+      check(
+        type(directive.into) == str,
+        "columns-combine",
+        "into must be the name of the column to build",
+        value: directive.into,
+        hint: "Give a column name as a string.",
+      )
       // Recorded rather than applied, exactly as a move is: where the combined
       // column goes depends on which columns the table ends up with, so it is
       // resolved once the fold is done and reads the same wherever it is written.
