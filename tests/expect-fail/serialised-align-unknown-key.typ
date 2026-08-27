@@ -1,6 +1,6 @@
-// An alignments entry carrying a key it does not read. The problem names the
-// descriptor, since the scope is the directive that holds it.
-// expect: display-table: align has an unknown key colums
+// An alignments entry carrying a key it does not read. The scope is the
+// directive the key resolves into, so the reader has a name to look up.
+// expect: columns-align: unknown key colums
 // expect: Known keys: alignment, columns.
 
 #import "../../src/spec.typ": build-spec
