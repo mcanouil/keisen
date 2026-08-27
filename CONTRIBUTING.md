@@ -42,6 +42,10 @@ A failing `#assert` is a compile failure, which is exactly how the tests report.
 The same script runs on every pull request, through `.github/workflows/checks.yml`, alongside `shellcheck` over every script and `shfmt` over the ones under `tools/`.
 Run it locally first: a run that only tells you what your own machine would have is a run nobody needed.
 
+A draft pull request runs the suite like any other.
+It costs minutes, and it is the trade made to stop a pull request from carrying three checks that never ran: a push and a change of draft state fired two runs in one group, and the run that survived the pair was the skipped one.
+So a draft is what keeps reviewers away, not what keeps the runner idle.
+
 Write the test first.
 Unit tests live in `tests/unit/` as `.typ` files of `#assert.eq` calls, and visual tests live in `tests/visual/` as documents to inspect.
 

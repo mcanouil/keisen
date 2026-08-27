@@ -48,9 +48,9 @@ on:
       - "CHANGELOG.md"
       - ".github/workflows/checks.yml"
   pull_request:
-    # The default activity types fire nothing when a pull request leaves draft,
-    # so `ready_for_review` is what runs the suite once the draft is lifted.
-    types: [opened, synchronize, reopened, ready_for_review]
+    # A draft runs the suite like any other pull request, so leaving draft has
+    # nothing left to run: `ready_for_review` would re-run the same commit.
+    types: [opened, synchronize, reopened]
     paths:
       - "src/**"
       - "lib.typ"
@@ -95,7 +95,6 @@ jobs:
   suite:
     name: Compile the suite
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft != true }}
     timeout-minutes: 15
 
     steps:
@@ -137,7 +136,6 @@ jobs:
   package:
     name: Compile from the staged package
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft != true }}
     timeout-minutes: 15
 
     steps:
@@ -182,7 +180,6 @@ jobs:
   lint:
     name: Lint the shell scripts
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.draft != true }}
     timeout-minutes: 10
 
     steps:

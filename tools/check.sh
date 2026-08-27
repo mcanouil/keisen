@@ -175,6 +175,64 @@ fitted_pages() {
 
 fitted_pages
 
+# Two unit tests scan a list of files written out by hand, because Typst cannot
+# walk a directory. Each list can go stale without a word: the scan still runs,
+# its assertion still holds, and the record quietly stops describing the tree. A
+# key read by a module nobody listed reads as read by nothing.
+#
+# The shell can walk the tree, so each list is held to what a grep finds. The
+# comparison is one way on purpose: a path in the tree and not in the list is
+# the failure. A path in the list and not in the tree fails already, since the
+# scan reads every file it names.
+option_scan() {
+  local label="$1" scanner="$2"
+  shift 2
+
+  # Both scanners sit in tests/unit and read their sources from there, so a
+  # listed path is made into one from the repository root by its own shape:
+  # ../../ leaves tests, ../ leaves tests/unit, and a bare name stays in it.
+  # The bare-name rule runs last and only on a path that carries no separator,
+  # so it cannot prefix what the two rules above have already rewritten.
+  local listed found missing
+  listed="$(
+    grep -oE 'source\("[^"]+"\)' "${scanner}" |
+      sed -E 's/^source\("//; s/"\)$//; s@^\.\./\.\./@@; s@^\.\./@tests/@' |
+      sed -E '/\//!s@^@tests/unit/@' |
+      sort
+  )"
+  found="$("$@" | sort)"
+
+  missing="$(comm -13 <(printf '%s\n' "${listed}") <(printf '%s\n' "${found}"))"
+  if [[ -n "${missing}" ]]; then
+    printf 'option scans: %s does not scan every file the tree has\n' "${scanner}" >&2
+    printf 'the %s below are in the tree and not in its sources list\n' "${label}" >&2
+    while read -r path; do
+      printf '  %s\n' "${path}" >&2
+    done <<<"${missing}"
+    fail_check "option scans"
+    return
+  fi
+
+  printf 'scans:    %s ok\n' "${label}"
+}
+
+# A reader is a file that calls `option`. src/theme/options.typ defines it, so it
+# is the one file the grep names and the list does not want.
+option_readers() {
+  grep -rlE '(^|[^-[:alnum:]_])option\(' src --include='*.typ' |
+    grep -v '^src/theme/options.typ$'
+}
+
+# The setters grep is the one written into the scanner it holds, which names the
+# scanner itself. That file is left out there on purpose, so it is left out here.
+option_setters() {
+  grep -rlE 'table-options\(|build-spec\(|theme:|options:' tests examples --include='*.typ' |
+    grep -v '^tests/unit/test-options-set.typ$'
+}
+
+option_scan "readers" tests/unit/test-options-read.typ option_readers
+option_scan "setters" tests/unit/test-options-set.typ option_setters
+
 # Typst has no try, so a panic cannot be asserted from inside a document. These
 # documents are expected to fail, and each names the message it should produce.
 #

@@ -43,4 +43,10 @@ Four edges are not among them: the table's first and last, answered by `table-bo
 On those four, `none` is an answer rather than a silence, so `row-border` never shows through.
 The two body keys are `none` on every preset, and `theme-minimal` answers `none` on the table's own two as well, so a table ruled as a grid writes the rule it wants on those keys.
 
+Which edge closes a table depends on what the table carries.
+The first three below differ only in what comes last: the body itself, then a summary row, then the notes.
+The fourth is a table with no notes under `theme-booktabs`, which is nothing but rules.
+
+![Four tables showing where a rule falls. The first is titled No notes and closes with a rule under its last body row. The second is titled Summary last and closes under a bold Total row. The third is titled Notes last, carries a footnote mark on its units label, and closes under three lines of notes. The fourth has no title and carries three rules: one above the column labels, one under them, and one under the last body row.](../assets/examples/rules.png)
+
 `number-rounding` answers a `format-number(rounding: auto)`, as `number-group-separator` and `number-decimal-separator` answer the separators, so a document sets its rounding once rather than on every directive.
