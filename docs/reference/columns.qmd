@@ -16,7 +16,7 @@ description: "Keisen's column directives: columns-label, columns-align, columns-
 : Column directives {.striped .hover tbl-colwidths="[45,55]"}
 
 `columns-hide` and `columns-move` take one column name per argument, and an array gives the names it holds.
-`columns-hide(("units", "price"))` says what `columns-hide("units", "price")` says, which is how every `columns:` selector reads an array too.
+`columns-hide(("units", "price"))` says what `columns-hide("units", "price")` says.
 The `before` and `after` anchors of `columns-move` name one column each, so neither reads an array.
 
 `columns-combine` receives the **formatted** content of its sources, not their raw values, which is what makes `(estimate, error) => [#estimate (#error)]` read the way it is written: each source keeps whatever its own `format-*` directive gave it.
