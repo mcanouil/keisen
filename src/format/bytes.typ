@@ -5,7 +5,7 @@
 ///! table that does not say which it means is telling the reader nothing.
 
 #import "../utils/errors.typ": fail-enum
-#import "number.typ": format-family, format-value, resolve-decimals, to-decimal
+#import "number.typ": convention, format-family, format-value, resolve-decimals, to-decimal
 
 #let _UNITS = (
   "1024": ([B], [KiB], [MiB], [GiB], [TiB], [PiB]),
@@ -84,11 +84,11 @@
       decimals: places,
       significant: none,
       grouping: grouping,
-      group-separator: if group-separator == auto { conventions.group } else { group-separator },
-      decimal-separator: if decimal-separator == auto { conventions.decimal } else { decimal-separator },
+      group-separator: convention(group-separator, conventions.group),
+      decimal-separator: convention(decimal-separator, conventions.decimal),
       scale: 1,
       sign: sign,
-      rounding: if rounding == auto { conventions.rounding } else { rounding },
+      rounding: convention(rounding, conventions.rounding),
       negative-zero: false,
     )),
   )
