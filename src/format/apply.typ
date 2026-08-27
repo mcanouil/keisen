@@ -95,21 +95,30 @@
 // silence, since a table built from filtered data legitimately has fewer rows on
 // some renderings than on others. Every directive that names something draws the
 // line here, so the location DSL and the format directives cannot disagree.
-// What a selector spells out is held to the kind the field reads. `matches-column`
-// and `matches-row` above already refuse a bare value of the wrong kind, and an
-// array of them used to be filtered instead: an index written among the column
+// What a selector spells out is held to the kind the field reads. An array of
+// the wrong kind used to be filtered instead: an index written among the column
 // names was dropped, so the directive landed on fewer columns than the caller
 // wrote and said nothing about why.
 //
+// A value that is neither the kind, an array, `auto` nor a predicate is refused
+// here rather than left to the matchers. They see one candidate at a time, so a
+// table with no notes, no rows or no columns never ran them and the selector
+// went unread: whether a selector is usable does not depend on what the table
+// turned out to hold, and an empty part is where a caller has least to go on.
+//
 // The whole selector is reported rather than the one element, since that is what
-// was written, and the message is the one the bare value gives. `field` is
-// carried for the same reason `matches-row` carries it: the kind alone cannot
-// tell a note position from a row index.
+// was written, and the message is the one the matchers give. `field` is carried
+// for the same reason `matches-row` carries it: the kind alone cannot tell a
+// note position from a row index.
 #let named(selector, kind, field: auto) = {
   if type(selector) == kind { return (selector,) }
-  if type(selector) != array { return () }
+  let named-field = if field != auto { field } else if kind == str { "columns" } else { "rows" }
+  if type(selector) != array {
+    if selector == auto or type(selector) == function { return () }
+    fail-selector(named-field, selector)
+  }
   if selector.all(candidate => type(candidate) == kind) { return selector }
-  fail-selector(if field != auto { field } else if kind == str { "columns" } else { "rows" }, selector)
+  fail-selector(named-field, selector)
 }
 
 // The last matching directive wins for a given cell, which makes "format the
