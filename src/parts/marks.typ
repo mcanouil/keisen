@@ -17,11 +17,15 @@
     if entry.source == none { continue }
     // Keyed by `repr` rather than `str`, because a summary row is identified by
     // the pair `(group, row)` and would otherwise have no place in the order.
-    let parts = if entry.part == "body" { ("body", "stub") } else if entry.part == "group" {
-      ("row-groups",)
-    } else if entry.part == "summary" { ("summary",) } else if entry.part == "grand-summary" {
-      ("grand-summary",)
-    } else if entry.part == "source-note" { ("source-notes",) } else { () }
+    // The two vocabularies meet here. What is tested is a row-plan part, which
+    // names what a row is; what is produced is PARTS, which names what a
+    // location can address. A body row answers to two addresses, its cells and
+    // its row name.
+    let parts = if entry.part == "body" { (PARTS.body, PARTS.stub) } else if entry.part == "group" {
+      (PARTS.row-groups,)
+    } else if entry.part == "summary" { (PARTS.summary,) } else if entry.part == "grand-summary" {
+      (PARTS.grand-summary,)
+    } else if entry.part == "source-note" { (PARTS.source-notes,) } else { () }
     for part in parts { order.insert(part + "|" + repr(entry.source), position) }
   }
   order
