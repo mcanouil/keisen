@@ -376,9 +376,6 @@
   let tracks = if has-stub { (track(spec.stub.rowname),) } else { () }
   for name in names { tracks.push(track(name)) }
 
-  // Part borders are read off the row plan: the plan already knows which row
-  // opens the body, closes a group, or begins the footer.
-
   set text(
     ..if setting("table-font") == none { (:) } else { (font: setting("table-font")) },
     ..if setting("table-font-size") == none { (:) } else { (size: setting("table-font-size")) },
@@ -398,8 +395,8 @@
   let body-rows = plan.filter(entry => entry.part in ("group", "body", "summary", "grand-summary"))
   let row-count = head.len() + levels.len() + 1 + body-rows.len() + notes.len()
 
-  // Part borders are read off the row plan: it already knows how many rows the
-  // title block and the header take, so the body opens under them and closes
+  // Where the body opens and closes: the title block and the header are counted
+  // from what was built above them, so the body opens under them and closes
   // wherever the footer begins.
   let body-opens = head.len() + levels.len() + 1
   let body-closes = body-opens + body-rows.len() - 1
