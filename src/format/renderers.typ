@@ -124,18 +124,28 @@
 // shared domain exists to prevent. The line renderers scale to the domain
 // instead, because a trend is about shape rather than magnitude.
 #let nanoplot-bar(numbers, domain: none, width: 4em, height: 0.8em, fill: auto, gap: 30%) = {
-  // A series with no readings has no bars for the gap to leave room between, so
-  // it answers with the empty box every renderer answers with, and the gap goes
-  // unread. `_canvas` asks the same question of the same value.
-  if numbers.len() != 0 {
-    check(
-      gap >= 0% and gap < 100%,
-      "nanoplot-bar",
-      "gap must leave the bars some width",
-      value: gap,
-      hint: "Give a percentage of the bar pitch below 100%.",
-    )
-  }
+  // Read before anything is drawn, and whether or not there is anything to
+  // draw: whether a gap leaves the bars some width does not depend on the data.
+  // A series with no readings answers with the empty box every renderer answers
+  // with, and that is the one case where a bad gap has no drawn plot to show
+  // itself in.
+  //
+  // The type is tested first, because the range test compares against a
+  // percentage and anything else fails that comparison rather than this check.
+  check(
+    type(gap) == ratio,
+    "nanoplot-bar",
+    "gap must be a percentage of the bar pitch",
+    value: gap,
+    hint: "Give a percentage of the bar pitch below 100%.",
+  )
+  check(
+    gap >= 0% and gap < 100%,
+    "nanoplot-bar",
+    "gap must leave the bars some width",
+    value: gap,
+    hint: "Give a percentage of the bar pitch below 100%.",
+  )
   _canvas(numbers, domain, width, height, (values, low, high) => {
     let base = calc.min(0.0, low)
     let peak = calc.max(0.0, high)
