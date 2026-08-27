@@ -10,29 +10,32 @@
 ///! expression language nobody wanted to write.
 ///!
 ///! A failure here names the directive the key resolves into, so a reader can
-///! look the name up: `colours` gives `data-colour`, and `widths`, `moves` and
-///! `alignments` give `columns-width`, `columns-move` and `columns-align`.
+///! look the name up: `colours` gives `data-colour`, `widths`, `moves` and
+///! `alignments` give `columns-width`, `columns-move` and `columns-align`, and
+///! `header`, `stub`, `row-groups`, `combines`, `spanners` and `footnotes` give
+///! `table-header`, `table-stub`, `table-row-group`, `columns-combine`,
+///! `table-spanner` and `table-footnote`.
+///!
+///! Two keys resolve through one shared reader and are still named apart, since
+///! each answers to a directive of its own: `summaries` gives `summary-rows` and
+///! `grand-summaries` gives `grand-summary-rows`.
 ///!
 ///! Where no one directive answers to the key, the scope becomes `display-table`
 ///! and the key opens the problem instead. `format`, `style` and `inset` are
 ///! there: each resolves into a family or into a property of one, and the
 ///! `align` of a style is a property of `style()` rather than the directive
-///! `columns-align`.
+///! `columns-align`. So is `substitutions`, whose `test` picks between
+///! `substitute-missing` and `substitute-zero`: one key, two directives, and no
+///! single name to take.
 ///!
-///! Eight keys still report under a shorter name of their own, and they are
-///! recorded here rather than moved because moving them is a change to eight
-///! messages and the fixtures that pin them, filed as its own piece of work.
+///! No key reports under a name of its own invention. A scope here is a public
+///! directive, or it is `display-table` with the key said in the problem.
 ///!
-///! Six of them name one public directive and would take it: `header`, `stub`,
-///! `row-group`, `combine`, `spanner` and `footnote` resolve into
-///! `table-header`, `table-stub`, `table-row-group`, `columns-combine`,
-///! `table-spanner` and `table-footnote`.
-///!
-///! Two answer to a pair rather than to one directive, so the rule gives them no
-///! single name to take: `summary` covers `summary-rows` and
-///! `grand-summary-rows`, and `substitution` covers `substitute-missing` and
-///! `substitute-zero`. Which name those two should carry is a decision of its
-///! own.
+///! `predicate` is the one scope outside that rule, and it is not a key. A row
+///! predicate is a value the subset spells out, `(column: .., op: .., value:
+///! ..)`, where a Typst caller writes a closure and so has no name to share.
+///! The scope names what the reader wrote, which the reference calls a
+///! predicate too.
 
 #import "../format/bytes.typ": format-bytes
 #import "../format/currency.typ": format-currency
@@ -534,12 +537,16 @@
   )
 }
 
-#let _summary(descriptor, scope) = {
-  _keys(descriptor, ("name", "label", "columns", "groups"), "summary")
+// `directive` is the public name the key resolves into, which the two summary
+// keys do not share: `summaries` gives `summary-rows` and `grand-summaries`
+// gives `grand-summary-rows`. It is passed rather than derived from `scope`, so
+// the caller that knows which key it is reading is the one that says so.
+#let _summary(descriptor, scope, directive) = {
+  _keys(descriptor, ("name", "label", "columns", "groups"), directive)
   (
   kind: "summary",
   scope: scope,
-  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, "summary")),
+  functions: ((descriptor.at("label", default: "Total")): _named(AGGREGATIONS, descriptor, directive)),
   columns: _selector(descriptor.at("columns", default: auto)),
   groups: _selector(descriptor.at("groups", default: auto)),
   format: none,
@@ -562,7 +569,7 @@
     let position = int(found.captures.first())
     if position < 1 or position > values.len() {
       fail(
-        "combine",
+        "columns-combine",
         "pattern names source " + str(position),
         value: text,
         hint: "Sources count from 1 in from order, and this combine has " + str(values.len()) + ".",
@@ -607,7 +614,7 @@
   let directives = ()
 
   let header = serialised.at("header", default: (:))
-  _keys(header, ("title", "subtitle"), "header")
+  _keys(header, ("title", "subtitle"), "table-header")
   if header.at("title", default: none) != none or header.at("subtitle", default: none) != none {
     directives.push((
       kind: "header",
@@ -617,7 +624,7 @@
   }
 
   let stub = serialised.at("stub", default: (:))
-  _keys(stub, ("rowname", "group", "label", "indent"), "stub")
+  _keys(stub, ("rowname", "group", "label", "indent"), "table-stub")
   if stub.len() > 0 and stub.values().any(value => value != none) {
     directives.push((
       kind: "stub",
@@ -629,11 +636,11 @@
   }
 
   for descriptor in serialised.at("row-groups", default: ()) {
-    _keys(descriptor, ("label", "rows"), "row-group")
+    _keys(descriptor, ("label", "rows"), "table-row-group")
     _required(
       descriptor,
       ("label", "rows"),
-      "row-group",
+      "table-row-group",
       "A declared group needs a label and the rows it claims.",
     )
     directives.push((
@@ -655,11 +662,11 @@
   if hidden.len() > 0 { directives.push((kind: "hide", columns: hidden)) }
 
   for descriptor in serialised.at("combines", default: ()) {
-    _keys(descriptor, ("into", "from", "pattern", "label", "hide-sources"), "combine")
+    _keys(descriptor, ("into", "from", "pattern", "label", "hide-sources"), "columns-combine")
     _required(
       descriptor,
       ("into", "from", "pattern"),
-      "combine",
+      "columns-combine",
       "A combine needs the column it builds, the columns it reads, and the pattern joining them.",
     )
     directives.push((
@@ -684,11 +691,11 @@
   }
 
   for spanner in serialised.at("spanners", default: ()) {
-    _keys(spanner, ("label", "columns", "level"), "spanner")
+    _keys(spanner, ("label", "columns", "level"), "table-spanner")
     _required(
       spanner,
       ("label", "columns"),
-      "spanner",
+      "table-spanner",
       "A spanner needs a label and the columns it covers.",
     )
     directives.push((
@@ -726,10 +733,19 @@
   for descriptor in serialised.at("formats", default: ()) { directives.push(_format(descriptor)) }
 
   for descriptor in serialised.at("substitutions", default: ()) {
-    _keys(descriptor, ("test", "columns", "rows", "replacement"), "substitution")
+    // One key, two directives: `test` picks between `substitute-missing` and
+    // `substitute-zero`, so there is no single name to report under. The scope
+    // is `display-table` and the key opens the problem, as it does for a format,
+    // a style and an inset.
+    _keys(
+      descriptor,
+      ("test", "columns", "rows", "replacement"),
+      "display-table",
+      subject: "substitutions",
+    )
     let test = descriptor.at("test", default: "missing")
     if test not in ("missing", "zero") {
-      fail-enum("substitution", "test", test, ("missing", "zero"))
+      fail-enum("display-table", "substitutions test", test, ("missing", "zero"))
     }
     directives.push((
       kind: "substitute",
@@ -777,19 +793,19 @@
   }
 
   for descriptor in serialised.at("summaries", default: ()) {
-    directives.push(_summary(descriptor, "group"))
+    directives.push(_summary(descriptor, "group", "summary-rows"))
   }
   for descriptor in serialised.at("grand-summaries", default: ()) {
-    directives.push(_summary(descriptor, "grand"))
+    directives.push(_summary(descriptor, "grand", "grand-summary-rows"))
   }
 
   for descriptor in serialised.at("styles", default: ()) { directives.push(_style(descriptor)) }
 
   for descriptor in serialised.at("footnotes", default: ()) {
-    _keys(descriptor, ("note", "locations", "mark"), "footnote")
+    _keys(descriptor, ("note", "locations", "mark"), "table-footnote")
     if "note" not in descriptor {
       fail(
-        "footnote",
+        "table-footnote",
         "no note given",
         value: descriptor,
         hint: "A footnote needs the text it prints.",

@@ -1,6 +1,6 @@
 // A substitution answers to what it replaces, and the subset knows two: an
 // empty cell and a zero.
-// expect: substitution: test must be one of "missing", "zero"
+// expect: display-table: substitutions test must be one of "missing", "zero"
 // expect: got "blank"
 #import "../../lib.typ": *
 #set page(width: auto, height: auto, margin: 0.5cm)

@@ -1,6 +1,7 @@
 // A summary descriptor with no name. The scope is the directive the key
-// resolves into, and no public function is called `summary`, so it stays.
-// expect: summary: no name given
+// resolves into, and `grand-summaries` resolves into `grand-summary-rows`: the
+// two summary keys share a resolver but not a directive.
+// expect: grand-summary-rows: no name given
 // expect: got (label: "Total", columns: "units").
 // expect: Name the built-in: (name: "aggregate-sum", ..).
 
