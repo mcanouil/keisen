@@ -123,8 +123,15 @@
 
   for directive in out.alignments {
     let spelled = type(directive.columns) in (str, array)
+    // Read through `named` whichever way it is written, so the two sides cannot
+    // disagree about what a selector may be. It answers with the names a spelled
+    // selector holds, with nothing for `auto` and a predicate, and refuses
+    // anything else. A selector that neither names nor filters was left to the
+    // filter below, which sees one column at a time, so a table whose every
+    // column is hidden ran it against nothing and the selector went unread.
+    let spelled-names = named(directive.columns, str)
     let names = if spelled {
-      named(directive.columns, str)
+      spelled-names
     } else {
       out.columns.filter(name => matches-column(directive.columns, name))
     }

@@ -1,8 +1,8 @@
-// A note selector numbers the footer rows, so a name written among the numbers
-// is a typo, and it is answered rather than filtered away. The array and the
-// bare value are answered in the same words, which are the ones the field takes.
+// A note is addressed by its position in the footer. The selector used to be
+// answered in the rows vocabulary, because a note is matched through the same
+// matcher a row is, so the caller was pointed at a field they did not write.
 // expect: notes: selector must be auto, a note position, an array of positions, or a predicate
-// expect: got (0, "1").
+// expect: got "1".
 // expect: Notes are numbered from zero, in the order the footer prints them.
 
 #import "../../lib.typ": *
@@ -13,5 +13,5 @@
   (units: (1, 2)),
   table-source-note[First.],
   table-source-note[Second.],
-  table-style(style(fill: red), locations: cells-source-notes(notes: (0, "1"))),
+  table-style(style(fill: red), locations: cells-source-notes(notes: "1")),
 )

@@ -11,6 +11,30 @@
 #import "../utils/errors.typ": fail-type
 #import "nanoplot.typ": nanoplot-cell, shared-domain
 
+// One entry per field a selector addresses, so a directive is answered in the
+// words of the field the caller wrote. A note is matched through `matches-row`
+// and a synthetic row, so it took the rows wording and pointed the caller at
+// `row.units`, which `cells-source-notes` does not take.
+#let SELECTOR-FIELDS = (
+  columns: (
+    expected: "auto, a name, an array of names, or a predicate",
+    hint: "Write \"units\", (\"units\", \"price\"), or name => name != \"units\".",
+  ),
+  rows: (
+    expected: "auto, an index, an array of indices, or a predicate",
+    hint: "Write 0, (0, 2), or row => row.units > 100.",
+  ),
+  notes: (
+    expected: "auto, a note position, an array of positions, or a predicate",
+    hint: "Notes are numbered from zero, in the order the footer prints them.",
+  ),
+)
+
+#let fail-selector(field, selector) = {
+  let (expected, hint) = SELECTOR-FIELDS.at(field)
+  fail-type(field, "selector", selector, expected, hint: hint)
+}
+
 #let matches-column(selector, name) = {
   if selector == auto {
     true
@@ -21,17 +45,14 @@
   } else if type(selector) == function {
     selector(name)
   } else {
-    fail-type(
-      "columns",
-      "selector",
-      selector,
-      "auto, a name, an array of names, or a predicate",
-      hint: "Write \"units\", (\"units\", \"price\"), or name => name != \"units\".",
-    )
+    fail-selector("columns", selector)
   }
 }
 
-#let matches-row(selector, row) = {
+// `field` names what the selector addresses. Notes ride this matcher on a
+// synthetic row carrying only `_index`, and say so, so a bad note selector is
+// not reported as a bad row selector.
+#let matches-row(selector, row, field: "rows") = {
   if selector == auto {
     true
   } else if type(selector) == int {
@@ -41,13 +62,7 @@
   } else if type(selector) == function {
     selector(row)
   } else {
-    fail-type(
-      "rows",
-      "selector",
-      selector,
-      "auto, an index, an array of indices, or a predicate",
-      hint: "Write 0, (0, 2), or row => row.units > 100.",
-    )
+    fail-selector(field, selector)
   }
 }
 
@@ -80,39 +95,36 @@
 // silence, since a table built from filtered data legitimately has fewer rows on
 // some renderings than on others. Every directive that names something draws the
 // line here, so the location DSL and the format directives cannot disagree.
-// What a selector spells out is held to the kind the field reads. `matches-column`
-// and `matches-row` above already refuse a bare value of the wrong kind, and an
-// array of them used to be filtered instead: an index written among the column
+// What a selector spells out is held to the kind the field reads. An array of
+// the wrong kind used to be filtered instead: an index written among the column
 // names was dropped, so the directive landed on fewer columns than the caller
 // wrote and said nothing about why.
 //
-// The whole selector is reported rather than the one element, since that is what
-// was written, and the message is the one the bare value gives.
+// A value that is neither the kind, an array, `auto` nor a predicate is refused
+// here rather than left to the matchers. They see one candidate at a time, so a
+// table with no notes, no rows or no columns never ran them and the selector
+// went unread. Whether a selector is usable does not depend on what the table
+// turned out to hold, and an empty part is where a caller has least to go on.
 //
-// Two messages for three fields: a note is addressed by position through
-// `matches-row` and a synthetic row, so a bare note selector of the wrong kind
-// has always been answered in the rows vocabulary. An array of them reads the
-// same rather than inventing a third wording the bare value would not give.
-#let _selector-kind(kind) = if kind == str {
-  (
-    scope: "columns",
-    expected: "auto, a name, an array of names, or a predicate",
-    hint: "Write \"units\", (\"units\", \"price\"), or name => name != \"units\".",
-  )
-} else {
-  (
-    scope: "rows",
-    expected: "auto, an index, an array of indices, or a predicate",
-    hint: "Write 0, (0, 2), or row => row.units > 100.",
-  )
-}
-
-#let named(selector, kind) = {
+// That holds for every column selector a directive carries and for every
+// location selector. The `rows` of a format, a substitution and a colour
+// directive is the one left: it is read a row at a time by `matches-row` alone,
+// as is `table-row-group`, which writes its own reading of this idea. Both are
+// filed rather than swept in here.
+//
+// The whole selector is reported rather than the one element, since that is what
+// was written, and the message is the one the matchers give. `field` is carried
+// for the same reason `matches-row` carries it: the kind alone cannot tell a
+// note position from a row index.
+#let named(selector, kind, field: auto) = {
   if type(selector) == kind { return (selector,) }
-  if type(selector) != array { return () }
+  let named-field = if field != auto { field } else if kind == str { "columns" } else { "rows" }
+  if type(selector) != array {
+    if selector == auto or type(selector) == function { return () }
+    fail-selector(named-field, selector)
+  }
   if selector.all(candidate => type(candidate) == kind) { return selector }
-  let (scope, expected, hint) = _selector-kind(kind)
-  fail-type(scope, "selector", selector, expected, hint: hint)
+  fail-selector(named-field, selector)
 }
 
 // The last matching directive wins for a given cell, which makes "format the
