@@ -313,13 +313,11 @@
   // reported under the name the caller wrote, so `format-date` is named rather
   // than the shared constructor behind it.
   //
-  // The rows are read here as well: they are matched one row at a time, so a
-  // table with no rows never ran the matcher and left the selector unread.
-  //
-  // The kind is held and the position is not, which is where these part from a
-  // group and from a location. A format that lands on no row leaves the table
-  // as it was, while a group that claims no row is dropped from the table
-  // altogether, and a style addresses a cell that has to exist.
+  // The rows are read here as well, for the reason `named` gives. The kind is
+  // held and the position is not, which is where these part from a group and
+  // from a location: a format that lands on no row leaves the table as it was,
+  // while a group that claims no row is dropped from the table altogether, and
+  // a style addresses a cell that has to exist.
   for directive in spec.formats {
     for name in named(directive.columns, str) {
       check-column(known, directive.at("scope", default: "format"), name)
