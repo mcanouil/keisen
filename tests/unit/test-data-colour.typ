@@ -104,6 +104,12 @@
 #assert.eq(one-row.keys(), ("0",))
 #assert.eq(one-row.at("0").fill.to-hex(), halfway)
 
+// A position the data does not hold colours nothing, and says nothing. The kind
+// of the selector is held in `_validate`, and the position is not: a directive
+// that lands on no row leaves the table as it was, while a group that claims no
+// row is dropped from the table altogether and is refused there.
+#assert.eq(colour-styles(data-colour(palette, columns: "units", rows: 9), spread, "units"), (:))
+
 // --- target says which of the two the colour becomes ---
 //
 // Filled, the cell carries the colour and the text carries the contrast chosen
