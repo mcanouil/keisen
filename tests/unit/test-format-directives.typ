@@ -51,3 +51,11 @@
 #let partial = apply-formats(rows, (format-number("mass", rows: 1, decimals: 0),), "mass")
 #assert.eq(partial.first(), 1.25)
 #assert.eq(partial.last().integer, "3")
+
+// A position the data does not hold formats nothing, and says nothing. The kind
+// of the selector is held in `_validate`, and the position is not: a directive
+// that lands on no row leaves the table as it was, while a group that claims no
+// row is dropped from the table altogether and is refused there.
+#assert.eq(apply-formats(rows, (format-number("mass", rows: 9, decimals: 0),), "mass"), rows.map(
+  row => row.mass,
+))
