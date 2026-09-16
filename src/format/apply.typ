@@ -106,11 +106,11 @@
 // went unread. Whether a selector is usable does not depend on what the table
 // turned out to hold, and an empty part is where a caller has least to go on.
 //
-// That holds for every column selector a directive carries and for every
-// location selector. The `rows` of a format, a substitution and a colour
-// directive is the one left: it is read a row at a time by `matches-row` alone,
-// as is `table-row-group`, which writes its own reading of this idea. Both are
-// filed rather than swept in here.
+// That holds for every selector a directive carries: the columns, the rows, and
+// every selector of the location DSL. The rows of a format, a substitution, a
+// colour directive and a group are matched a row at a time, so `_validate` reads
+// each of them here for its kind and drops the answer. `table-row-group` keeps
+// only its bounds test, over the positions this returns.
 //
 // The whole selector is reported rather than the one element, since that is what
 // was written, and the message is the one the matchers give. `field` is carried
