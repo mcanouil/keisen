@@ -9,7 +9,7 @@
 ///! stub cells, the group position for group labels, the note position for
 ///! notes, and `none` where the part has one row.
 
-#import "format/apply.typ": matches-column, matches-label, matches-row, named
+#import "format/apply.typ": check-rows, matches-column, matches-label, matches-row, named
 #import "parts/stub.typ": stub-column-names
 #import "parts/summaries.typ": directives-for, summary-labels
 #import "utils/columns.typ": check-addressable
@@ -167,19 +167,6 @@
   }
 }
 
-#let _check-rows(spec, scope, selector) = {
-  for position in named(selector, int) {
-    check(
-      position >= 0 and position < spec.data.len(),
-      scope,
-      "row " + repr(position) + " is not in the data",
-      hint: "Rows are numbered from zero, and this table has "
-        + str(spec.data.len())
-        + " of them.",
-    )
-  }
-}
-
 #let _check-notes(scope, selector, count) = {
   for position in named(selector, int, field: "notes") {
     check(
@@ -261,12 +248,12 @@
 
   if part == PARTS.body {
     _check-columns(spec, "cells-body", location.columns)
-    _check-rows(spec, "cells-body", location.rows)
+    check-rows("cells-body", location.rows, spec.data.len())
     let rows = spec.data.filter(row => matches-row(location.rows, row))
     let columns = spec.columns.filter(name => matches-column(location.columns, name))
     rows.map(row => columns.map(name => _address(PARTS.body, row: row._index, column: name))).flatten()
   } else if part == PARTS.stub {
-    _check-rows(spec, "cells-stub", location.rows)
+    check-rows("cells-stub", location.rows, spec.data.len())
     spec.data
       .filter(row => matches-row(location.rows, row))
       .map(row => _address(PARTS.stub, row: row._index))

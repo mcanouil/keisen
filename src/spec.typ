@@ -9,7 +9,9 @@
 #import "parts/spanners.typ": validate-spanners
 #import "parts/summaries.typ": infinite-columns
 #import "parts/stub.typ": stub-column-names
-#import "format/apply.typ": matches-column, matches-label, matches-row, named, nanoplot-columns
+#import "format/apply.typ": (
+  check-rows, check-selector, matches-column, matches-label, matches-row, named, nanoplot-columns,
+)
 #import "spec/order.typ": apply-alignments, apply-combines, apply-moves
 #import "theme/options.typ": validate-options
 #import "utils/columns.typ": check-addressable
@@ -224,22 +226,10 @@
 
   // An index outside the data is a typo by definition; a predicate that matches
   // no row is not, since a table built from filtered data legitimately has
-  // fewer rows on some renderings than on others.
-  //
-  // The kind is held by `named` rather than by a reading of its own, so a name
-  // written among the numbers is answered as the wrong kind of selector rather
-  // than as a row the data does not have.
+  // fewer rows on some renderings than on others. The same reading answers a
+  // location, so a group and a style say the same thing about the same row.
   for directive in spec.row-groups {
-    for position in named(directive.rows, int) {
-      check(
-        position >= 0 and position < spec.data.len(),
-        "table-row-group",
-        "row " + repr(position) + " is not in the data",
-        hint: "Rows are numbered from zero, and this table has "
-          + str(spec.data.len())
-          + " of them.",
-      )
-    }
+    check-rows("table-row-group", directive.rows, spec.data.len())
   }
 
   check(
@@ -323,20 +313,19 @@
   // reported under the name the caller wrote, so `format-date` is named rather
   // than the shared constructor behind it.
   //
-  // The rows are read here as well, and the answer is dropped: they are matched
-  // one row at a time, so a table with no rows never ran the matcher and left
-  // the selector unread.
+  // The rows are read here as well: they are matched one row at a time, so a
+  // table with no rows never ran the matcher and left the selector unread.
   for directive in spec.formats {
     for name in named(directive.columns, str) {
       check-column(known, directive.at("scope", default: "format"), name)
     }
-    let _ = named(directive.rows, int)
+    check-selector(directive.rows, int)
   }
   for directive in spec.substitutions {
     for name in named(directive.columns, str) {
       check-column(known, "substitute-" + directive.test, name)
     }
-    let _ = named(directive.rows, int)
+    check-selector(directive.rows, int)
   }
   for directive in spec.colours {
     // The target is read here rather than where the colour is drawn, because a
@@ -363,7 +352,7 @@
       hint: "Write domain: (0, 100), or leave it auto to span the data.",
     )
     for name in named(directive.columns, str) { check-column(known, "data-colour", name) }
-    let _ = named(directive.rows, int)
+    check-selector(directive.rows, int)
   }
 
   spec

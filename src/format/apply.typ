@@ -8,7 +8,7 @@
 #import "../data.typ": column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
-#import "../utils/errors.typ": fail-type
+#import "../utils/errors.typ": check, fail-type
 #import "nanoplot.typ": nanoplot-cell, shared-domain
 
 // One entry per field a selector addresses, so a directive is answered in the
@@ -109,8 +109,7 @@
 // That holds for every selector a directive carries: the columns, the rows, and
 // every selector of the location DSL. The rows of a format, a substitution, a
 // colour directive and a group are matched a row at a time, so `_validate` reads
-// each of them here for its kind and drops the answer. `table-row-group` keeps
-// only its bounds test, over the positions this returns.
+// each of them through `check-selector` or `check-rows` below.
 //
 // The whole selector is reported rather than the one element, since that is what
 // was written, and the message is the one the matchers give. `field` is carried
@@ -125,6 +124,27 @@
   }
   if selector.all(candidate => type(candidate) == kind) { return selector }
   fail-selector(named-field, selector)
+}
+
+// The reading on its own, for a field whose elements nothing then walks. A
+// caller that has something to do with the positions loops over `named`
+// instead.
+#let check-selector(selector, kind, field: auto) = {
+  let _ = named(selector, kind, field: field)
+}
+
+// A row the data does not have, in one reading for every directive that
+// addresses rows. The location DSL and `table-row-group` each wrote it out, so
+// the two could drift apart.
+#let check-rows(scope, selector, count) = {
+  for position in named(selector, int) {
+    check(
+      position >= 0 and position < count,
+      scope,
+      "row " + repr(position) + " is not in the data",
+      hint: "Rows are numbered from zero, and this table has " + str(count) + " of them.",
+    )
+  }
 }
 
 // The last matching directive wins for a given cell, which makes "format the
