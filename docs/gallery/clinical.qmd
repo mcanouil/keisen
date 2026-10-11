@@ -189,3 +189,5 @@ Both tables below start from the same data dictionary.
 - [Total a table by group](../examples/total-by-group.qmd).
 - [Columns reference](../reference/columns.qmd).
 - [Formatters reference](../reference/formatters.qmd).
+- [Table parts reference](../reference/table-parts.qmd).
+- [Themes reference](../reference/themes.qmd).
