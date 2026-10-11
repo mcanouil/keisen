@@ -23,3 +23,5 @@ website:
               text: "Population by region"
             - href: gallery/income-statement.qmd
               text: "Income statement"
+            - href: gallery/assay.qmd
+              text: "Laboratory assay"

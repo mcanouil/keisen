@@ -167,6 +167,7 @@
   source("../visual/conventions.typ"),
   source("../visual/dates-markup.typ"),
   source("../visual/formatters.typ"),
+  source("../visual/gallery-assay-keisen.typ"),
   source("../visual/gallery-clinical-keisen.typ"),
   source("../visual/gallery-income-statement-keisen.typ"),
   source("../visual/gallery-population-keisen.typ"),
