@@ -31,7 +31,7 @@
 #assert.eq(zero.exponent, power(0))
 
 #let negative = slots(format-scientific("size"), -4500)
-#assert.eq(negative.sign, "-")
+#assert.eq(negative.sign, "\u{2212}")
 #assert.eq(negative.integer, "4")
 #assert.eq(negative.fraction, "50")
 #assert.eq(negative.exponent, power(3))

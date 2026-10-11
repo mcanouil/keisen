@@ -44,7 +44,7 @@
 // --- a negative share keeps its sign ---
 
 #let loss = slots(format-percent("share"), -0.045)
-#assert.eq(loss.sign, "-")
+#assert.eq(loss.sign, "\u{2212}")
 #assert.eq(loss.integer, "4")
 #assert.eq(loss.fraction, "5")
 

@@ -34,7 +34,7 @@
 #assert.eq(
   slots-to-content((
     kind: "number",
-    sign: "-",
+    sign: "\u{2212}",
     prefix: none,
     integer: "1 234",
     separator: ".",
@@ -42,9 +42,7 @@
     exponent: none,
     suffix: none,
   )),
-  // Written as an interpolated string: markup would read the leading hyphen as
-  // a minus sign and split the literal into two pieces.
-  [#"-1 234.50"],
+  [#"\u{2212}1 234.50"],
 )
 
 // Content passes through; anything else becomes content, because a cell holds

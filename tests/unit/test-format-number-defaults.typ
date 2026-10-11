@@ -58,7 +58,7 @@
 #let unbounded = ((amount: float.inf, _index: 0), (amount: -float.inf, _index: 1))
 #let limits = apply-formats(unbounded, (format-number("amount", infinity: [∞]),), "amount")
 #assert.eq(limits.first(), [∞])
-#assert.eq(limits.last(), [-] + [∞])
+#assert.eq(limits.last(), [#"\u{2212}"] + [∞])
 
 // A finite value in the same column is formatted as it always was.
 #assert.eq(

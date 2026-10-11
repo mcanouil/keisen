@@ -63,7 +63,7 @@
 // A size is a magnitude, so the unit is chosen by how big it is and the sign
 // rides along.
 #let negative = slots(format-bytes("size"), -2048)
-#assert.eq(negative.sign, "-")
+#assert.eq(negative.sign, "\u{2212}")
 #assert.eq(negative.integer, "2")
 #assert.eq(negative.suffix, sym.space.nobreak + [KiB])
 

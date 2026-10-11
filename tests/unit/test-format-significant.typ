@@ -37,7 +37,7 @@
 #assert.eq(written(9.99999, 3), "10.0")
 
 // The sign is read from the value that entered rounding, so it survives a carry.
-#assert.eq(format-value(-9.99, (..options, significant: 2)).sign, "-")
+#assert.eq(format-value(-9.99, (..options, significant: 2)).sign, "\u{2212}")
 #assert.eq(written(-9.99, 2), "10")
 
 // Values that do not carry are unchanged, and so are the ones that carry into

@@ -41,6 +41,6 @@
 #assert.eq(slots(format-currency("amount", currency: "JPY", decimals: 2), 1234.5).fraction, "50")
 
 // The sign leads the symbol, because -€5 is a debt and €-5 is a typo.
-#assert.eq(slots(format-currency("amount"), -5).sign, "-")
+#assert.eq(slots(format-currency("amount"), -5).sign, "\u{2212}")
 
 #assert.eq(slots(format-currency("amount", decimals: 0, space: true), 12).prefix, [€] + sym.space.nobreak)
