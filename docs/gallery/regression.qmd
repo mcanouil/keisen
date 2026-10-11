@@ -23,8 +23,8 @@ Both tables below start from the same data dictionary.
 ## What Keisen does for you
 
 - Rounds the estimates and the interval bounds to two decimal places.
-- Writes a p-value below 0.001 as `< 0.001`, chosen by a predicate on each column.
-- Sets the significant adjusted results in bold, chosen by a predicate on the data rather than by row numbers.
+- Writes a p-value below 0.001 as `< 0.001` through one directive for each column, chosen by a predicate on the rows.
+- Sets the significant adjusted results in bold from one predicate on the data, so no cell is wrapped by hand.
 - Puts one spanner over the three columns of each model.
 
 ## The source
@@ -64,17 +64,10 @@ Both tables below start from the same data dictionary.
   ),
   table-stub(rowname: "term", label: [Term]),
   format-number(
-    (
-      "crude",
-      "crude-lower",
-      "crude-upper",
-      "adjusted",
-      "adjusted-lower",
-      "adjusted-upper",
-    ),
+    name => name != "term" and not name.ends-with("-p"),
     decimals: 2,
   ),
-  format-number(("crude-p", "adjusted-p"), decimals: 3),
+  format-number(name => name.ends-with("-p"), decimals: 3),
   format("crude-p", value => [< 0.001], rows: row => row.crude-p < 0.001),
   format("adjusted-p", value => [< 0.001], rows: row => row.adjusted-p < 0.001),
   columns-combine(
@@ -212,3 +205,5 @@ Both tables below start from the same data dictionary.
 - [Mark a cell that fails a threshold](../examples/mark-a-failing-cell.qmd).
 - [Formatters reference](../reference/formatters.qmd).
 - [Locations reference](../reference/locations.qmd).
+- [Table parts reference](../reference/table-parts.qmd).
+- [Themes reference](../reference/themes.qmd).

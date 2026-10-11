@@ -32,17 +32,10 @@
   ),
   table-stub(rowname: "term", label: [Term]),
   format-number(
-    (
-      "crude",
-      "crude-lower",
-      "crude-upper",
-      "adjusted",
-      "adjusted-lower",
-      "adjusted-upper",
-    ),
+    name => name != "term" and not name.ends-with("-p"),
     decimals: 2,
   ),
-  format-number(("crude-p", "adjusted-p"), decimals: 3),
+  format-number(name => name.ends-with("-p"), decimals: 3),
   format("crude-p", value => [< 0.001], rows: row => row.crude-p < 0.001),
   format("adjusted-p", value => [< 0.001], rows: row => row.adjusted-p < 0.001),
   columns-combine(
