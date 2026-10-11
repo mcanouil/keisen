@@ -25,3 +25,5 @@ website:
               text: "Income statement"
             - href: gallery/assay.qmd
               text: "Laboratory assay"
+            - href: gallery/standings.qmd
+              text: "League standings"
