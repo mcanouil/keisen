@@ -1,0 +1,19 @@
+# The Gallery section's own sidebar, pulled in by `metadata-files` in
+# _quarto.yml and selected by gallery/_metadata.yml.
+#
+# One page is one domain table, built in native Typst and with Keisen.
+#
+# gallery/index.qmd is absent on purpose: it is the navbar's "Gallery" item.
+# Labels are plain text, for the reason recorded in _sidebar-reference.yml.
+website:
+  sidebar:
+    - id: gallery
+      # Floating, for the reason recorded in _sidebar-reference.yml.
+      style: floating
+      search: false
+      collapse-level: 2
+      contents:
+        - section: "Gallery"
+          contents:
+            - href: gallery/clinical.qmd
+              text: "Baseline characteristics"

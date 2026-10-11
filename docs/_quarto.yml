@@ -66,6 +66,8 @@ website:
         text: "Reference"
       - href: examples/index.qmd
         text: "Examples"
+      - href: gallery/index.qmd
+        text: "Gallery"
       - href: changelog.qmd
         text: "Changelog"
     # The gitlink widget replaces this item wholesale, so the `text` and `icon`
@@ -88,6 +90,7 @@ website:
 metadata-files:
   - _sidebar-reference.yml
   - _sidebar-examples.yml
+  - _sidebar-gallery.yml
 
 filters:
   - code-window
