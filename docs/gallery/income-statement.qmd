@@ -25,7 +25,7 @@ Both tables below start from the same data dictionary.
 - Writes each amount in pounds sterling, with grouped digits and its sign.
 - Calculates a subtotal for each section.
 - Calculates the operating profit from all the rows.
-- Shades the profit row through `cells-grand-summary`, without a count of rows.
+- Shades the profit row through `cells-grand-summary`, so no cell gets its own fill.
 
 ## The source
 
@@ -169,3 +169,5 @@ Both tables below start from the same data dictionary.
 - [Draw attention to a total](../examples/highlight-a-total.qmd).
 - [Aggregations reference](../reference/aggregations.qmd).
 - [Formatters reference](../reference/formatters.qmd).
+- [Table parts reference](../reference/table-parts.qmd).
+- [Themes reference](../reference/themes.qmd).
