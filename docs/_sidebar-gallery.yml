@@ -19,3 +19,5 @@ website:
               text: "Baseline characteristics"
             - href: gallery/regression.qmd
               text: "Regression results"
+            - href: gallery/population.qmd
+              text: "Population by region"
