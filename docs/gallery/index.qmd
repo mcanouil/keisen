@@ -1,0 +1,17 @@
+---
+title: "Gallery"
+subtitle: "Tables from real domains, each built twice: once in native Typst and once with Keisen."
+description: "Clinical, statistical, demographic, financial, scientific, and sports tables, each built in native Typst and with Keisen from the same data."
+listing:
+  type: grid
+  contents: "*.qmd"
+  sort: "title"
+  fields: [image, title, description, categories]
+  categories: true
+  filter-ui: false
+  sort-ui: false
+  image-height: 220px
+---
+
+Each entry starts from one data dictionary and builds the same table two times, first with Keisen and then in native Typst.
+`tools/check.sh` compiles both versions on every run, and each picture is the output of its source.
