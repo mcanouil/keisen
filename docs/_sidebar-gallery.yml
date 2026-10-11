@@ -21,3 +21,5 @@ website:
               text: "Regression results"
             - href: gallery/population.qmd
               text: "Population by region"
+            - href: gallery/income-statement.qmd
+              text: "Income statement"
