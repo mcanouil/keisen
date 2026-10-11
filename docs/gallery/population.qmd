@@ -4,7 +4,7 @@ subtitle: "Counts, shares, and an age profile drawn inside each row."
 description: "Grouped population counts, percentage shares, a bar nanoplot of the age profile, and a computed total row."
 categories: [Demographics]
 image: ../assets/examples/gallery-population-keisen.png
-image-alt: "A table titled Population by region, with six regions. Each row shows a population with grouped digits, a share as a percentage, a small bar chart of five age bands, and a median age. A Total row closes the table."
+image-alt: "A table titled Population by region, with nine regions. Each row shows a population with grouped digits, a share as a percentage, a small bar chart of five age bands, and a median age. A Total row closes the table."
 ---
 
 Census releases and regional reports summarise a population in this shape.
@@ -14,7 +14,7 @@ Both tables below start from the same data dictionary.
 
 ::: {layout-ncol=2}
 
-![Keisen](../assets/examples/gallery-population-keisen.png){fig-alt="A table titled Population by region, with six regions. Each row shows a population with grouped digits, a share as a percentage, a small bar chart of five age bands, and a median age. A Total row closes the table."}
+![Keisen](../assets/examples/gallery-population-keisen.png){fig-alt="A table titled Population by region, with nine regions. Each row shows a population with grouped digits, a share as a percentage, a small bar chart of five age bands, and a median age. A Total row closes the table."}
 
 ![Native Typst](../assets/examples/gallery-population-native.png){fig-alt="The same population table, built in native Typst, with the same grouped counts, shares, bar charts, and total row."}
 
@@ -39,18 +39,41 @@ Both tables below start from the same data dictionary.
 #import "@preview/keisen:0.1.0": *
 
 #let data = (
-  region: ("North", "North East", "Midlands", "East", "London", "South West"),
-  population: (7516113, 2683040, 10737200, 6398497, 8945309, 5764881),
-  share: (0.157, 0.056, 0.224, 0.133, 0.187, 0.120),
+  region: (
+    "North East",
+    "North West",
+    "Yorkshire and The Humber",
+    "East Midlands",
+    "West Midlands",
+    "East",
+    "London",
+    "South East",
+    "South West",
+  ),
+  population: (
+    2683040,
+    7516113,
+    5541262,
+    4934939,
+    6021653,
+    6398497,
+    8945309,
+    9379833,
+    5764881,
+  ),
+  share: (0.047, 0.131, 0.097, 0.086, 0.105, 0.112, 0.156, 0.164, 0.101),
   profile: (
-    (0.18, 0.12, 0.26, 0.26, 0.18),
     (0.17, 0.12, 0.24, 0.27, 0.20),
+    (0.18, 0.12, 0.26, 0.26, 0.18),
+    (0.19, 0.12, 0.25, 0.25, 0.19),
+    (0.18, 0.11, 0.25, 0.26, 0.20),
     (0.19, 0.12, 0.26, 0.25, 0.18),
     (0.18, 0.10, 0.25, 0.27, 0.20),
     (0.20, 0.14, 0.36, 0.20, 0.10),
+    (0.18, 0.11, 0.25, 0.27, 0.19),
     (0.16, 0.10, 0.23, 0.28, 0.23),
   ),
-  median-age: (40.1, 42.3, 39.8, 42.0, 35.6, 44.5),
+  median-age: (42.3, 40.1, 40.4, 41.2, 39.8, 42.0, 35.6, 41.8, 44.5),
 )
 
 #display-table(
@@ -96,18 +119,41 @@ Both tables below start from the same data dictionary.
 
 ```typst
 #let data = (
-  region: ("North", "North East", "Midlands", "East", "London", "South West"),
-  population: (7516113, 2683040, 10737200, 6398497, 8945309, 5764881),
-  share: (0.157, 0.056, 0.224, 0.133, 0.187, 0.120),
+  region: (
+    "North East",
+    "North West",
+    "Yorkshire and The Humber",
+    "East Midlands",
+    "West Midlands",
+    "East",
+    "London",
+    "South East",
+    "South West",
+  ),
+  population: (
+    2683040,
+    7516113,
+    5541262,
+    4934939,
+    6021653,
+    6398497,
+    8945309,
+    9379833,
+    5764881,
+  ),
+  share: (0.047, 0.131, 0.097, 0.086, 0.105, 0.112, 0.156, 0.164, 0.101),
   profile: (
-    (0.18, 0.12, 0.26, 0.26, 0.18),
     (0.17, 0.12, 0.24, 0.27, 0.20),
+    (0.18, 0.12, 0.26, 0.26, 0.18),
+    (0.19, 0.12, 0.25, 0.25, 0.19),
+    (0.18, 0.11, 0.25, 0.26, 0.20),
     (0.19, 0.12, 0.26, 0.25, 0.18),
     (0.18, 0.10, 0.25, 0.27, 0.20),
     (0.20, 0.14, 0.36, 0.20, 0.10),
+    (0.18, 0.11, 0.25, 0.27, 0.19),
     (0.16, 0.10, 0.23, 0.28, 0.23),
   ),
-  median-age: (40.1, 42.3, 39.8, 42.0, 35.6, 44.5),
+  median-age: (42.3, 40.1, 40.4, 41.2, 39.8, 42.0, 35.6, 41.8, 44.5),
 )
 
 #let fixed(value, digits) = {
@@ -205,3 +251,5 @@ Both tables below start from the same data dictionary.
 - [Total a table by group](../examples/total-by-group.qmd).
 - [Nanoplots reference](../reference/nanoplots.qmd).
 - [Aggregations reference](../reference/aggregations.qmd).
+- [Table parts reference](../reference/table-parts.qmd).
+- [Formatters reference](../reference/formatters.qmd).
