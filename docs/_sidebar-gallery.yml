@@ -17,3 +17,13 @@ website:
           contents:
             - href: gallery/clinical.qmd
               text: "Baseline characteristics"
+            - href: gallery/regression.qmd
+              text: "Regression results"
+            - href: gallery/population.qmd
+              text: "Population by region"
+            - href: gallery/income-statement.qmd
+              text: "Income statement"
+            - href: gallery/assay.qmd
+              text: "Laboratory assay"
+            - href: gallery/standings.qmd
+              text: "League standings"
