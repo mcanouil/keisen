@@ -45,7 +45,7 @@
     locations: cells-body(columns: "lead-result", rows: row => row.lead > 10),
   ),
   table-footnote(
-    [Above the regulatory limit of 10 µg/L.],
+    [Values in bold red are above the regulatory limit of 10 µg/L.],
     locations: cells-column-labels(columns: "lead-result"),
   ),
   table-footnote(

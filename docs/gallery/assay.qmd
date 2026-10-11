@@ -77,7 +77,7 @@ Both tables below start from the same data dictionary.
     locations: cells-body(columns: "lead-result", rows: row => row.lead > 10),
   ),
   table-footnote(
-    [Above the regulatory limit of 10 µg/L.],
+    [Values in bold red are above the regulatory limit of 10 µg/L.],
     locations: cells-column-labels(columns: "lead-result"),
   ),
   table-footnote(
@@ -165,7 +165,7 @@ Both tables below start from the same data dictionary.
   )[Source: synthetic laboratory data.]),
   table.cell(colspan: 4, align: start, text(
     size: 0.8em,
-  )[#super[1]Above the regulatory limit of 10 µg/L.]),
+  )[#super[1]Values in bold red are above the regulatory limit of 10 µg/L.]),
   table.cell(colspan: 4, align: start, text(
     size: 0.8em,
   )[#super[2]n.d.: not detected.]),
@@ -183,3 +183,5 @@ Both tables below start from the same data dictionary.
 - [Mark a cell that fails a threshold](../examples/mark-a-failing-cell.qmd).
 - [Write values in their own notation](../examples/values-in-their-own-notation.qmd).
 - [Formatters reference](../reference/formatters.qmd).
+- [Table parts reference](../reference/table-parts.qmd).
+- [Themes reference](../reference/themes.qmd).

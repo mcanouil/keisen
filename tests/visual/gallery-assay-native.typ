@@ -73,7 +73,7 @@
   )[Source: synthetic laboratory data.]),
   table.cell(colspan: 4, align: start, text(
     size: 0.8em,
-  )[#super[1]Above the regulatory limit of 10 µg/L.]),
+  )[#super[1]Values in bold red are above the regulatory limit of 10 µg/L.]),
   table.cell(colspan: 4, align: start, text(
     size: 0.8em,
   )[#super[2]n.d.: not detected.]),
