@@ -167,6 +167,7 @@
   source("../visual/conventions.typ"),
   source("../visual/dates-markup.typ"),
   source("../visual/formatters.typ"),
+  source("../visual/gallery-clinical-keisen.typ"),
   source("../visual/grouped.typ"),
   source("../visual/nanoplots.typ"),
   source("../visual/row-groups.typ"),
