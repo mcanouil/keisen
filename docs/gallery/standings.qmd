@@ -16,7 +16,7 @@ Both tables below start from the same data dictionary.
 
 ![Keisen](../assets/examples/gallery-standings-keisen.png){fig-alt="A table titled League table, with eight teams. The goal difference cells are coloured from red for negative to blue for positive. A small line chart shows the last five results, and the top two rows are green and the bottom row red."}
 
-![Native Typst](../assets/examples/gallery-standings-native.png){fig-alt="The same league table, built in native Typst, with the same colours, form charts, and shaded rows."}
+![Native Typst](../assets/examples/gallery-standings-native.png){fig-alt="The same league table, built in native Typst, with the same colours and shaded rows. Its form charts mark every result, where Keisen marks the first, the last, and the extremes."}
 
 :::
 
@@ -52,10 +52,10 @@ Both tables below start from the same data dictionary.
   ),
   played: (14,) * 8,
   won: (10, 9, 7, 6, 5, 4, 3, 2),
-  drawn: (2, 3, 4, 3, 4, 3, 4, 3),
-  lost: (2, 2, 3, 5, 5, 7, 7, 9),
+  drawn: (2, 2, 3, 2, 3, 2, 3, 3),
+  lost: (2, 3, 4, 6, 6, 8, 8, 9),
   difference: (18, 14, 6, 2, -1, -8, -12, -19),
-  points: (32, 30, 25, 21, 19, 15, 13, 9),
+  points: (32, 29, 24, 20, 18, 14, 12, 9),
   form: (
     (3, 3, 1, 3, 3),
     (3, 1, 3, 3, 0),
@@ -122,10 +122,10 @@ Both tables below start from the same data dictionary.
   ),
   played: (14,) * 8,
   won: (10, 9, 7, 6, 5, 4, 3, 2),
-  drawn: (2, 3, 4, 3, 4, 3, 4, 3),
-  lost: (2, 2, 3, 5, 5, 7, 7, 9),
+  drawn: (2, 2, 3, 2, 3, 2, 3, 3),
+  lost: (2, 3, 4, 6, 6, 8, 8, 9),
   difference: (18, 14, 6, 2, -1, -8, -12, -19),
-  points: (32, 30, 25, 21, 19, 15, 13, 9),
+  points: (32, 29, 24, 20, 18, 14, 12, 9),
   form: (
     (3, 3, 1, 3, 3),
     (3, 1, 3, 3, 0),
@@ -225,3 +225,4 @@ Both tables below start from the same data dictionary.
 - [Mark a cell that fails a threshold](../examples/mark-a-failing-cell.qmd).
 - [Nanoplots reference](../reference/nanoplots.qmd).
 - [Locations reference](../reference/locations.qmd).
+- [Formatters reference](../reference/formatters.qmd).
