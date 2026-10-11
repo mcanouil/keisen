@@ -17,3 +17,5 @@ website:
           contents:
             - href: gallery/clinical.qmd
               text: "Baseline characteristics"
+            - href: gallery/regression.qmd
+              text: "Regression results"
