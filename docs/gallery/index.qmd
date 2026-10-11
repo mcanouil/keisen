@@ -1,6 +1,6 @@
 ---
 title: "Gallery"
-subtitle: "Tables from real domains, each built twice: once in native Typst and once with Keisen."
+subtitle: "Tables from real domains, each built twice: once with Keisen and once in native Typst."
 description: "Clinical, statistical, demographic, financial, scientific, and sports tables, each built in native Typst and with Keisen from the same data."
 listing:
   type: grid
