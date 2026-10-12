@@ -4,7 +4,9 @@ project:
   # project's version, and removes both afterwards. The leading ./ is required;
   # a bare name fails to spawn. The scripts live in _scripts/, whose leading
   # underscore keeps Quarto from treating it as content.
-  pre-render: ./_scripts/pre-render.sh
+  pre-render:
+    - ./_scripts/pre-render.sh
+    - ./_scripts/package-path.sh
   post-render: ./_scripts/post-render.sh
   # Quarto copies nothing to the output directory by convention: only these
   # globs, plus files it finds behind an `href` or `src` in the rendered HTML.
@@ -92,7 +94,13 @@ metadata-files:
   - _sidebar-examples.yml
   - _sidebar-gallery.yml
 
+# Pages hold {typst} blocks that typst-render compiles, not code to execute, so
+# no page starts a Jupyter kernel for them.
+engine: markdown
+
 filters:
+  # Before code-window, so the source typst-render echoes gets its window.
+  - typst-render
   - code-window
   - gitlink
 
@@ -134,6 +142,20 @@ extensions:
       # colour-scheme toggle, so those two take its bordered pill as well;
       # left at the default they would sit next to it as plain glyphs.
       style-navbar-tools: true
+  # Every table on the site is compiled from the visual test the page shows,
+  # with `//| file:`. A leading slash is the docs project, so the root is the
+  # repository and a test reads another by its path from there, as anatomy.typ
+  # reads /tests/visual/grouped.typ. The package path is made before each render
+  # by _scripts/package-path.sh. The images stay light, on white, as the tests
+  # draw them.
+  typst-render:
+    root: "/.."
+    package-path: "/.typst-packages"
+    background: "#ffffff"
+    width: auto
+    height: auto
+    margin: 0pt
+    cache: true
   code-window:
     style: "macos"
     # Blocks here are configuration to copy rather than files to save, so a
