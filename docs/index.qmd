@@ -69,11 +69,12 @@ Each gallery entry builds one table with Keisen and again in native Typst, from 
 
 ## Keisen and native Typst
 
-A Keisen table isn't much shorter than the same table in native Typst, and the gallery shows both side by side.
-The difference is what the lines say.
+Keisen saves some typing, but that isn't the point.
+Across the gallery, the native version of a table runs from a little longer to about twice as long.
+The bigger difference is what the lines say.
 Native code says how to build the table: loop over the sections, sum each column, and put each rule in its place.
-Keisen says what the table is, so when the data changes, the table follows.
-Add a section, a third year or another line, and there's no code to touch.
+Keisen says what the table is, so when the rows change, the table follows.
+Add a section or another line to the data, and there's no code to touch.
 
 ```{.typst filename="Native Typst"}
 #for section in ("Revenue", "Operating costs") {
