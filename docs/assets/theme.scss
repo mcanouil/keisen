@@ -161,3 +161,11 @@ h1.keisen-wordmark {
     white-space: nowrap;
   }
 }
+
+// typst-render writes each table as an SVG at its natural size, about 1.33
+// pixels per point, which sets the tables smaller than the text around them.
+// One and a half times that is two pixels per point, the size the tables had
+// when they were PNGs at 144 pixels per inch, and the SVG stays sharp.
+img[src*="assets/typst-render/"] {
+  zoom: 1.5;
+}

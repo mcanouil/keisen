@@ -1,6 +1,4 @@
-// The rules a theme draws, on tables whose parts differ. The suite used to be
-// green while the closing rule was missing, because every table here carried a
-// source note and the footer was drawing it.
+// The rules a theme draws, on tables whose parts differ.
 
 #import "@preview/keisen:0.1.0": *
 

@@ -1,4 +1,4 @@
-// Milestone 2: stub with row names, groups as repeating subheaders.
+// Rows grouped by region, with a subtotal for each group and a grand total.
 
 #import "@preview/keisen:0.1.0": *
 

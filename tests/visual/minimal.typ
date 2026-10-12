@@ -1,4 +1,4 @@
-// Milestone 1: title, subtitle, column labels, formatted body, source note.
+// A title, a subtitle, column labels, formatted numbers and a source note.
 
 #import "@preview/keisen:0.1.0": *
 

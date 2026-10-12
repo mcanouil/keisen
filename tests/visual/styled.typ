@@ -1,5 +1,5 @@
-// Milestone 3: conditional styling, data-driven colour, substitutions, and
-// footnote marks numbered in reading order.
+// Conditional styling, data-driven colour, substitutions, and footnote marks
+// numbered in reading order.
 
 #import "@preview/keisen:0.1.0": *
 

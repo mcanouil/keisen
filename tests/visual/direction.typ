@@ -1,17 +1,10 @@
-// The same table twice, once in left-to-right text and once in right-to-left,
-// which is the check the package's alignments were designed for and nothing
-// performed until now.
-//
-// This one is read by eye. Compiling proves nothing about it, and the unit
-// test beside it (tests/unit/test-direction.typ) covers only what a function
-// returns. What to look for in the right-to-left table:
+// The same table twice, once in left-to-right text and once in right-to-left.
+// In the right-to-left table, look for these things:
 //
 //   - the columns run the other way, stub last;
 //   - the title, the labels and the text cells sit against the right edge;
 //   - the amounts sit against the left edge, still lined up on their decimal
 //     separators, and each still reads 1 256.750 rather than 750.256 1.
-//
-// The last of those was broken until the number run was pinned to ltr.
 
 #import "@preview/keisen:0.1.0": *
 

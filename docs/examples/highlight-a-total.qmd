@@ -1,4 +1,5 @@
 ---
+engine: markdown
 title: "Draw attention to a total"
 subtitle: "Shading a subtotal row, colouring a grand total, and marking either with a note."
 description: "Address summary rows with cells-summary and cells-grand-summary to shade, colour, and footnote the totals a table computes."
@@ -6,41 +7,11 @@ description: "Address summary rows with cells-summary and cells-grand-summary to
 
 A subtotal is addressed like any other cell, through `cells-summary` and `cells-grand-summary`, so a total can be shaded, recoloured, or footnoted without anyone counting rows.
 
-```typst
-#import "@preview/keisen:0.1.0": *
-
-#display-table(
-  (
-    region: ("North", "North", "South", "South"),
-    product: ("Bolt", "Nut", "Beam", "Plate"),
-    units: (1250, 860, 430, 2100),
-    revenue: (18750.5, 12900.25, 21500, 31500.75),
-  ),
-  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
-  table-stub(rowname: "product", group: "region", label: [Product]),
-  columns-label(units: [Units], revenue: [Revenue]),
-  columns-align(end, columns: "product"),
-  format-integer("units"),
-  format-number("revenue", decimals: 2),
-  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
-  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
-  table-style(style(fill: luma(235)), locations: cells-summary()),
-  table-style(
-    style(text: (fill: rgb("#08519c"))),
-    locations: cells-grand-summary(columns: "revenue"),
-  ),
-  table-footnote(
-    [Subtotals exclude intra-group sales.],
-    locations: cells-summary(groups: "North", columns: none),
-  ),
-  table-footnote([Audited.], locations: cells-grand-summary(columns: "revenue")),
-  table-style(style(text: (size: 1.2em)), locations: cells-grand-summary(columns: "units")),
-  table-source-note([Source: internal ledger.]),
-  theme: theme-booktabs(),
-)
+```{typst}
+//| file: ../../tests/visual/summaries.typ
+//| echo: true
+//| alt: "Two tables. In the first, a sales table, the product names, the Product stubhead and the Subtotal and Total labels all sit against the end edge, both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two. In the second, a table with no stub, the product names sit against the end edge and the Total label beneath them sits against the same edge."
 ```
-
-![Two tables. In the first, a sales table, the product names, the Product stubhead and the Subtotal and Total labels all sit against the end edge, both subtotal rows are shaded across their full width including their labels, the grand total's revenue is set in blue, the North subtotal's label carries footnote mark one, and the grand total's revenue carries mark two. In the second, a table with no stub, the product names sit against the end edge and the Total label beneath them sits against the same edge.](../assets/examples/summaries.png)
 
 `columns-align` names the stub here, so each total's label sits beside the figures it totals rather than a column away from them.
 The stubhead follows the same edge, since a header on the opposite side from its column reads as a mistake.

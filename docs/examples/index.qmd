@@ -1,4 +1,5 @@
 ---
+engine: markdown
 title: "Examples"
 subtitle: "One page per thing a reader is trying to do."
 description: "A worked Keisen table to start from, and a page for each outcome: totals by group, declared groups, estimates with their error, local notation, threshold marks, long tables, in-cell plots, and right-to-left text."
@@ -14,27 +15,11 @@ The listings are the test sources, quoted; `tools/check.sh` compiles those tests
 
 The smallest thing worth calling a display table: a title, labelled columns, formatted numbers, and a source note.
 
-```typst
-#import "@preview/keisen:0.1.0": *
-
-#display-table(
-  (
-    model: ("Audi A4", "BMW 320i", "Volkswagen Golf"),
-    consumption: (7.25, 8.5, 6.125),
-    year: (2019, 2021, 2020),
-  ),
-  table-header(
-    title: [Fuel consumption],
-    subtitle: [Litres per 100 kilometres],
-  ),
-  columns-label(model: [Model], consumption: [Consumption], year: [Year]),
-  format-number("consumption", decimals: 2),
-  format-integer("year", grouping: none),
-  table-source-note([Source: manufacturer figures.]),
-)
+```{typst}
+//| file: ../../tests/visual/minimal.typ
+//| echo: true
+//| alt: "A table titled Fuel consumption with three car models, their consumption to two decimals, and the model year, above a source note."
 ```
-
-![A table titled Fuel consumption with three car models, their consumption to two decimals, and the model year, above a source note.](../assets/examples/minimal.png)
 
 Numeric columns align themselves against the end edge and the others against the start edge, so nothing needed saying about alignment.
 `6.125` rounds to `6.13`: the default is half-up, computed in decimal arithmetic rather than in floats.

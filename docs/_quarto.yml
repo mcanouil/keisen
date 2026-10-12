@@ -94,10 +94,6 @@ metadata-files:
   - _sidebar-examples.yml
   - _sidebar-gallery.yml
 
-# Pages hold {typst} blocks that typst-render compiles, not code to execute, so
-# no page starts a Jupyter kernel for them.
-engine: markdown
-
 filters:
   # Before code-window, so the source typst-render echoes gets its window.
   - typst-render
