@@ -87,11 +87,21 @@ A visual test and an example carry the rule, and `tools/check.sh` requires it of
 A unit test or an expect-fail fixture renders nothing anyone looks at, so it may leave the page alone; where it sets one, the same rule holds.
 `tests/visual/breakable.typ` fixes its height alone, because a page that grows never breaks and breaking is what it tests.
 
-After changing a visual test, regenerate the images the documentation shows:
+The visual tests are the examples in the documentation.
+Each page shows a test with a `//| file:` block, and the site build compiles that file, so there is no image to regenerate.
+A visual test imports the package as a reader does, with `#import "@preview/keisen:<version>": *`.
+`tools/check.sh` links that import to the working tree, and it refuses a visual test that imports `lib.typ` directly.
+To show a new test on a page, add a block that names it:
 
-```bash
-tools/render-docs-assets.sh
+````markdown
+```{typst}
+//| file: ../../tests/visual/<name>.typ
+//| echo: true
+//| alt: "<what the table shows>"
 ```
+````
+
+A page that holds such a block sets `engine: markdown` in its front matter.
 
 ## Rehearsing a release
 
