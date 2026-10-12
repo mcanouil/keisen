@@ -104,12 +104,12 @@ Both tables below start from the same data dictionary.
     digits = digits.slice(0, -3)
   }
   groups.insert(0, digits)
-  (if number < 0 { "-" } else { "" }) + groups.join(sym.space.thin)
+  (if number < 0 { "−" } else { "" }) + groups.join(sym.space.thin)
 }
 
 #let pounds(number) = {
   let amount = grouped(calc.abs(number))
-  (if number < 0 { "-" } else { "" }) + "£" + amount
+  (if number < 0 { "−" } else { "" }) + "£" + amount
 }
 
 #let years = ("fy2025", "fy2026")

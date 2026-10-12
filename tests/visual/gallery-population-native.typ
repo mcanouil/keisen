@@ -57,7 +57,7 @@
     digits = digits.slice(0, -3)
   }
   groups.insert(0, digits)
-  (if number < 0 { "-" } else { "" }) + groups.join(sym.space.thin)
+  (if number < 0 { "−" } else { "" }) + groups.join(sym.space.thin)
 }
 
 #let bars(values) = {

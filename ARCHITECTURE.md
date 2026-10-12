@@ -77,6 +77,8 @@ otherwise look arbitrary.
 - **`str(decimal)` writes U+2212 MINUS SIGN, not an ASCII hyphen.**
   Slicing the sign off a formatted decimal breaks on a character boundary, so
   the magnitude is taken with `calc.abs` instead.
+  The formatters write the sign of a negative value as U+2212 for the same
+  reason: it is the character Typst itself prints.
 - **Closures fail on arity mismatch.**
   Predicates and formatters take exactly one argument; row position travels on
   the reserved `_index` key rather than as a second parameter.

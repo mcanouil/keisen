@@ -67,10 +67,11 @@
 
 // ... unless asked to keep it.
 #let kept = format-value(-0.4, (..options, decimals: 0, negative-zero: true))
-#assert.eq(kept.sign, "-")
+#assert.eq(kept.sign, "\u{2212}")
 
-// Negatives that survive rounding keep their sign, and an explicit sign shows.
-#assert.eq(format-value(-12.5, options).sign, "-")
+// Negatives that survive rounding keep their sign, written as U+2212 MINUS SIGN
+// as Typst writes it, and an explicit sign shows.
+#assert.eq(format-value(-12.5, options).sign, "\u{2212}")
 #assert.eq(format-value(-12.5, options).integer, "12")
 #assert.eq(format-value(12.5, (..options, sign: true)).sign, "+")
 

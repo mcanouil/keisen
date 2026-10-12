@@ -202,7 +202,7 @@
 #let unbounded(value, options) = {
   let written = options.at("infinity", default: none)
   if written == none or value not in (float.inf, -float.inf) { return none }
-  if value == -float.inf { [-] + written } else { written }
+  if value == -float.inf { [#"\u{2212}"] + written } else { written }
 }
 
 #let format-value(value, options) = {
@@ -253,8 +253,10 @@
   // Significant-digit rounding zeroes trailing integer digits rather than
   // dropping them, which `str` already reflects.
   let zero = integer.trim("0") == "" and fraction.trim("0") == ""
+  // U+2212 MINUS SIGN rather than a hyphen, as Typst itself writes a negative
+  // number and as the exponent of `format-scientific` already reads.
   let sign = if negative and (not zero or options.negative-zero) {
-    "-"
+    "\u{2212}"
   } else if options.sign and not negative and not zero {
     "+"
   } else {

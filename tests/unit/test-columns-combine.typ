@@ -52,7 +52,7 @@
 // Each source keeps the formatting its own directive gave it: the estimate to
 // two decimals, the error to three.
 #holds(cells.at(1).first(), "1.23", "0.021")
-#holds(cells.at(1).last(), "-0.57", "0.043")
+#holds(cells.at(1).last(), "\u{2212}0.57", "0.043")
 
 // A combined cell is content, so it carries no slots to line up on: a combined
 // column is opaque, which is the price of the pattern being free-form.
