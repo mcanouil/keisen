@@ -40,18 +40,20 @@ fail_check() {
 compile_glob() {
   local label="$1"
   local glob="$2"
+  shift 2
+  local extra=("$@")
   local label_passed=0
   local label_total=0
 
   for f in ${glob}; do
     label_total=$((label_total + 1))
     compiles=$((compiles + 1))
-    if typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
+    if typst compile "${extra[@]}" "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
       label_passed=$((label_passed + 1))
     else
       documents_failed=$((documents_failed + 1))
       printf '  FAIL  %s  %s\n' "${label}" "${f}"
-      typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
+      typst compile "${extra[@]}" "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
     fi
   done
 
@@ -492,7 +494,13 @@ if ! tools/accessibility-check.sh; then
   fail_check "accessibility"
 fi
 
-compile_glob "visual" "tests/visual/*.typ"
+# The visual tests are the documentation's examples, so they import the package
+# the way a reader does. This links that import back to the working tree.
+if ! tools/package-path.sh --self-test; then
+  fail_check "package path self-test"
+fi
+PACKAGE_PATH="$(tools/package-path.sh "${OUT_DIR}/packages")"
+compile_glob "visual" "tests/visual/*.typ" --package-path "${PACKAGE_PATH}"
 compile_glob "examples" "examples/*.typ"
 
 # The documentation shows a listing beside a picture and says the picture is
