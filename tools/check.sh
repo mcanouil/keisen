@@ -560,6 +560,35 @@ documented_files() {
 
 documented_files
 
+# The landing page highlights a range of lines in a file it shows, by number. A
+# line added above the range would move the highlight off the code the prose
+# describes, so each range is held to the lines it must open and close on.
+highlighted_lines() {
+  local stale=()
+  local page source range first last from to
+  while IFS='|' read -r page source range first last; do
+    from="${range%-*}"
+    to="${range#*-}"
+    if ! grep -q "data-highlight-lines=\"${range}\"" "${page}" ||
+      [[ "$(sed -n "${from}p" "${source}")" != ${first}* ]] ||
+      [[ "$(sed -n "${to}p" "${source}")" != "${last}" ]]; then
+      stale+=("${page}: lines ${range} of ${source}")
+    fi
+  done <<'RANGES'
+docs/index.qmd|tests/visual/gallery-income-statement-native.typ|40-54|#for section in|}
+RANGES
+  if [[ ${#stale[@]} -gt 0 ]]; then
+    printf 'docs: a highlighted range no longer covers its code; got %d\n' "${#stale[@]}" >&2
+    printf '  %s\n' "${stale[@]}" >&2
+    printf '  update data-highlight-lines on the page and the range here\n' >&2
+    fail_check "docs highlight"
+    return
+  fi
+  printf 'docs:     highlight ok\n'
+}
+
+highlighted_lines
+
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.
 if ! tools/quarto-check.sh; then
