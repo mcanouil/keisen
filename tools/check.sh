@@ -588,19 +588,41 @@ fi
 
 fresh_assets
 
-# The landing page quotes grouped.typ's call under "Quick look", beside the
-# figure that anatomy.typ evaluates from that same call. The asset check keeps
-# the figure in step with the source; this keeps the quoted text in step too.
+# The landing page quotes code from three test files: grouped.typ's call under
+# "Quick look", and the native and Keisen income statements under "Keisen and
+# native Typst". The asset check keeps each picture in step with its source;
+# this keeps the quoted text in step too.
+#
+# A quote is the body of the first fence that matches its opening line after its
+# heading, compared with the lines a sed range selects from the source.
+quoted_block() {
+  awk -v heading="$1" -v fence="$2" '
+    $0 == heading { section = 1; next }
+    section && $0 == fence { inside = 1; next }
+    inside && /^```$/ { exit }
+    inside
+  ' docs/index.qmd
+}
+
 quoted_listing() {
-  local wanted quoted
-  wanted="$(sed -n '/^#display-table(/,$p' tests/visual/grouped.typ)"
-  quoted="$(awk '/^## Quick look/ { section = 1 } section && /^```typst$/ { fence = 1; next } fence && /^```$/ { exit } fence' docs/index.qmd |
-    sed -n '/^#display-table(/,$p')"
-  if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
-    printf 'listing: docs/index.qmd quotes a call that differs from tests/visual/grouped.typ
-' >&2
-    printf '  copy the #display-table( call from grouped.typ into the Quick look listing
-' >&2
+  local stale=()
+  local heading fence source range wanted quoted
+  while IFS='|' read -r heading fence source range; do
+    wanted="$(sed -n "${range}" "${source}")"
+    quoted="$(quoted_block "${heading}" "${fence}" | sed -n "${range}")"
+    if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
+      stale+=("${heading#\#\# } (${fence}) against ${source}")
+    fi
+  done <<'QUOTES'
+## Quick look|```typst|tests/visual/grouped.typ|/^#display-table(/,$p
+## Keisen and native Typst|```{.typst filename="Native Typst"}|tests/visual/gallery-income-statement-native.typ|/^#for section in/,/^}$/p
+## Keisen and native Typst|```{.typst filename="Keisen"}|tests/visual/gallery-income-statement-keisen.typ|/^#display-table(/,$p
+QUOTES
+
+  if [[ ${#stale[@]} -gt 0 ]]; then
+    printf 'listing: docs/index.qmd quotes code that differs from its source\n' >&2
+    printf '  %s\n' "${stale[@]}" >&2
+    printf '  copy the lines from the source file into the quote\n' >&2
     fail_check "listing"
     return
   fi
