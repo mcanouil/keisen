@@ -4,7 +4,7 @@ title: "Laboratory assay"
 subtitle: "Measurements with their uncertainty, values below detection, and results over a limit."
 description: "Values joined to their uncertainty, scientific notation for small values, a replacement for missing values, and results over a limit in red."
 categories: [Science]
-image: ../assets/typst-render/gallery-assay-keisen.png
+image: ../assets/typst-render/gallery/gallery-assay-keisen.png
 image-alt: "A booktabs table titled Drinking water assay, with eight samples. The Lead column shows each value plus or minus its uncertainty, and the two results over 10 are bold and red. Cadmium shows n.d. for two samples, and Gross alpha uses scientific notation."
 ---
 

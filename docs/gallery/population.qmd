@@ -4,7 +4,7 @@ title: "Population by region"
 subtitle: "Counts, shares, and an age profile drawn inside each row."
 description: "Grouped population counts, percentage shares, a bar nanoplot of the age profile, and a computed total row."
 categories: [Demographics]
-image: ../assets/typst-render/gallery-population-keisen.png
+image: ../assets/typst-render/gallery/gallery-population-keisen.png
 image-alt: "A table titled Population by region, with nine regions. Each row shows a population with grouped digits, a share as a percentage, a small bar chart of five age bands, and a median age. A Total row closes the table."
 ---
 

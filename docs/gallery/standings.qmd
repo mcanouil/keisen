@@ -4,7 +4,7 @@ title: "League standings"
 subtitle: "Positions and results, a coloured goal difference, and the recent form drawn in each row."
 description: "A goal difference coloured on one scale, a points nanoplot of the last five results, and shaded promotion and relegation rows."
 categories: [Sport]
-image: ../assets/typst-render/gallery-standings-keisen.png
+image: ../assets/typst-render/gallery/gallery-standings-keisen.png
 image-alt: "A table titled League table, with eight teams. The goal difference cells are coloured from red for negative to blue for positive. A small line chart shows the last five results, and the top two rows are green and the bottom row red."
 ---
 

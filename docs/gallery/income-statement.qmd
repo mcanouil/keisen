@@ -4,7 +4,7 @@ title: "Income statement"
 subtitle: "Revenue and costs for two years, with a subtotal for each section and an operating profit."
 description: "Amounts in pounds sterling grouped by section, with computed subtotals and a shaded operating profit row."
 categories: [Finance]
-image: ../assets/typst-render/gallery-income-statement-keisen.png
+image: ../assets/typst-render/gallery/gallery-income-statement-keisen.png
 image-alt: "A booktabs table titled Income statement, with 2025 and 2026 columns under a Pounds sterling spanner. Revenue lines and Operating costs lines each end with a Subtotal row. A shaded Operating profit row closes the table."
 ---
 

@@ -525,145 +525,40 @@ PACKAGE_PATH="$(tools/package-path.sh "${OUT_DIR}/packages")"
 compile_glob "visual" "tests/visual/*.typ" --package-path "${PACKAGE_PATH}"
 compile_glob "examples" "examples/*.typ"
 
-# The documentation shows a listing beside a picture and says the picture is
-# what the listing produces. Nothing held it to that: tools/render-docs-assets.sh
-# is run by hand, and two tracked images were found to be the output of source
-# that had changed three times since.
-#
-# The render is reproducible, so comparing the bytes is enough. It runs after
-# the visual tests so a failure to compile is reported as a compile failure
-# rather than as a stale image.
-fresh_assets() {
-  # The manifest names the compiler the package needs, and an older one renders
-  # something this repository never agreed to. It is a floor rather than a pin:
-  # 0.15.0, which CI installs, and 0.15.1 render all fourteen visual tests to
-  # identical bytes, so requiring equality would fail the suite over a
-  # difference that makes none.
-  #
-  # A newer Typst that does change a render is caught by the comparison below,
-  # which is why the running version is named when an image is reported stale.
-  local wanted running
-  wanted="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
-  running="$(typst --version | awk '{ print $2; exit }')"
-  if [[ "$(printf '%s\n%s\n' "${wanted}" "${running}" | sort -V | head -1)" != "${wanted}" ]]; then
-    printf 'assets: this Typst is older than the package declares\n' >&2
-    printf '  typst.toml: %s\n' "${wanted}" >&2
-    printf '  running:    %s\n' "${running}" >&2
-    fail_check "assets"
-    return
-  fi
-
-  local stage
-  stage="${OUT_DIR}/asset-freshness"
-  rm -rf "${stage}"
-
-  if ! tools/render-docs-assets.sh "${stage}" >/dev/null; then
-    printf 'assets: the visual tests could not be rendered\n' >&2
-    fail_check "assets"
-    return
-  fi
-
-  local stale=()
-  local rendered
-  for rendered in "${stage}"/*.png; do
-    local name
-    name="$(basename "${rendered}")"
-    if ! cmp -s "${rendered}" "docs/assets/examples/${name}"; then
-      stale+=("${name}")
-    fi
-  done
-
-  # A tracked image whose visual test is gone is served by the site and produced
-  # by nothing, which is the same defect read from the other end.
-  local tracked
-  for tracked in docs/assets/examples/*.png; do
-    local name
-    name="$(basename "${tracked}")"
-    if [[ ! -f "${stage}/${name}" ]]; then
-      stale+=("${name} (no visual test renders it)")
-    fi
-  done
-
-  # A second copy of every image is nothing to leave behind after a check that
-  # has read them.
-  rm -rf "${stage}"
-
-  if [[ ${#stale[@]} -gt 0 ]]; then
-    printf 'assets: a documentation image is not what its source renders\n' >&2
-    printf '  %s\n' "${stale[@]}" >&2
-    printf '  run tools/render-docs-assets.sh and commit the result\n' >&2
-    printf '  rendered here by typst %s; the manifest declares %s\n' "${running}" "${wanted}" >&2
-    fail_check "assets"
-    return
-  fi
-
-  printf 'assets:   ok\n'
-}
-
-# The renderer refuses a pair of visual tests whose names cannot be told apart,
-# and the packaging script refuses a payload entry that would ship nothing. This
-# tree holds neither shape, and `package.sh archive` is reached by no script
-# here, so both run against their own fixtures.
-#
-# Before the render below, as every other self-test runs before its live
-# counterpart: a broken guard is then reported as a broken guard rather than as
-# a stale image.
-if ! tools/render-docs-assets.sh --self-test; then
-  fail_check "assets self-test"
-fi
-
+# The packaging script refuses a payload entry that would ship nothing. This
+# tree holds no such entry, and `package.sh archive` is reached by no script
+# here, so it runs against its own fixtures.
 if ! tools/package.sh --self-test; then
   fail_check "package self-test"
 fi
 
-fresh_assets
-
-# The landing page quotes code from three test files: grouped.typ's call under
-# "Quick look", and the native and Keisen income statements under "Keisen and
-# native Typst". The asset check keeps each picture in step with its source;
-# this keeps the quoted text in step too.
-#
-# A quote is the body of the first fence that matches its opening line inside
-# its heading's section. From the line that opens the range to the end of the
-# fence, it must equal the lines the range selects from the source, so a line
-# added after the range counts as drift; only lines before it, such as the
-# package import that stands in for the test's local one, are left out.
-quoted_block() {
-  awk -v heading="$1" -v fence="$2" '
-    $0 == heading { section = 1; next }
-    section && !inside && /^## / { exit }
-    section && $0 == fence { inside = 1; next }
-    inside && /^```$/ { exit }
-    inside
-  ' docs/index.qmd
-}
-
-quoted_listing() {
-  local stale=()
-  local heading fence source range wanted quoted
-  while IFS='|' read -r heading fence source range; do
-    wanted="$(sed -n "${range}" "${source}")"
-    quoted="$(quoted_block "${heading}" "${fence}" | sed -n "${range%%,*},\$p")"
-    if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
-      stale+=("${heading#\#\# } (${fence}) against ${source}")
-    fi
-  done <<'QUOTES'
-## Quick look|```typst|tests/visual/grouped.typ|/^#display-table(/,$p
-## Keisen and native Typst|```{.typst filename="Native Typst"}|tests/visual/gallery-income-statement-native.typ|/^#for section in/,/^}$/p
-## Keisen and native Typst|```{.typst filename="Keisen"}|tests/visual/gallery-income-statement-keisen.typ|/^#display-table(/,$p
-QUOTES
-
-  if [[ ${#stale[@]} -gt 0 ]]; then
-    printf 'listing: docs/index.qmd quotes code that differs from its source\n' >&2
-    printf '  %s\n' "${stale[@]}" >&2
-    printf '  copy the lines from the source file into the quote\n' >&2
-    fail_check "listing"
+# Each table on the site is compiled from the file a page names in a
+# `//| file:` line. A renamed or deleted test would otherwise surface only when
+# the site is built, so every name is resolved here against its page.
+documented_files() {
+  local missing=()
+  local page line target
+  for page in docs/*.qmd docs/*/*.qmd; do
+    while IFS= read -r line; do
+      target="${line#//| file: }"
+      target="${target%\"}"
+      target="${target#\"}"
+      if [[ ! -f "$(dirname "${page}")/${target}" ]]; then
+        missing+=("${page}: ${target}")
+      fi
+    done < <(grep -E '^//\| file: ' "${page}" || true)
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    printf 'docs: a page names a file that does not exist; got %d\n' "${#missing[@]}" >&2
+    printf '  %s\n' "${missing[@]}" >&2
+    printf '  point the //| file: path at the test that renders the table\n' >&2
+    fail_check "docs files"
     return
   fi
-  printf 'listing:  ok\n'
+  printf 'docs:     files ok\n'
 }
 
-quoted_listing
+documented_files
 
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.

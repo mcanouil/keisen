@@ -1,3 +1,9 @@
 # Every page in this directory takes the Examples sidebar, for the reason
 # recorded in reference/_metadata.yml.
 sidebar: examples
+
+# typst-render names each page's images after the page, and two sections hold an
+# index.qmd, so each section writes into a directory of its own.
+extensions:
+  typst-render:
+    output-directory: "/assets/typst-render/examples"

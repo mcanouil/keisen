@@ -4,7 +4,7 @@ title: "Regression results"
 subtitle: "Two models side by side, each estimate with its confidence interval and its p-value."
 description: "Unadjusted and adjusted estimates under one spanner each, with small p-values written as less than 0.001 and significant results in bold."
 categories: [Statistics]
-image: ../assets/typst-render/gallery-regression-keisen.png
+image: ../assets/typst-render/gallery/gallery-regression-keisen.png
 image-alt: "A booktabs table titled Change in HbA1c at 26 weeks. Unadjusted and Adjusted spanners each cover an Estimate, a 95% CI, and a p column for five terms. Small p-values show as less than 0.001, and the adjusted results with p below 0.05 are in bold."
 ---
 

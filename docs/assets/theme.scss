@@ -169,3 +169,14 @@ h1.keisen-wordmark {
 img[src*="assets/typst-render/"] {
   zoom: 1.5;
 }
+
+// The native file is the longest on the page. It scrolls within a fixed height
+// so the comparison stays readable, with its loop highlighted.
+.keisen-native div.sourceCode {
+  max-height: 28rem;
+  overflow-y: auto;
+}
+
+.keisen-highlight {
+  background-color: rgba(var(--bs-primary-rgb), 0.12);
+}

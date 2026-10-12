@@ -140,9 +140,18 @@ for qmd in docs/**/*.qmd; do
   ' "${qmd}")))
 done
 
+# Most pages show a visual test through a `//| file:` block rather than a pasted
+# listing, and the loop above has already compiled each of those files against
+# the installed package. They count as listings here.
+shown=0
+for qmd in docs/**/*.qmd; do
+  [[ "${qmd}" == */_* ]] && continue
+  shown=$((shown + $(grep -c '^//| file: ' "${qmd}" || true)))
+done
+
 # Finding no listing would report success without compiling one, and a
 # documentation site whose imports nobody checks is what this script is for.
-if [[ ${listings} -eq 0 ]]; then
+if [[ $((listings + shown)) -eq 0 ]]; then
   echo "dry-release: no documentation listing imports the package" >&2
   exit 1
 fi
@@ -157,8 +166,8 @@ for smoke in "${SMOKE_DIR}"/listing-*.typ; do
   fi
 done
 
-printf 'installed: %d/%d compiled (%d from documentation listings)\n' \
-  "$((total - failures))" "${total}" "${listings}"
+printf 'installed: %d/%d compiled (%d from documentation listings, %d shown through file blocks)\n' \
+  "$((total - failures))" "${total}" "${listings}" "${shown}"
 
 if [[ ${failures} -gt 0 ]]; then
   printf '\n%d failure(s) compiling against the installed package.\n' "${failures}" >&2

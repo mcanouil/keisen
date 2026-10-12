@@ -4,7 +4,7 @@ title: "Baseline characteristics"
 subtitle: "The first table of a trial report, with each treatment arm described side by side."
 description: "Means with their standard deviation and counts with their percentage, grouped by section under a spanner for the treatment arms."
 categories: [Clinical]
-image: ../assets/typst-render/gallery-clinical-keisen.png
+image: ../assets/typst-render/gallery/gallery-clinical-keisen.png
 image-alt: "A booktabs table titled Baseline characteristics. A Treatment arm spanner with footnote mark one covers the Drug and Placebo columns, each labelled with its size. Rows are grouped under Demographics and Disease history, and each cell shows a value with its spread in brackets."
 ---
 
