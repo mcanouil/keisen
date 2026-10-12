@@ -13,6 +13,9 @@
 website:
   sidebar:
     - id: reference
+      # The brand logo would otherwise repeat in the sidebar header, under the
+      # same seal in the pinned navbar.
+      logo: false
       # Floating rather than docked: the navbar already paints a band across the
       # top, and a docked sidebar under it walls the page in on two sides.
       # Atelier repaints a docked sidebar from the chrome palette and leaves a
