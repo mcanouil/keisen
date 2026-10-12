@@ -7,9 +7,7 @@ meta:
 
 logo:
   images:
-    seal:
-      path: assets/icons/icon.svg
-      alt: "Keisen seal: a vermilion stamp carved with a ruled table."
+    seal: assets/icons/icon.svg
   small: seal
 
 color:
