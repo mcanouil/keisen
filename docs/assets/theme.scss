@@ -102,6 +102,18 @@
   }
 }
 
+// The cards carry one or two words each, so they keep a small title that
+// hyphenates rather than breaking a word at an arbitrary letter on a phone.
+#listing-gallery-strip .card-body {
+  padding: 0.5rem 0.75rem;
+}
+
+#listing-gallery-strip .card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  hyphens: auto;
+}
+
 // The grammar table wears booktabs rules: heavy above and below, light under the
 // header, and nothing between the rows.
 .keisen-grammar table {
