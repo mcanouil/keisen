@@ -542,12 +542,18 @@ fi
 # Quarto ignores (_site, _extensions) are skipped.
 documented_files() {
   local missing=()
-  local page line target image
+  local page line target image expected
   for page in docs/**/*.qmd; do
     [[ "${page}" == */_* ]] && continue
     image="$(sed -n 's|^image: \(.*assets/typst-render/.*\)$|\1|p' "${page}")"
-    if [[ -n "${image}" ]] && ! grep -qF "//| output-filename: \"$(basename "${image}")\"" "${page}"; then
-      missing+=("${page}: ${image} (no block on the page writes it)")
+    if [[ -n "${image}" ]]; then
+      # A section writes into assets/typst-render/<section>/, as its _metadata.yml
+      # sets, so the card must name that directory and a file a block writes.
+      expected="../assets/typst-render/$(basename "$(dirname "${page}")")/$(basename "${image}")"
+      if [[ "${image}" != "${expected}" ]] ||
+        ! grep -qF "//| output-filename: \"$(basename "${image}")\"" "${page}"; then
+        missing+=("${page}: ${image} (no block on the page writes it)")
+      fi
     fi
     while IFS= read -r line; do
       target="${line#//| file: }"

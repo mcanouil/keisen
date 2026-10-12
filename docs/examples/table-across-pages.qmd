@@ -11,10 +11,33 @@ The page height is the only thing the listing sets that the others do not: a pag
 ```{typst}
 //| file: ../../tests/visual/breakable.typ
 //| echo: true
-//| pages: all
-//| layout-ncol: 3
-//| alt: "Three pages of one long table. Page one: the title, column labels, and the first rows of the North group. Page two: the column labels and the North group label both reprinted, the group's mean, then the South group. Page three: the last readings, the South group's mean, and the source note."
+//| eval: false
 ```
+
+::: {layout-ncol=3}
+
+```{typst}
+//| file: ../../tests/visual/breakable.typ
+//| echo: false
+//| pages: 1
+//| alt: "Page one: the title, column labels, and the first rows of the North group."
+```
+
+```{typst}
+//| file: ../../tests/visual/breakable.typ
+//| echo: false
+//| pages: 2
+//| alt: "Page two: the column labels and the North group label both reprinted, the group's mean, then the South group."
+```
+
+```{typst}
+//| file: ../../tests/visual/breakable.typ
+//| echo: false
+//| pages: 3
+//| alt: "Page three: the last readings, the South group's mean, and the source note."
+```
+
+:::
 
 The second page is the point.
 Row groups are rendered as native level-3 subheaders, so a group carrying on past a page break reprints its own label under the repeated column labels, and the next group retires it automatically.
