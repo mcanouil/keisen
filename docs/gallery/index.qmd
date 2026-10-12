@@ -14,4 +14,6 @@ listing:
 ---
 
 Each entry starts from one data dictionary and builds the same table two times, first with Keisen and then in native Typst.
+The two sources are close in length.
+The difference is that the native one works out the table step by step, while the Keisen one describes it.
 `tools/check.sh` compiles both versions on every run, and each picture is the output of its source.
