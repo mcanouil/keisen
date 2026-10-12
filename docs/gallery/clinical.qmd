@@ -1,9 +1,10 @@
 ---
+engine: markdown
 title: "Baseline characteristics"
 subtitle: "The first table of a trial report, with each treatment arm described side by side."
 description: "Means with their standard deviation and counts with their percentage, grouped by section under a spanner for the treatment arms."
 categories: [Clinical]
-image: ../assets/examples/gallery-clinical-keisen.png
+image: ../assets/typst-render/gallery-clinical-keisen.png
 image-alt: "A booktabs table titled Baseline characteristics. A Treatment arm spanner with footnote mark one covers the Drug and Placebo columns, each labelled with its size. Rows are grouped under Demographics and Disease history, and each cell shows a value with its spread in brackets."
 ---
 
@@ -14,11 +15,40 @@ Both tables below start from the same data dictionary.
 
 ::: {layout-ncol=2}
 
-![Keisen](../assets/examples/gallery-clinical-keisen.png){fig-alt="A booktabs table titled Baseline characteristics. A Treatment arm spanner with footnote mark one covers the Drug and Placebo columns, each labelled with its size. Rows are grouped under Demographics and Disease history, and each cell shows a value with its spread in brackets."}
+::: {}
 
-![Native Typst](../assets/examples/gallery-clinical-native.png){fig-alt="The same baseline characteristics table, built in native Typst, with the same spanner, row groups, values, and footnote."}
+```{typst}
+//| file: ../../tests/visual/gallery-clinical-keisen.typ
+//| echo: false
+//| alt: "A booktabs table titled Baseline characteristics. A Treatment arm spanner with footnote mark one covers the Drug and Placebo columns, each labelled with its size. Rows are grouped under Demographics and Disease history, and each cell shows a value with its spread in brackets."
+```
+
+[Keisen]{.figure-caption}
 
 :::
+
+::: {}
+
+```{typst}
+//| file: ../../tests/visual/gallery-clinical-native.typ
+//| echo: false
+//| alt: "The same baseline characteristics table, built in native Typst, with the same spanner, row groups, values, and footnote."
+```
+
+[Native Typst]{.figure-caption}
+
+:::
+
+:::
+
+```{typst}
+//| file: ../../tests/visual/gallery-clinical-keisen.typ
+//| echo: false
+//| include: false
+//| format: png
+//| dpi: 144
+//| output-filename: "gallery-clinical-keisen.png"
+```
 
 ## What Keisen does for you
 
@@ -35,67 +65,10 @@ Both tables below start from the same data dictionary.
 
 **Keisen**
 
-```typst
-#import "@preview/keisen:0.1.0": *
-
-#let data = (
-  section: ("Demographics",) * 4 + ("Disease history",) * 4,
-  characteristic: (
-    "Age, years",
-    "Female",
-    "Body mass index, kg/m²",
-    "Current smoker",
-    "HbA1c, %",
-    "Diabetes duration, years",
-    "Prior myocardial infarction",
-    "Hypertension",
-  ),
-  kind: ("mean", "count", "mean", "count", "mean", "mean", "count", "count"),
-  drug: (61.4, 54, 29.8, 22, 8.1, 9.6, 14, 81),
-  drug-spread: (9.2, 45.0, 4.7, 18.3, 0.9, 6.1, 11.7, 67.5),
-  placebo: (60.9, 57, 30.2, 19, 8.2, 10.1, 12, 77),
-  placebo-spread: (9.8, 48.3, 5.1, 16.1, 1.0, 6.4, 10.2, 65.3),
-)
-
-#display-table(
-  data,
-  table-header(
-    title: [Baseline characteristics],
-    subtitle: [Randomised population, by treatment arm],
-  ),
-  table-stub(
-    rowname: "characteristic",
-    group: "section",
-    label: [Characteristic],
-  ),
-  columns-hide("kind"),
-  format-number(
-    ("drug", "placebo"),
-    rows: row => row.kind == "mean",
-    decimals: 1,
-  ),
-  format-integer(("drug", "placebo"), rows: row => row.kind == "count"),
-  format-number(("drug-spread", "placebo-spread"), decimals: 1),
-  columns-combine(
-    "drug-arm",
-    ("drug", "drug-spread"),
-    (value, spread) => [#value (#spread)],
-    label: [Drug \ _n_ = 120],
-  ),
-  columns-combine(
-    "placebo-arm",
-    ("placebo", "placebo-spread"),
-    (value, spread) => [#value (#spread)],
-    label: [Placebo \ _n_ = 118],
-  ),
-  table-spanner([Treatment arm], ("drug-arm", "placebo-arm")),
-  table-footnote(
-    [Mean (SD) for continuous variables; _n_ (%) for categorical variables.],
-    locations: cells-column-spanners(),
-  ),
-  table-source-note([Source: synthetic trial data.]),
-  theme: theme-booktabs(),
-)
+```{typst}
+//| file: ../../tests/visual/gallery-clinical-keisen.typ
+//| echo: true
+//| eval: false
 ```
 
 :::
@@ -104,79 +77,10 @@ Both tables below start from the same data dictionary.
 
 **Native Typst**
 
-```typst
-#let data = (
-  section: ("Demographics",) * 4 + ("Disease history",) * 4,
-  characteristic: (
-    "Age, years",
-    "Female",
-    "Body mass index, kg/m²",
-    "Current smoker",
-    "HbA1c, %",
-    "Diabetes duration, years",
-    "Prior myocardial infarction",
-    "Hypertension",
-  ),
-  kind: ("mean", "count", "mean", "count", "mean", "mean", "count", "count"),
-  drug: (61.4, 54, 29.8, 22, 8.1, 9.6, 14, 81),
-  drug-spread: (9.2, 45.0, 4.7, 18.3, 0.9, 6.1, 11.7, 67.5),
-  placebo: (60.9, 57, 30.2, 19, 8.2, 10.1, 12, 77),
-  placebo-spread: (9.8, 48.3, 5.1, 16.1, 1.0, 6.4, 10.2, 65.3),
-)
-
-#let fixed(value, digits) = {
-  let text = str(calc.round(value, digits: digits))
-  let parts = text.split(".")
-  let decimals = parts.at(1, default: "")
-  parts.at(0) + "." + decimals + "0" * (digits - decimals.len())
-}
-
-#let summary(value, spread, kind) = {
-  let shown = if kind == "mean" { fixed(value, 1) } else { str(value) }
-  [#shown (#fixed(spread, 1))]
-}
-
-#let body = ()
-#let previous = none
-#for row in range(data.characteristic.len()) {
-  let section = data.section.at(row)
-  if section != previous {
-    body.push(table.cell(colspan: 3, strong(section)))
-    previous = section
-  }
-  let kind = data.kind.at(row)
-  body.push(data.characteristic.at(row))
-  body.push(summary(data.drug.at(row), data.drug-spread.at(row), kind))
-  body.push(summary(data.placebo.at(row), data.placebo-spread.at(row), kind))
-}
-
-#table(
-  columns: 3,
-  align: start,
-  stroke: none,
-  inset: 0.45em,
-  table.hline(stroke: 1pt),
-  table.cell(colspan: 3, text(
-    size: 1.1em,
-    weight: "bold",
-  )[Baseline characteristics]),
-  table.cell(colspan: 3)[Randomised population, by treatment arm],
-  table.header(
-    [],
-    table.cell(colspan: 2, align: center)[*Treatment arm*#super[1]],
-    table.hline(start: 1, stroke: 0.5pt),
-    [*Characteristic*],
-    [*Drug* \ *_n_ = 120*],
-    [*Placebo* \ *_n_ = 118*],
-    table.hline(stroke: 0.5pt),
-  ),
-  ..body,
-  table.cell(colspan: 3, text(size: 0.8em)[Source: synthetic trial data.]),
-  table.cell(colspan: 3, text(size: 0.8em)[
-    #super[1]Mean (SD) for continuous variables; _n_ (%) for categorical variables.
-  ]),
-  table.hline(stroke: 1pt),
-)
+```{typst}
+//| file: ../../tests/visual/gallery-clinical-native.typ
+//| echo: true
+//| eval: false
 ```
 
 :::
