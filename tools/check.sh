@@ -593,11 +593,15 @@ fresh_assets
 # native Typst". The asset check keeps each picture in step with its source;
 # this keeps the quoted text in step too.
 #
-# A quote is the body of the first fence that matches its opening line after its
-# heading, compared with the lines a sed range selects from the source.
+# A quote is the body of the first fence that matches its opening line inside
+# its heading's section. From the line that opens the range to the end of the
+# fence, it must equal the lines the range selects from the source, so a line
+# added after the range counts as drift; only lines before it, such as the
+# package import that stands in for the test's local one, are left out.
 quoted_block() {
   awk -v heading="$1" -v fence="$2" '
     $0 == heading { section = 1; next }
+    section && !inside && /^## / { exit }
     section && $0 == fence { inside = 1; next }
     inside && /^```$/ { exit }
     inside
@@ -609,7 +613,7 @@ quoted_listing() {
   local heading fence source range wanted quoted
   while IFS='|' read -r heading fence source range; do
     wanted="$(sed -n "${range}" "${source}")"
-    quoted="$(quoted_block "${heading}" "${fence}" | sed -n "${range}")"
+    quoted="$(quoted_block "${heading}" "${fence}" | sed -n "${range%%,*},\$p")"
     if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
       stale+=("${heading#\#\# } (${fence}) against ${source}")
     fi
