@@ -85,7 +85,7 @@ Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.c
 
 ::: {.keisen-quick-look-code}
 
-The table at the top of this page comes from this call, in `tests/visual/grouped.typ`.
+The table at the top of this page comes from this call, with each part labelled.
 
 ```typst
 #import "@preview/keisen:0.1.0": *

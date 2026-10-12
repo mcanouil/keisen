@@ -1,4 +1,4 @@
-// The table from grouped.typ, with each part named in the margin. The landing
+// The table that grouped.typ renders, with each part named in the margin. The landing
 // page of the documentation shows it, so a reader learns the parts before the
 // functions that build them.
 //
@@ -6,7 +6,7 @@
 // the first cell of every row, and the label sits at the height of that cell. The
 // labels therefore follow the table when its spacing changes.
 
-#import "../../lib.typ": *
+#import "../fixtures/regional-sales.typ": regional-sales
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
@@ -27,24 +27,6 @@
 
 #show table.cell: it => if it.x == 0 { [#metadata(it.y)<anatomy-row>] + it } else { it }
 
-#let sales = display-table(
-  (
-    product: ("Bolt", "Nut", "Beam", "Plate"),
-    region: ("North", "North", "South", "South"),
-    units: (1250, 860, 430, 2100),
-    revenue: (18750.5, 12900.25, 21500, 31500.75),
-  ),
-  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
-  table-stub(rowname: "product", group: "region", label: [Product]),
-  columns-label(units: [Units], revenue: [Revenue]),
-  table-spanner([Performance], ("units", "revenue")),
-  format-integer("units"),
-  format-number("revenue", decimals: 2),
-  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
-  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
-  table-source-note([Source: internal ledger.]),
-  table-options(row-striping: true),
-)
 
 #let label-width = 2.6cm
 #let leader = 12pt
@@ -52,7 +34,7 @@
 
 #grid(
   columns: (auto, gap + leader + gap + label-width),
-  sales,
+  regional-sales,
   [
     #metadata(none)<anatomy-origin>
     #context {
@@ -61,8 +43,13 @@
       for marker in query(<anatomy-row>) {
         tops.insert(str(marker.value), marker.location().position().y)
       }
-      // The first layout pass has no markers yet, so the labels wait for the next.
-      if origin == () or tops == (:) { return }
+      // The first layout pass resolves no marker yet, so the labels wait for the
+      // next. Once the origin resolves, a missing row marker is a real failure.
+      if origin == () { return }
+      assert(
+        tops != (:),
+        message: "anatomy: no row marker found; got 0 rows. Keep the `table.cell` show rule in step with how the table emits its first column.",
+      )
       for part in parts {
         let row = str(part.row)
         assert(
