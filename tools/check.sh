@@ -48,12 +48,12 @@ compile_glob() {
   for f in ${glob}; do
     label_total=$((label_total + 1))
     compiles=$((compiles + 1))
-    if typst compile "${extra[@]}" "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
+    if typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
       label_passed=$((label_passed + 1))
     else
       documents_failed=$((documents_failed + 1))
       printf '  FAIL  %s  %s\n' "${label}" "${f}"
-      typst compile "${extra[@]}" "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
+      typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
     fi
   done
 
@@ -534,11 +534,21 @@ fi
 
 # Each table on the site is compiled from the file a page names in a
 # `//| file:` line. A renamed or deleted test would otherwise surface only when
-# the site is built, so every name is resolved here against its page.
+# the site is built, so every name is resolved here against its page. A page
+# whose card image typst-render writes must also hold the block that writes it,
+# or its listing card and social card point at nothing.
+#
+# Every page at any depth, as tools/dry-release.sh sweeps them; directories
+# Quarto ignores (_site, _extensions) are skipped.
 documented_files() {
   local missing=()
-  local page line target
-  for page in docs/*.qmd docs/*/*.qmd; do
+  local page line target image
+  for page in docs/**/*.qmd; do
+    [[ "${page}" == */_* ]] && continue
+    image="$(sed -n 's|^image: \(.*assets/typst-render/.*\)$|\1|p' "${page}")"
+    if [[ -n "${image}" ]] && ! grep -qF "//| output-filename: \"$(basename "${image}")\"" "${page}"; then
+      missing+=("${page}: ${image} (no block on the page writes it)")
+    fi
     while IFS= read -r line; do
       target="${line#//| file: }"
       target="${target%\"}"
@@ -551,7 +561,8 @@ documented_files() {
   if [[ ${#missing[@]} -gt 0 ]]; then
     printf 'docs: a page names a file that does not exist; got %d\n' "${#missing[@]}" >&2
     printf '  %s\n' "${missing[@]}" >&2
-    printf '  point the //| file: path at the test that renders the table\n' >&2
+    printf '  point the //| file: path at the test that renders the table,\n' >&2
+    printf '  and give the card image the output-filename its block writes\n' >&2
     fail_check "docs files"
     return
   fi
