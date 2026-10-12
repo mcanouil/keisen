@@ -1,25 +1,82 @@
 ---
-title: "Keisen"
-subtitle: "Display tables for Typst, built from data rather than drawn by hand."
+pagetitle: "Keisen"
 description: "Keisen brings the display-table grammar to Typst: parts, formatters, and styling addressed by what the data says."
 authors:
   - name: "Mickaël Canouil"
     orcid: "0000-0002-3396-4549"
     url: "https://mickael.canouil.fr"
+toc: false
+title-block-style: none
+page-layout: full
+listing:
+  id: gallery-strip
+  contents:
+    - "gallery/*.qmd"
+    - "!gallery/index.qmd"
+  type: grid
+  sort: "title"
+  fields: [image, title]
+  image-height: 140px
+  filter-ui: false
+  sort-ui: false
 ---
 
-A table in a report is rarely a bare grid.
-It carries a title, row names grouped into blocks, labels that span several columns, subtotals, source notes, and footnotes tied to particular cells.
-Typst gives you a `table` element and leaves all of that to you, so the work becomes bookkeeping: which row is a subtotal, which cell needs a mark, which column of numbers lines up on its decimal point.
+::: {.keisen-hero}
 
-Keisen takes that bookkeeping.
-You describe the parts and the formatting, and it builds the table.
+::: {.keisen-hero-text}
 
+![Keisen seal](assets/icons/icon.svg){.keisen-seal} [Keisen [罫線]{.keisen-kanji lang="ja"}]{.keisen-wordmark}
+
+[Display tables for Typst, built from data rather than drawn by hand.]{.keisen-tagline}
+
+Describe the parts and the formatting, and Keisen does the bookkeeping: subtotals, spanners, footnote marks, and numbers aligned on the decimal point.
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
+
+[Early development: use from a clone]{.keisen-badge}
+
+[See the gallery](gallery/index.qmd){.btn .btn-primary}
+[Browse examples](examples/index.qmd){.btn .btn-outline-primary}
+
+:::
+
+::: {.keisen-anatomy}
+
+![The parts of a display table, named on the table they build.](assets/examples/anatomy.png){fig-alt="A sales table titled Regional sales with each part named in red in the right margin: header, spanner, column labels, row group, stub and body, summary row, grand summary, and source note."}
+
+:::
+
+:::
+
+## Six domains, each built twice
+
+Each gallery entry builds one table with Keisen and again in native Typst, from the same data.
+
+::: {#gallery-strip}
+:::
+
+## The grammar
+
+Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it.
+
+::: {.keisen-grammar}
+
+| Layer      | What it gives you                                                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Parts      | A header, a stub with row names and groups, column labels with spanners, summary rows, source notes, and footnotes numbered in reading order. |
+| Formatters | Numbers, percentages, currency, scientific notation, byte sizes, dates, and markup, computed in Typst's `decimal` type rather than in floats. |
+| Locations  | Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is in row nine. |
+| Nanoplots  | Sparklines and bars inside cells, sharing one domain down a column so they can be compared.                                           |
+| Themes     | Four presets that are option dictionaries, so a theme and an option call compose by merging.                                        |
+
+:::
 
 ## Quick look
 
-This is `tests/visual/grouped.typ`, and the image below is its output.
+::: {.keisen-quick-look}
+
+::: {.keisen-quick-look-code}
+
+The table at the top of this page comes from this call, in `tests/visual/grouped.typ`.
 
 ```typst
 #import "@preview/keisen:0.1.0": *
@@ -44,44 +101,24 @@ This is `tests/visual/grouped.typ`, and the image below is its output.
 )
 ```
 
-![A sales table titled Regional sales, its Units and Revenue columns under a Performance spanner, rows grouped by region with a bold Subtotal closing each group, a bold Total closing the table, alternate rows shaded, and a source note in the footer.](assets/examples/grouped.png)
+:::
 
-The [Examples](examples/index.qmd) section carries a page for each thing a reader might be trying to do, every one beside the source that produced it.
+::: {.keisen-quick-look-notes}
 
-## Status
+### No dependencies {.no-anchor}
 
-Keisen is in early development and has no release yet, so it is used from a clone rather than from Typst Universe.
-The API is settling milestone by milestone, and the [Reference](reference/index.qmd) is written from the source rather than from memory, though nothing yet checks the pages against the code automatically.
+Keisen imports no third-party package, so formatting stays pluggable and installing it pulls in nothing else.
 
-Follow along in the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
+### Native row groups {.no-anchor}
 
-## What it does
+Row groups are native repeating subheaders, so a group that spans a page break prints its label again.
 
-Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it:
+### Status {.no-anchor}
 
-Parts
-: A header, a stub with row names and groups, column labels with spanners, a body, summary rows, source notes, and footnotes whose marks are numbered in reading order. Groups come from a column of the data, or from the document where the data has none.
+Keisen has no release yet, so you use it from a clone rather than from Typst Universe.
+The API settles milestone by milestone.
+Follow the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
-Formatters
-: Numbers, integers, percentages, currency, scientific notation, byte sizes, dates, and markup held as text. Every figure is computed in Typst's `decimal` type rather than in floats, and `format()` takes anything the family does not.
+:::
 
-Locations
-: Styling addressed by what the data says, so a cell is highlighted because its margin fell below a threshold, not because it is the fourth cell of the ninth row.
-
-Nanoplots
-: Sparklines and bars inside cells, drawn with native primitives and sharing one domain down a column so they can be compared. Small enough to sit inline at the height of the text.
-
-Themes
-: Four presets that are option dictionaries, so a theme and an option call are the same kind of thing and compose by merging.
-
-## Design
-
-Keisen imports no third-party package at all, so formatting stays pluggable and installing it pulls in nothing else.
-Row groups are rendered as native repeating subheaders, which means a group that spans a page break reprints its label.
-
-## Links
-
-- [Reference](reference/index.qmd) for every function, its arguments, and its defaults.
-- [Examples](examples/index.qmd) for a worked table per outcome.
-- [Changelog](changelog.qmd) for what each release changed.
-- [Source and issues](https://github.com/{{< var repository.slug >}}) on GitHub.
+:::
