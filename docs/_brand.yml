@@ -5,6 +5,13 @@ meta:
   link:
     home: https://m.canouil.dev/keisen/
 
+logo:
+  images:
+    seal:
+      path: assets/icons/icon.svg
+      alt: "Keisen seal: a vermilion stamp carved with a ruled table."
+  small: seal
+
 color:
   palette:
     paper-light: "#FBFBF8"

@@ -1,54 +1,61 @@
 # Icons
 
-`icon.svg` is Quarto's own mark, the quartered circle, taken from Quarto's `quarto-icon.svg` as it stands.
-That is the plain icon, not the wordmark, and not the trademarked lock-up.
-The geometry and the `#74AADB` fill are untouched; only the editor prolog was dropped and `role="img"` with a `<title>` added, so the mark is announced rather than skipped.
+`icon.svg` is the Keisen seal.
+The seal is a vermilion square with round corners, like a Japanese name stamp (hanko).
+A ruled table is cut into it: a frame, a header rule, and a stub rule.
+The name Keisen (罫線) means the ruled lines of a table, so the mark shows the name.
 
-Every documentation site in this family carries the same mark, so the rasters beside it are correct in every repository and nothing has to be regenerated when one is scaffolded.
-Replace `icon.svg` only when the extension has a mark of its own, and regenerate all four rasters from it when you do.
+The SVG is drawn by hand on a 32 by 32 grid.
+Each rule is 2.5 units wide, so the rules stay visible at 16 pixels.
+The colours come from `../../_brand.yml`: `vermilion` (`#C8442F`) for the seal and `paper-light` (`#FBFBF8`) for the cuts.
+The seal is opaque and has one colour scheme, so the SVG has no `prefers-color-scheme` rule.
 
 ## Rasters
 
-The rasters are flattened onto `#191C1F`, the dark ground this family of sites is painted on, which is the pastel extension's `night` where that extension is used.
-Quarto blue measures roughly 4.6 against it and roughly 1.9 against the light paper of the same palette, so the dark ground is the one where the silhouette holds at favicon size.
-The mark is a single colour in both colour schemes, so there is no `prefers-color-scheme` rule to force and no user stylesheet is needed for the conversion.
+The rasters come from `icon.svg`.
+If you change the SVG, generate all four rasters again.
 
-Tools: `rsvg-convert` (librsvg) for the vector to raster step, `magick` (ImageMagick 7) for padding, flattening, and `.ico` assembly.
-Neither is a build dependency; the commands are run by hand when the master changes.
+Tools: `rsvg-convert` (librsvg) converts the vector to rasters.
+`magick` (ImageMagick 7) adds the padding, flattens the image, and writes the `.ico` file.
+The site build does not use these tools.
 
-Run from this directory.
+Run the commands from this directory.
 
 ```bash
+tmp="$(mktemp -d)"
 for size in 32 144 154 410; do
-  rsvg-convert -w "${size}" icon.svg -o "/tmp/icon-${size}.png"
+  rsvg-convert -w "${size}" -h "${size}" icon.svg -o "${tmp}/icon-${size}.png"
 done
 
-magick /tmp/icon-32.png -background '#191C1F' -gravity center -extent 32x32 -flatten -strip /tmp/icon-32-flat.png
-magick /tmp/icon-32-flat.png -define icon:format=png ../../favicon.ico
-magick /tmp/icon-144.png -background '#191C1F' -gravity center -extent 180x180 -flatten -strip apple-touch-icon.png
-magick /tmp/icon-154.png -background '#191C1F' -gravity center -extent 192x192 -flatten -strip icon-192.png
-magick /tmp/icon-410.png -background '#191C1F' -gravity center -extent 512x512 -flatten -strip icon-512.png
+magick "${tmp}/icon-32.png" ../../favicon.ico
+magick "${tmp}/icon-144.png" -background '#FBFBF8' -gravity center -extent 180x180 -flatten -strip apple-touch-icon.png
+magick "${tmp}/icon-154.png" -background '#FBFBF8' -gravity center -extent 192x192 -flatten -strip icon-192.png
+magick "${tmp}/icon-410.png" -background '#FBFBF8' -gravity center -extent 512x512 -flatten -strip icon-512.png
+rm -r "${tmp}"
 ```
 
-`rsvg-convert -w` on its own preserves the aspect ratio, and the viewBox is 121.8 by 118.8 rather than square, so each render comes out slightly short and `-extent` centres it in the square.
-The intermediate sizes are chosen so the mark lands at 80 percent of the final square, which is the 10 percent padding the Apple touch icon wants.
-The favicon takes the full square instead, since it is only 32 pixels to begin with.
+The intermediate sizes put the seal at 80 percent of the final square.
+This gives the 10 percent padding that the Apple touch icon needs.
+The padding is `paper-light`, so the seal looks like a stamp on paper.
+The favicon has no padding, because it is only 32 pixels.
 
-| File                   | Size    | Purpose                                                    |
-| ---------------------- | ------- | ---------------------------------------------------------- |
-| `icon.svg`             | vector  | `extensions.atelier.icon`, and the source for the rest     |
-| `../../favicon.ico`    | 32x32   | `website.favicon`, for clients that ignore the SVG         |
-| `apple-touch-icon.png` | 180x180 | `extensions.atelier.apple-touch-icon`, opaque, 10% padding |
-| `icon-192.png`         | 192x192 | `../../site.webmanifest`                                   |
-| `icon-512.png`         | 512x512 | `../../site.webmanifest`                                   |
+| File                   | Size    | Purpose                                                       |
+| ---------------------- | ------- | ------------------------------------------------------------- |
+| `icon.svg`             | vector  | `extensions.atelier.icon`, the brand logo, and the source     |
+| `../../favicon.ico`    | 32x32   | `website.favicon`, for clients that ignore the SVG            |
+| `apple-touch-icon.png` | 180x180 | `extensions.atelier.apple-touch-icon`, opaque, 10% padding    |
+| `icon-192.png`         | 192x192 | `../../site.webmanifest`                                      |
+| `icon-512.png`         | 512x512 | `../../site.webmanifest`                                      |
 
-There is no maskable icon: this is a documentation site, not an installable application.
+There is no maskable icon, because this site is not an installable application.
 
 ## Manifest colours
 
-`../../site.webmanifest` sets both `theme_color` and `background_color` to `#191C1F`, the same dark ground the rasters sit on, and JSON takes no comment to say why.
+`../../site.webmanifest` sets `theme_color` and `background_color` to `#FBFBF8`.
+This is the same paper colour as the padding of the rasters.
+JSON has no comments, so the reason is given here.
 
-`background_color` paints the splash screen behind the icon before the first frame renders, so matching the ground the icon was flattened onto is what stops a light rim appearing around it.
-`theme_color` is the arguable one, because a manifest carries a single value and cannot vary by colour scheme.
-The per-scheme `theme-color` meta tags do that job for the browser chrome, emitted by the atelier filter from the brand: `#F6F1E6` in light and `#191C1F` in dark.
-The manifest is left dark for coherence with the icon rather than matching either scheme.
+`background_color` paints the splash screen behind the icon.
+The same colour as the padding prevents a rim around the icon.
+A manifest has only one `theme_color`, and it cannot change with the colour scheme.
+The atelier filter writes the `theme-color` meta tags for each colour scheme from the brand.
