@@ -17,6 +17,7 @@ listing:
   sort: "title"
   fields: [image, title]
   image-height: 140px
+  grid-columns: 6
   filter-ui: false
   sort-ui: false
 ---
@@ -25,7 +26,15 @@ listing:
 
 ::: {.keisen-hero-text}
 
-![Keisen seal](assets/icons/icon.svg){.keisen-seal} [Keisen [罫線]{.keisen-kanji lang="ja"}]{.keisen-wordmark}
+::: {.keisen-brand}
+
+```{=html}
+<img src="assets/icons/icon.svg" alt="" class="keisen-seal">
+```
+
+# Keisen [罫線]{.keisen-kanji lang="ja"} {.keisen-wordmark .unnumbered .unlisted .no-anchor}
+
+:::
 
 [Display tables for Typst, built from data rather than drawn by hand.]{.keisen-tagline}
 
@@ -115,7 +124,7 @@ Row groups are native repeating subheaders, so a group that spans a page break p
 
 ### Status {.no-anchor}
 
-Keisen has no release yet, so you use it from a clone rather than from Typst Universe.
+Until the first release, use Keisen from a clone of the repository.
 The API settles milestone by milestone.
 Follow the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 

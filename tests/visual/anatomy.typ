@@ -3,7 +3,7 @@
 // functions that build them.
 //
 // Each label finds its row from the table itself: a show rule leaves a marker in
-// every cell, and the label sits at the height of the first cell in its row. The
+// the first cell of every row, and the label sits at the height of that cell. The
 // labels therefore follow the table when its spacing changes.
 
 #import "../../lib.typ": *
@@ -25,7 +25,7 @@
   (row: 13, name: [source note]),
 )
 
-#show table.cell: it => [#metadata((x: it.x, y: it.y))<anatomy-cell>] + it
+#show table.cell: it => if it.x == 0 { [#metadata(it.y)<anatomy-row>] + it } else { it }
 
 #let sales = display-table(
   (
@@ -56,17 +56,20 @@
   [
     #metadata(none)<anatomy-origin>
     #context {
-      let origin = query(<anatomy-origin>).map(m => m.location().position().y)
-      let markers = query(<anatomy-cell>)
+      let origin = query(<anatomy-origin>)
+      let tops = (:)
+      for marker in query(<anatomy-row>) {
+        tops.insert(str(marker.value), marker.location().position().y)
+      }
       // The first layout pass has no markers yet, so the labels wait for the next.
-      if origin.len() == 0 or markers.len() == 0 { return }
+      if origin == () or tops == (:) { return }
       for part in parts {
-        let cells = markers.filter(m => m.value.y == part.row)
+        let row = str(part.row)
         assert(
-          cells.len() > 0,
-          message: "anatomy: no cell in grid row " + str(part.row) + "; got " + repr(part.name) + ". Update the row numbers in `parts` to match the table.",
+          row in tops,
+          message: "anatomy: no cell in grid row " + row + "; got " + repr(part.name) + ". Update the row numbers in `parts` to match the table.",
         )
-        let dy = calc.min(..cells.map(m => m.location().position().y)) - origin.first()
+        let dy = tops.at(row) - origin.first().location().position().y
         place(top + left, dx: gap, dy: dy + 0.9em, line(length: leader, stroke: 0.5pt + ink))
         place(top + left, dx: gap + leader + gap, dy: dy + 0.45em, text(fill: ink, style: "italic", part.name))
       }

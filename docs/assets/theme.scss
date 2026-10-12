@@ -15,32 +15,48 @@
 // them below the large breakpoint. Colours come from Bootstrap's variables, which
 // the brand sets for each colour scheme, so the rules hold in light and dark.
 
-.keisen-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 2.5rem;
-  align-items: center;
-  padding-block: 1.5rem 2.5rem;
-  border-bottom: 2px solid var(--bs-body-color);
+$keisen-serif: "Libertinus Serif", Georgia, "Times New Roman", serif;
+$keisen-rule: var(--bs-body-color);
 
-  @media (max-width: 991.98px) {
-    grid-template-columns: minmax(0, 1fr);
+.keisen-hero,
+.keisen-quick-look {
+  display: grid;
+  gap: 2.5rem;
+
+  @include media-breakpoint-down(lg) {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 
-.keisen-wordmark {
-  font-family: "Libertinus Serif", Georgia, "Times New Roman", serif;
-  font-size: 3rem;
-  font-weight: 600;
-  line-height: 1.1;
-  vertical-align: middle;
+.keisen-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding-block: 1.5rem 2.5rem;
+  border-bottom: 2px solid $keisen-rule;
+}
+
+.keisen-brand {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+
+  p {
+    margin: 0;
+  }
 }
 
 .keisen-seal {
   width: 4rem;
   height: 4rem;
-  margin-right: 0.75rem;
-  vertical-align: middle;
+}
+
+h1.keisen-wordmark {
+  margin: 0;
+  border: none;
+  font-family: $keisen-serif;
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 .keisen-kanji {
@@ -53,7 +69,7 @@
 .keisen-tagline {
   display: block;
   margin-top: 0.5rem;
-  font-family: "Libertinus Serif", Georgia, "Times New Roman", serif;
+  font-family: $keisen-serif;
   font-size: 1.4rem;
   line-height: 1.35;
 }
@@ -89,15 +105,14 @@
   }
 }
 
-// Six domains on one row on a wide screen, wrapping to three and then two.
+// The listing sets six columns. Quarto drops them straight to two and then one,
+// which leaves a tablet with six cramped cards and a phone with six tall ones.
 #listing-gallery-strip .list.grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-
-  @media (max-width: 991.98px) {
+  @include media-breakpoint-down(lg) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  @media (max-width: 575.98px) {
+  @include media-breakpoint-down(sm) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -117,14 +132,13 @@
 // The grammar table wears booktabs rules: heavy above and below, light under the
 // header, and nothing between the rows.
 .keisen-grammar table {
-  border-top: 2px solid var(--bs-body-color);
-  border-bottom: 2px solid var(--bs-body-color);
+  border-top: 2px solid $keisen-rule;
+  border-bottom: 2px solid $keisen-rule;
 
   thead tr {
-    border-bottom: 1px solid var(--bs-body-color);
+    border-bottom: 1px solid $keisen-rule;
   }
 
-  tbody tr,
   tbody td {
     border: none;
   }
@@ -136,13 +150,7 @@
 }
 
 .keisen-quick-look {
-  display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 2rem;
-
-  @media (max-width: 991.98px) {
-    grid-template-columns: minmax(0, 1fr);
-  }
 
   h3 {
     margin-top: 0;
