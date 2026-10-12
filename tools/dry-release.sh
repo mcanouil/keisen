@@ -93,6 +93,9 @@ total=0
 # specification. These exercise the whole public surface, since most of them
 # import it wholesale.
 for f in tests/visual/*.typ; do
+  # anatomy.typ reads grouped.typ beside it and evaluates that call, so a lone
+  # copy here has nothing to read, and grouped.typ already covers its table.
+  [[ "${f}" == "tests/visual/anatomy.typ" ]] && continue
   total=$((total + 1))
   name="$(basename "${f%.typ}")"
   smoke="${SMOKE_DIR}/visual-${name}.typ"

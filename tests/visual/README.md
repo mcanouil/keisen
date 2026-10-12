@@ -12,5 +12,6 @@ Set the page to fit its content, so the picture on the site is the table rather 
 
 `breakable.typ` is the exception: it needs a fixed page, since a page that grows to fit never breaks, and breaking is what it tests.
 
-`grouped.typ` and `anatomy.typ` import their table from `tests/fixtures/regional-sales.typ`.
+`anatomy.typ` reads `grouped.typ` and evaluates its `display-table` call.
 The labelled figure on the landing page therefore always shows the same call as `grouped.typ`.
+`tools/dry-release.sh` skips `anatomy.typ`, because its table is `grouped.typ`, which the dry release already compiles.
