@@ -163,6 +163,7 @@
   source("test-summary-label-alignment.typ"),
   source("test-summary-locations.typ"),
   source("test-theme-rounding.typ"),
+  source("../visual/anatomy.typ"),
   source("../visual/combined.typ"),
   source("../visual/conventions.typ"),
   source("../visual/dates-markup.typ"),
