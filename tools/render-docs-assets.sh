@@ -133,6 +133,10 @@ mkdir -p "${OUT_DIR}"
 stage="$(mktemp -d "${TMPDIR:-/tmp}/keisen-assets.XXXXXX")"
 trap 'rm -rf "${stage}"' EXIT
 
+# The visual tests import @preview/keisen as a reader does; this links that
+# import to the working tree for the render.
+package_path="$(tools/package-path.sh "${stage}/packages")"
+
 names=()
 for f in tests/visual/*.typ; do
   names+=("$(basename "${f%.typ}")")
@@ -166,7 +170,7 @@ for name in "${names[@]}"; do
   # tracked image deleted and the site serving nothing at all.
   rm -f "${stage:?}"/*.png
   # A document of several pages needs a page-number template in the path.
-  typst compile "${f}" --root "${REPO_ROOT}" "${stage}/${name}-{p}.png" \
+  typst compile --package-path "${package_path}" "${f}" --root "${REPO_ROOT}" "${stage}/${name}-{p}.png" \
     --format png --ppi "$(ppi_for "${name}")" --ignore-system-fonts
 
   # The pattern the clearing line below uses, and the one the self-test holds:

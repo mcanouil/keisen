@@ -1,7 +1,7 @@
 // Gallery: baseline characteristics, built with Keisen.
 // Its native twin is gallery-clinical-native.typ; the two render alike.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

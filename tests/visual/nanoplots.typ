@@ -9,7 +9,7 @@
 // the option discarded, every short cell falls back to the top of its row,
 // which is where Typst puts a table cell, and the tracked image goes stale.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

@@ -1,7 +1,7 @@
 // Milestone 4: a table long enough to break, so the column labels and the
 // current group label both reprint on the following page.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 // The height is fixed, because a page that grows to hold the table never breaks
 // and breaking is what this test is for. The width still fits its content, as

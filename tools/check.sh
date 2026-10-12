@@ -177,6 +177,28 @@ fitted_pages() {
 
 fitted_pages
 
+# The documentation shows each visual test as written, so a relative import
+# would put a line on the page that no reader can run.
+relative_visual_imports() {
+  local offenders=()
+  local f
+  for f in tests/visual/*.typ; do
+    if grep -q '"\.\./\.\./lib\.typ"' "${f}"; then
+      offenders+=("${f}")
+    fi
+  done
+  if [[ ${#offenders[@]} -gt 0 ]]; then
+    printf 'imports: a visual test imports the working tree; got %d file(s)\n' "${#offenders[@]}" >&2
+    printf '  %s\n' "${offenders[@]}" >&2
+    printf '  use #import "@preview/keisen:<version>": * as the documentation shows it\n' >&2
+    fail_check "imports"
+    return
+  fi
+  printf 'imports:  ok\n'
+}
+
+relative_visual_imports
+
 # Two unit tests scan a list of files written out by hand, because Typst cannot
 # walk a directory. Each list can go stale without a word: the scan still runs,
 # its assertion still holds, and the record quietly stops describing the tree. A

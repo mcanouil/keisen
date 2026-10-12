@@ -1,7 +1,7 @@
 // Milestone 3: conditional styling, data-driven colour, substitutions, and
 // footnote marks numbered in reading order.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

@@ -2,7 +2,7 @@
 // green while the closing rule was missing, because every table here carried a
 // source note and the footer was drawing it.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 9pt)

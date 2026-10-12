@@ -89,20 +89,15 @@ mkdir -p "${SMOKE_DIR}"
 failures=0
 total=0
 
-# Every visual test, with its relative import rewritten to the package
-# specification. These exercise the whole public surface, since most of them
-# import it wholesale.
-#
-# anatomy.typ reads grouped.typ as text and evaluates its call, so a copy of
-# grouped.typ under its own name sits beside the smoke copies for it to read.
-cp tests/visual/grouped.typ "${SMOKE_DIR}/grouped.typ"
+# Every visual test, compiled in place against the installed package. They
+# import @preview/keisen as a reader does, so nothing is rewritten; the root is
+# the repository, so anatomy.typ's read of /tests/visual/grouped.typ resolves.
+# These exercise the whole public surface, since most of them import it
+# wholesale.
 for f in tests/visual/*.typ; do
   total=$((total + 1))
   name="$(basename "${f%.typ}")"
-  smoke="${SMOKE_DIR}/visual-${name}.typ"
-  sed -E "s|\"\.\./\.\./lib\.typ\"|\"@preview/keisen:${VERSION}\"|" "${f}" >"${smoke}"
-
-  if ! typst compile "${smoke}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
+  if ! typst compile "${f}" --root "${REPO_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
     failures=$((failures + 1))
     printf '  FAIL  installed  %s\n' "${f}" >&2
     sed -n '1,5p' "${SMOKE_DIR}/visual-${name}.err" >&2
