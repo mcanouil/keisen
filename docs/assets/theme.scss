@@ -22,10 +22,6 @@ $keisen-rule: var(--bs-body-color);
 .keisen-quick-look {
   display: grid;
   gap: 2.5rem;
-
-  @include media-breakpoint-down(lg) {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
 }
 
 .keisen-hero {
@@ -33,6 +29,23 @@ $keisen-rule: var(--bs-body-color);
   align-items: center;
   padding-block: 1.5rem 2.5rem;
   border-bottom: 2px solid $keisen-rule;
+}
+
+.keisen-quick-look {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+
+  h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+  }
+}
+
+// After the column rules above, so the single column wins below the breakpoint.
+.keisen-hero,
+.keisen-quick-look {
+  @include media-breakpoint-down(lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .keisen-brand {
@@ -146,14 +159,5 @@ h1.keisen-wordmark {
   tbody td:first-child {
     font-weight: 600;
     white-space: nowrap;
-  }
-}
-
-.keisen-quick-look {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-
-  h3 {
-    margin-top: 0;
-    font-size: 1.1rem;
   }
 }
