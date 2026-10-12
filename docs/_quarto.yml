@@ -147,6 +147,8 @@ extensions:
   typst-render:
     root: "/.."
     package-path: "/.typst-packages"
+    # One directory for every page, ignored by git, whatever the page depth.
+    output-directory: "/assets/typst-render"
     background: "#ffffff"
     width: auto
     height: auto
