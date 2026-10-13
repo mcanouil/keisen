@@ -6,7 +6,9 @@
 # box on the page in place of the table, and lets the render succeed. A site
 # built that way would publish error boxes with a green build, so this runs
 # after the render and fails it instead. It also fails when a page's card image,
-# which a hidden block writes, did not reach the site.
+# which a hidden block writes, did not reach the site, and when a listing still
+# shows a visual test's "/lib.typ" import, which _filters/package-import.lua
+# writes as the package import.
 # Kept apart from post-render.sh, which is the same in every repository.
 
 set -euo pipefail
@@ -44,6 +46,11 @@ for page in "${pages[@]}"; do
   if grep -q 'typst-render-error' "${page}"; then
     failed+=("${page#"${DOCS_DIR}"/} (a table did not compile)")
   fi
+  # Highlighting splits a line into spans, so the tags are removed first. grep
+  # reads to the end, rather than -q, so pipefail does not see sed cut short.
+  if sed 's/<[^>]*>//g; s/&quot;/"/g' "${page}" | grep '#import "/lib\.typ"' >/dev/null; then
+    failed+=("${page#"${DOCS_DIR}"/} (a listing shows the \"/lib.typ\" import)")
+  fi
 
   # A card image is named in the page's front matter and written by a hidden
   # block, which shows nothing when it fails, so the served file is what proves
@@ -60,7 +67,8 @@ done
 if [[ ${#failed[@]} -gt 0 ]]; then
   printf '[post-render] typst-render: %d failure(s); got:\n' "${#failed[@]}" >&2
   printf '  %s\n' "${failed[@]}" >&2
-  printf '  compile the test the page names with tools/check.sh to see its error\n' >&2
+  printf '  a table: compile the test the page names with tools/check.sh to see its error\n' >&2
+  printf '  an import: check that _quarto.yml lists _filters/package-import.lua\n' >&2
   exit 1
 fi
 printf '[post-render] typst-render: every table compiled\n'

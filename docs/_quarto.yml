@@ -98,8 +98,11 @@ metadata-files:
 filters:
   # Before code-window, so the source typst-render echoes gets its window.
   - typst-render
-  # After typst-render, which compiles the "/lib.typ" import, and before
-  # code-window, so the window shows the import a reader writes.
+  # Rewrites the "/lib.typ" import in the listings typst-render echoes, in
+  # place, so it runs after typst-render. code-window runs earlier, in its own
+  # pre-quarto pass, and wraps the listing without hiding it.
+  # _scripts/typst-render-check.sh fails a render whose listing still shows
+  # "/lib.typ".
   - _filters/package-import.lua
   - code-window
   - gitlink

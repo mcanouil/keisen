@@ -611,7 +611,8 @@ highlighted_lines
 # The site shows each visual test's "/lib.typ" import as the package import, and
 # a filter that stopped matching would publish a line no reader can run. Run on
 # a listing of each import form, the filter must write every one as the
-# manifest's version and leave a listing in another language alone.
+# manifest's version and leave a listing in another language alone. The render
+# itself is checked by docs/_scripts/typst-render-check.sh.
 documented_imports() {
   local filter=docs/_filters/package-import.lua
   local version want got
