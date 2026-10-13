@@ -150,6 +150,16 @@ The Typst Universe submission needs your own GitHub identity, so run it from a c
 The script downloads the release archive, lints it with `typst-package-check`, and opens the pull request on `typst/packages` from the fork in `TYPST_PACKAGES_FORK`.
 `--dry-run` does all of this except the push and the pull request.
 
+The workflow refuses to bump when the branch moved after the dispatch, so dispatch it again.
+If a run stops after the bump merged but before the GitHub Release exists, finish it by hand from the bump commit:
+
+```bash
+tools/package.sh archive release_assets
+gh release create <version> release_assets/keisen-<version>.tar.gz release_assets/keisen-<version>.zip \
+  --target <bump commit> --title <version> --notes-file <the changelog section>
+gh workflow run pages.yml
+```
+
 `tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.

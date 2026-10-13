@@ -48,6 +48,17 @@ jobs:
           [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
 
+      # The bump runs first, and is undone, so a changelog with nothing under
+      # Unreleased is refused in seconds rather than after the suite.
+      - name: Try the bump
+        shell: bash
+        env:
+          BUMP: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          tools/bump-version.sh "${BUMP}"
+          git checkout -- .
+
       - name: Set up Typst
         uses: typst-community/setup-typst@v5
         with:
@@ -141,7 +152,9 @@ jobs:
           fi
           git checkout -b "${BRANCH}"
           git add typst.toml CITATION.cff CHANGELOG.md README.md
-          git commit -m "ci: bump version to ${VERSION}"
+          # validate has checked this tree, so the bump pull request starts no
+          # other workflow.
+          git commit -m "ci: bump version to ${VERSION} [skip ci]"
           git push origin "${BRANCH}"
 
           pr_url="$(gh pr create \
