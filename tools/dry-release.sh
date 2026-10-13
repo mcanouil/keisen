@@ -92,6 +92,10 @@ total=0
 # Every visual test, with its relative import rewritten to the package
 # specification. These exercise the whole public surface, since most of them
 # import it wholesale.
+#
+# anatomy.typ reads grouped.typ as text and evaluates its call, so a copy of
+# grouped.typ under its own name sits beside the smoke copies for it to read.
+cp tests/visual/grouped.typ "${SMOKE_DIR}/grouped.typ"
 for f in tests/visual/*.typ; do
   total=$((total + 1))
   name="$(basename "${f%.typ}")"

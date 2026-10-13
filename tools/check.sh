@@ -588,6 +588,27 @@ fi
 
 fresh_assets
 
+# The landing page quotes grouped.typ's call under "Quick look", beside the
+# figure that anatomy.typ evaluates from that same call. The asset check keeps
+# the figure in step with the source; this keeps the quoted text in step too.
+quoted_listing() {
+  local wanted quoted
+  wanted="$(sed -n '/^#display-table(/,$p' tests/visual/grouped.typ)"
+  quoted="$(awk '/^## Quick look/ { section = 1 } section && /^```typst$/ { fence = 1; next } fence && /^```$/ { exit } fence' docs/index.qmd |
+    sed -n '/^#display-table(/,$p')"
+  if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
+    printf 'listing: docs/index.qmd quotes a call that differs from tests/visual/grouped.typ
+' >&2
+    printf '  copy the #display-table( call from grouped.typ into the Quick look listing
+' >&2
+    fail_check "listing"
+    return
+  fi
+  printf 'listing:  ok\n'
+}
+
+quoted_listing
+
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.
 if ! tools/quarto-check.sh; then

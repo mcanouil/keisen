@@ -114,6 +114,17 @@ fi
 OUT_DIR="${1:-docs/assets/examples}"
 PPI=144
 
+# The landing page shows anatomy.png at about the width of half the page, which
+# is as wide as the image itself at the base density, so a high-density screen
+# blurs it. Twice the density keeps it sharp there; every other image is shown
+# smaller than its pixels.
+ppi_for() {
+  case "$1" in
+  anatomy) printf '%s' "$((PPI * 2))" ;;
+  *) printf '%s' "${PPI}" ;;
+  esac
+}
+
 mkdir -p "${OUT_DIR}"
 
 # One staging directory for the whole run, removed however the script ends. Made
@@ -156,7 +167,7 @@ for name in "${names[@]}"; do
   rm -f "${stage:?}"/*.png
   # A document of several pages needs a page-number template in the path.
   typst compile "${f}" --root "${REPO_ROOT}" "${stage}/${name}-{p}.png" \
-    --format png --ppi "${PPI}" --ignore-system-fonts
+    --format png --ppi "$(ppi_for "${name}")" --ignore-system-fonts
 
   # The pattern the clearing line below uses, and the one the self-test holds:
   # a page is the name, a hyphen, and digits.
