@@ -142,7 +142,7 @@ gh repo clone "${FORK}" "${CLONE}" -- --filter=blob:none --no-checkout --depth 1
 # gh repo clone auto-adds `upstream` for forks; only add it when missing.
 git -C "${CLONE}" remote get-url upstream >/dev/null 2>&1 ||
   git -C "${CLONE}" remote add upstream https://github.com/typst/packages.git
-git -C "${CLONE}" fetch upstream main --depth 1
+git -C "${CLONE}" fetch --filter=blob:none upstream main --depth 1
 git -C "${CLONE}" sparse-checkout init --cone
 git -C "${CLONE}" sparse-checkout set "${PKG_PATH}"
 git -C "${CLONE}" checkout -B "${BRANCH}" upstream/main
@@ -165,19 +165,7 @@ cp -r "${STAGE}" "${DEST}"
 git -C "${CLONE}" add "${PKG_PATH}/${VERSION}"
 git -C "${CLONE}" commit -m "Add ${PKG}:${VERSION}" >/dev/null
 
-if [[ "${DRY_RUN}" -eq 1 ]]; then
-  printf '\n[dry-run] Would push %s to %s and open a PR against typst/packages.\n' \
-    "${BRANCH}" "${FORK}"
-  printf '[dry-run] Staged tree:\n'
-  git -C "${CLONE}" show --stat --oneline HEAD | sed 's/^/  /'
-  exit 0
-fi
-
-# --- Push to fork ------------------------------------------------------------
-# Force push is intentional: a re-run for the same version replaces the branch.
-git -C "${CLONE}" push --force origin "${BRANCH}"
-
-# --- Open, reuse, or retarget a PR against typst/packages --------------------
+# --- Pull request body ------------------------------------------------------
 BODY_FILE="${TMP}/pr-body.md"
 build_body() {
   if [[ "${IS_UPDATE}" -eq 1 ]]; then
@@ -207,9 +195,24 @@ build_body() {
     fi
   } >"${BODY_FILE}"
 }
+build_body
 
+if [[ "${DRY_RUN}" -eq 1 ]]; then
+  printf '\n[dry-run] Would push %s to %s and open a PR against typst/packages.\n' \
+    "${BRANCH}" "${FORK}"
+  printf '[dry-run] Staged tree:\n'
+  git -C "${CLONE}" show --stat --oneline HEAD | sed 's/^/  /'
+  printf '[dry-run] Pull request body:\n'
+  sed 's/^/  /' "${BODY_FILE}"
+  exit 0
+fi
+
+# --- Push to fork ------------------------------------------------------------
+# Force push is intentional: a re-run for the same version replaces the branch.
+git -C "${CLONE}" push --force origin "${BRANCH}"
+
+# --- Open, reuse, or retarget a PR against typst/packages --------------------
 if [[ -n "${REPLACE_PR}" ]]; then
-  build_body
   gh pr edit "${REPLACE_PR}" \
     --repo typst/packages \
     --title "${PKG}:${VERSION}" \
@@ -228,7 +231,6 @@ else
   if [[ -n "${PR_URL}" ]]; then
     echo "Reusing existing PR: ${PR_URL}"
   else
-    build_body
     PR_URL="$(gh pr create \
       --repo typst/packages \
       --base main \

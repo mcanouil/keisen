@@ -151,7 +151,8 @@ jobs:
             git push origin --delete "${BRANCH}"
           fi
           git checkout -b "${BRANCH}"
-          git add typst.toml CITATION.cff CHANGELOG.md README.md
+          # Whatever tools/bump-version.sh rewrote, so the list lives in one place.
+          git add -u
           # validate has checked this tree, so the bump pull request starts no
           # other workflow.
           git commit -m "ci: bump version to ${VERSION} [skip ci]"
@@ -167,6 +168,12 @@ jobs:
           merged=false
           for attempt in {1..10}; do
             if gh pr merge "${pr_url}" --merge --delete-branch; then
+              merged=true
+              break
+            fi
+            # The merge comes before the branch deletion, so a failure can
+            # follow a merge that happened.
+            if [[ "$(gh pr view "${pr_url}" --json state --jq .state)" == "MERGED" ]]; then
               merged=true
               break
             fi
