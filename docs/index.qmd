@@ -83,7 +83,9 @@ Native code says how to build the table: loop over the sections, sum each column
 Keisen says what the table is, so when the rows change, the table follows.
 Add a section or another line to the data, and there's no code to touch.
 
-[Native Typst]{.figure-caption}
+::: {.panel-tabset .keisen-compare}
+
+### Native Typst
 
 ::: {.keisen-native data-highlight-lines="40-54"}
 
@@ -92,6 +94,16 @@ Add a section or another line to the data, and there's no code to touch.
 //| echo: true
 //| eval: false
 //| code-line-numbers: true
+```
+
+:::
+
+### Keisen
+
+```{typst}
+//| file: ../tests/visual/gallery-income-statement-keisen.typ
+//| echo: true
+//| eval: false
 ```
 
 :::
@@ -120,18 +132,10 @@ Add a section or another line to the data, and there's no code to touch.
 </script>
 ```
 
-[Keisen]{.figure-caption}
-
-```{typst}
-//| file: ../tests/visual/gallery-income-statement-keisen.typ
-//| echo: true
-//| eval: false
-```
-
 Both come from the [income statement](gallery/income-statement.qmd).
-The first is the whole native file, with the loop that builds the body of the table highlighted.
+The Native Typst tab shows the whole native file, with the loop that builds the body of the table highlighted.
 Around that loop, the file places the header, the rules and the total, and brings its own helpers to group the digits and print the pounds.
-The second is the whole Keisen file.
+The Keisen tab shows the whole Keisen file.
 
 Keisen also looks after the details that are easy to get wrong.
 Sums stay exact because they run in decimals, footnote marks are numbered in reading order, a group's label comes back after a page break, and negative numbers get a true minus sign.
