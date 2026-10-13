@@ -40,20 +40,18 @@ fail_check() {
 compile_glob() {
   local label="$1"
   local glob="$2"
-  shift 2
-  local extra=("$@")
   local label_passed=0
   local label_total=0
 
   for f in ${glob}; do
     label_total=$((label_total + 1))
     compiles=$((compiles + 1))
-    if typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
+    if typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
       label_passed=$((label_passed + 1))
     else
       documents_failed=$((documents_failed + 1))
       printf '  FAIL  %s  %s\n' "${label}" "${f}"
-      typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
+      typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
     fi
   done
 
@@ -615,7 +613,7 @@ highlighted_lines
 # a listing of each import form, the filter must write every one as the
 # manifest's version and leave a listing in another language alone.
 documented_imports() {
-  local filter="${1:-docs/_filters/package-import.lua}"
+  local filter=docs/_filters/package-import.lua
   local version want got
   version="$(awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml)"
   want="#import \"@preview/keisen:${version}\": *

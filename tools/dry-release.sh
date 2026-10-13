@@ -96,6 +96,9 @@ total=0
 # /tests/visual/grouped.typ resolves, and an import the rewrite missed fails
 # there, since that root holds no lib.typ. These exercise the whole public
 # surface, since most of them import it wholesale.
+#
+# Every copy is written before the first compile, since anatomy.typ sorts before
+# the grouped.typ it reads.
 VISUAL_ROOT="${STAGE_ROOT}/visual-root"
 mkdir -p "${VISUAL_ROOT}/tests/visual"
 for f in tests/visual/*.typ; do

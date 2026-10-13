@@ -16,7 +16,7 @@ local function manifest_version()
   end
   local text = file:read('a')
   file:close()
-  local version = text:match('\nversion%s*=%s*"([^"]+)"') or text:match('^version%s*=%s*"([^"]+)"')
+  local version = ('\n' .. text):match('\nversion%s*=%s*"([^"]+)"')
   if version == nil then
     error('package-import: typst.toml names no version; got none. Set version = "x.y.z" in typst.toml.')
   end
