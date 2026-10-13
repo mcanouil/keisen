@@ -223,6 +223,8 @@ import_versions() {
 # Pages cannot tell a reader to use a clone. The package is installed from
 # Typst Universe, and the release bump cannot rewrite prose, so the wording is
 # refused at every commit rather than at the release.
+PRE_RELEASE_PHRASES='early development|no release yet|until the first release|once the package is released|use from a clone'
+
 pre_release_wording() {
   local lines="$1"
   if [[ -n "${lines}" ]]; then
@@ -431,6 +433,22 @@ tests/visual/minimal.typ:3:${mark}:0.0.9" 'a second file that drifted'
   prerelease 0 '' '' 'wording gone'
   prerelease 1 'says to use a clone' "${clone}" 'wording left behind'
 
+  # The phrases the live scan reads, each in the wording the pages once used, so
+  # a pattern that stops matching fails here rather than passing the scan.
+  phrased() {
+    local line="$1"
+    cases=$((cases + 1))
+    if ! grep -qiE "${PRE_RELEASE_PHRASES}" <<<"${line}"; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  the pre-release phrases miss: %s\n' "${line}" >&2
+    fi
+  }
+  phrased '> _Keisen_ is in early development.'
+  phrased 'Keisen has no release yet, so import lib.typ from a clone.'
+  phrased 'Until the first release, use Keisen from a clone of the repository.'
+  phrased 'which is how they will read once the package is released.'
+  phrased '[Early development: use from a clone]{.keisen-badge}'
+
   if [[ ${bad} -gt 0 ]]; then
     printf 'version: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
     exit 1
@@ -502,7 +520,7 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo "version: not a git checkout, so the import lines and the pre-release wording cannot be read" >&2
   exit 1
 fi
-wording="$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
+wording="$(git grep -niE "${PRE_RELEASE_PHRASES}" \
   -- README.md ':(glob)docs/**/*.qmd')" || [[ $? -eq 1 ]]
 pre_release_wording "${wording}"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
