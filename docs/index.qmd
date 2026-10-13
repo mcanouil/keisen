@@ -67,6 +67,64 @@ Each gallery entry builds one table with Keisen and again in native Typst, from 
 ::: {#gallery-strip}
 :::
 
+## Keisen and native Typst
+
+Keisen saves some typing, but that isn't the point.
+Across the gallery, the native version of a table runs from a little longer to about twice as long.
+The bigger difference is what the lines say.
+Native code says how to build the table: loop over the sections, sum each column, and put each rule in its place.
+Keisen says what the table is, so when the rows change, the table follows.
+Add a section or another line to the data, and there's no code to touch.
+
+```{.typst filename="Native Typst"}
+#for section in ("Revenue", "Operating costs") {
+  let rows = range(data.line.len()).filter(row => (
+    data.section.at(row) == section
+  ))
+  body.push(table.cell(colspan: 3, strong(section)))
+  for row in rows {
+    body.push(data.line.at(row))
+    body += years.map(year => pounds(data.at(year).at(row)))
+  }
+  body.push(table.hline(stroke: 0.5pt))
+  body.push([*Subtotal*])
+  body += years.map(year => pounds(
+    rows.map(row => data.at(year).at(row)).sum(),
+  ))
+}
+```
+
+```{.typst filename="Keisen"}
+#display-table(
+  data,
+  table-header(title: [Income statement], subtitle: [Years ending 31 March]),
+  table-stub(rowname: "line", group: "section", label: [Line]),
+  columns-label(fy2025: [2025], fy2026: [2026]),
+  table-spanner([Pounds sterling], ("fy2025", "fy2026")),
+  format-currency(("fy2025", "fy2026"), currency: "GBP", decimals: 0),
+  summary-rows(functions: (Subtotal: aggregate-sum), columns: (
+    "fy2025",
+    "fy2026",
+  )),
+  grand-summary-rows(functions: ("Operating profit": aggregate-sum), columns: (
+    "fy2025",
+    "fy2026",
+  )),
+  table-style(style(fill: luma(240)), locations: cells-grand-summary()),
+  table-source-note([Source: synthetic accounts.]),
+  theme: theme-booktabs(),
+)
+```
+
+Both come from the [income statement](gallery/income-statement.qmd).
+The first is the loop that builds the body of the native table.
+The rest of that file places the header, the rules and the total, and brings its own helpers to group the digits and print the pounds.
+The second is the whole Keisen table.
+
+Keisen also looks after the details that are easy to get wrong.
+Sums stay exact because they run in decimals, footnote marks are numbered in reading order, a group's label comes back after a page break, and negative numbers get a true minus sign.
+A theme is a value too, so you can define your house style once and pass it to every table in a report.
+
 ## The grammar
 
 Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.com) and Python's [`great_tables`](https://posit-dev.github.io/great-tables/) made familiar, designed for Typst rather than ported to it.
