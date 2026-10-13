@@ -545,6 +545,11 @@ documented_files() {
   local page line target image expected
   for page in docs/**/*.qmd; do
     [[ "${page}" == */_* ]] && continue
+    # Quarto runs a {typst} block as code to execute unless the page sets the
+    # markdown engine, and fails the build when it cannot start a kernel.
+    if grep -qE '^[[:space:]]*```\{typst\}' "${page}" && ! grep -q '^engine: markdown' "${page}"; then
+      missing+=("${page}: engine: markdown (the page holds a {typst} block)")
+    fi
     image="$(sed -n 's|^image: \(.*assets/typst-render/.*\)$|\1|p' "${page}")"
     if [[ -n "${image}" ]]; then
       # A section writes into assets/typst-render/<section>/, as its _metadata.yml
@@ -569,7 +574,8 @@ documented_files() {
     printf 'docs: a page names a file that does not exist; got %d\n' "${#missing[@]}" >&2
     printf '  %s\n' "${missing[@]}" >&2
     printf '  point the //| file: path at the test that renders the table,\n' >&2
-    printf '  and give the card image the output-filename its block writes\n' >&2
+    printf '  give the card image the output-filename its block writes,\n' >&2
+    printf '  and set engine: markdown on a page that holds a {typst} block\n' >&2
     fail_check "docs files"
     return
   fi

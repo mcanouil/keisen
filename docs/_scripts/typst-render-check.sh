@@ -18,11 +18,13 @@ OUTPUT_DIR="${QUARTO_PROJECT_OUTPUT_DIR:-_site}"
 
 # The pages this render wrote, one per line, or every page when Quarto names none.
 pages=()
+source_of_pages="QUARTO_PROJECT_OUTPUT_FILES named no .html file"
 if [[ -n "${QUARTO_PROJECT_OUTPUT_FILES:-}" ]]; then
   while IFS= read -r page; do
     [[ "${page}" == *.html ]] && pages+=("${page}")
   done <<<"${QUARTO_PROJECT_OUTPUT_FILES}"
 else
+  source_of_pages="no .html file under ${OUTPUT_DIR}"
   while IFS= read -r page; do
     pages+=("${page}")
   done < <(find "${OUTPUT_DIR}" -name '*.html')
@@ -31,7 +33,7 @@ fi
 # Reading no page would report success having checked nothing.
 if [[ ${#pages[@]} -eq 0 ]]; then
   printf '[post-render] typst-render: no rendered page was read; got 0 pages\n' >&2
-  printf '  QUARTO_PROJECT_OUTPUT_FILES named no .html file\n' >&2
+  printf '  %s\n' "${source_of_pages}" >&2
   exit 1
 fi
 
