@@ -68,19 +68,19 @@ rewrite_files() {
     return 1
   fi
 
-  sed -E -i.bak 's/^(version[[:space:]]*=[[:space:]]*")[^"]+/\1'"${version}"'/' "${dir}/typst.toml"
-  sed -E -i.bak 's/^## Unreleased$/## '"${version}"' ('"${date}"')/' "${dir}/CHANGELOG.md"
-  sed -E -i.bak 's|(@preview/keisen:)[0-9]+\.[0-9]+\.[0-9]+|\1'"${version}"'|' "${dir}/README.md"
-  sed -E -i.bak 's/^version:.*/version: '"${version}"'/' "${dir}/CITATION.cff"
+  # perl rather than sed: `sed -i` takes a different argument on macOS and on
+  # Linux, and perl edits in place on both with no backup file left behind.
+  VERSION="${version}" DATE="${date}" perl -pi -e \
+    's/^(version\s*=\s*")[^"]+/$1$ENV{VERSION}/' "${dir}/typst.toml"
+  VERSION="${version}" DATE="${date}" perl -pi -e \
+    's/^## Unreleased$/## $ENV{VERSION} ($ENV{DATE})/' "${dir}/CHANGELOG.md"
+  VERSION="${version}" perl -pi -e \
+    's/(\@preview\/keisen:)\d+\.\d+\.\d+/$1$ENV{VERSION}/' "${dir}/README.md"
   # The citation carries no date while nothing is released, so the first
   # release adds the line rather than replacing it.
-  if grep -qE '^date-released[[:space:]]*:' "${dir}/CITATION.cff"; then
-    sed -E -i.bak 's/^date-released[[:space:]]*:.*/date-released: "'"${date}"'"/' "${dir}/CITATION.cff"
-  else
-    sed -E -i.bak 's/^version:.*/&\
-date-released: "'"${date}"'"/' "${dir}/CITATION.cff"
-  fi
-  rm -f "${dir}"/*.bak
+  VERSION="${version}" DATE="${date}" perl -0pi -e \
+    's/^date-released\s*:.*\n//m; s/^version:.*$/version: $ENV{VERSION}\ndate-released: "$ENV{DATE}"/m' \
+    "${dir}/CITATION.cff"
 }
 
 if [[ "${1:-}" == "--self-test" ]]; then
@@ -145,7 +145,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   cases=$((cases + 1))
 
   printf '# Changelog\n\n## Unreleased\n\n## 0.1.0 (2026-10-14)\n\n- feat: Initial release.\n' >"${fixtures}/CHANGELOG.md"
-  sed -i.bak 's/date-released: .*/date-released: "2026-10-14"/' "${fixtures}/CITATION.cff" && rm -f "${fixtures}"/*.bak
+  perl -pi -e 's/^date-released: .*/date-released: "2026-10-14"/' "${fixtures}/CITATION.cff"
   rewrite_files "${fixtures}" 0.2.0 2026-11-01 2>/dev/null &&
     {
       bad=$((bad + 1))
