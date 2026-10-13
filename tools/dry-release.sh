@@ -143,11 +143,11 @@ done
 # Most pages show a visual test through a `//| file:` block rather than a pasted
 # listing, and the loop above has already compiled each of those files against
 # the installed package. They count as listings here.
-shown=0
-for qmd in docs/**/*.qmd; do
+# Distinct files, since one test can fill several blocks.
+shown="$(for qmd in docs/**/*.qmd; do
   [[ "${qmd}" == */_* ]] && continue
-  shown=$((shown + $(grep -c '^//| file: ' "${qmd}" || true)))
-done
+  grep -h '^//| file: ' "${qmd}" || true
+done | sed 's|.*/tests/visual/||' | sort -u | grep -c . || true)"
 
 # Finding no listing would report success without compiling one, and a
 # documentation site whose imports nobody checks is what this script is for.
@@ -166,7 +166,7 @@ for smoke in "${SMOKE_DIR}"/listing-*.typ; do
   fi
 done
 
-printf 'installed: %d/%d compiled (%d from documentation listings, %d shown through file blocks)\n' \
+printf 'installed: %d/%d compiled (%d from documentation listings, %d test files shown through file blocks)\n' \
   "$((total - failures))" "${total}" "${listings}" "${shown}"
 
 if [[ ${failures} -gt 0 ]]; then

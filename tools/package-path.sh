@@ -3,7 +3,7 @@
 # imports @preview/keisen:<version> compiles against the working tree. The
 # version comes from typst.toml, so a bump needs no edit here.
 #
-# Used by tools/check.sh for the visual tests and by docs/_scripts/pre-render.sh
+# Used by tools/check.sh for the visual tests and by docs/_scripts/package-path.sh
 # for the documentation, whose pages show those tests as a user would write them.
 
 set -euo pipefail

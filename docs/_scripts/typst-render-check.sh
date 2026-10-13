@@ -6,7 +6,7 @@
 # box on the page in place of the table, and lets the render succeed. A site
 # built that way would publish error boxes with a green build, so this runs
 # after the render and fails it instead. It also fails when a page's card image,
-# which a hidden block writes, was not written.
+# which a hidden block writes, did not reach the site.
 # Kept apart from post-render.sh, which is the same in every repository.
 
 set -euo pipefail
@@ -28,6 +28,13 @@ else
   done < <(find "${OUTPUT_DIR}" -name '*.html')
 fi
 
+# Reading no page would report success having checked nothing.
+if [[ ${#pages[@]} -eq 0 ]]; then
+  printf '[post-render] typst-render: no rendered page was read; got 0 pages\n' >&2
+  printf '  QUARTO_PROJECT_OUTPUT_FILES named no .html file\n' >&2
+  exit 1
+fi
+
 failed=()
 for page in "${pages[@]}"; do
   [[ "${page}" = /* ]] || page="${DOCS_DIR}/${page}"
@@ -35,22 +42,23 @@ for page in "${pages[@]}"; do
   if grep -q 'typst-render-error' "${page}"; then
     failed+=("${page#"${DOCS_DIR}"/} (a table did not compile)")
   fi
-done
 
-# A card image is named in front matter and written by a hidden block, which
-# shows nothing when it fails, so the file itself is what proves it compiled.
-for source in "${DOCS_DIR}"/*/*.qmd; do
+  # A card image is named in the page's front matter and written by a hidden
+  # block, which shows nothing when it fails, so the served file is what proves
+  # it compiled. Only the pages this render wrote are checked.
+  relative="${page#"${OUTPUT_DIR}"/}"
+  source="${DOCS_DIR}/${relative%.html}.qmd"
+  [[ -f "${source}" ]] || continue
   image="$(sed -n 's|^image: \(.*assets/typst-render/.*\)$|\1|p' "${source}")"
-  [[ -n "${image}" ]] || continue
-  if [[ ! -f "$(dirname "${source}")/${image}" ]]; then
-    failed+=("${source#"${DOCS_DIR}"/}: ${image} (card image not written)")
+  if [[ -n "${image}" && ! -f "$(dirname "${page}")/${image}" ]]; then
+    failed+=("${relative%.html}.qmd: ${image} (card image not written)")
   fi
 done
 
 if [[ ${#failed[@]} -gt 0 ]]; then
   printf '[post-render] typst-render: %d failure(s); got:\n' "${#failed[@]}" >&2
   printf '  %s\n' "${failed[@]}" >&2
-  printf '  compile the named test with tools/check.sh to see its error\n' >&2
+  printf '  compile the test the page names with tools/check.sh to see its error\n' >&2
   exit 1
 fi
 printf '[post-render] typst-render: every table compiled\n'
