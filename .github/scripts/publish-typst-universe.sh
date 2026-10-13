@@ -105,7 +105,7 @@ fi
 PKG_PATH="packages/preview/${PKG}"
 
 # --- Temp workspace + cleanup -------------------------------------------------
-TMP="$(mktemp -d "${REPO_ROOT}/.typst-universe.XXXXXX")"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/keisen-universe.XXXXXX")"
 trap 'rm -rf "${TMP}"' EXIT
 STAGE="${TMP}/stage/${PKG}/${VERSION}"
 CLONE="${TMP}/typst-packages"

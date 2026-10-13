@@ -128,6 +128,14 @@ jobs:
           VERSION: ${{ steps.bump.outputs.version }}
         run: |
           set -euo pipefail
+          # The bump merges onto the branch as it is now, so a commit that
+          # landed after the dispatch would ship without the validate job
+          # having checked it.
+          head="$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)"
+          if [[ "${head}" != "${GITHUB_SHA}" ]]; then
+            echo "::error::${GITHUB_REF_NAME} moved from ${GITHUB_SHA} to ${head} after the dispatch; dispatch the release again."
+            exit 1
+          fi
           if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
             git push origin --delete "${BRANCH}"
           fi
