@@ -123,12 +123,10 @@ manifest_categories() {
 }
 
 # The date of the changelog section for a version, or nothing while the version
-# is still under Unreleased. With no version, the date of the newest section of
-# any version, which is how the pre-release check knows a release exists.
+# is still under Unreleased.
 released_on() {
-  local changelog="$1" version="${2:-}"
-  local heading='[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}'
-  [[ -n "${version}" ]] && heading="${version//./\\.}"
+  local changelog="$1" version="$2"
+  local heading="${version//./\\.}"
   sed -n "s/^## ${heading} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1
 }
 
