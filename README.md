@@ -9,13 +9,10 @@ Documentation: <https://m.canouil.dev/keisen>.
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcanouil/keisen)
 
-> [!WARNING]
-> _Keisen_ is in early development.
-
 ## Quick look
 
 ```typst
-#import "@preview/keisen:0.1.0": *
+#import "@preview/keisen:0.0.1": *
 
 #display-table(
   sales,
