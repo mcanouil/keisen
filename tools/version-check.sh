@@ -123,8 +123,7 @@ manifest_categories() {
 }
 
 # The date of the changelog section for a version, or nothing while the version
-# is still under Unreleased. Read by the citation and the pre-release checks, so
-# the heading grammar is written once.
+# is still under Unreleased.
 released_on() {
   local changelog="$1" version="$2"
   local escaped="${version//./\\.}"
@@ -207,12 +206,16 @@ import_versions() {
   fi
 }
 
-# A release cannot ship pages that say there is no release: once the changelog
-# dates the manifest version, the pre-release wording the scan found is refused.
+# Pages cannot say there is no release once there is one: as soon as the
+# changelog dates any version, the pre-release wording the scan found is refused.
+# Any version, not only the manifest's, so the wording cannot come back while the
+# next version is gathered under Unreleased.
 pre_release_wording() {
-  local changelog="$1" version="$2" lines="$3"
-  if [[ -n "$(released_on "${changelog}" "${version}")" && -n "${lines}" ]]; then
-    printf 'version: %s is released, and the documentation still says to use a clone\n' "${version}" >&2
+  local changelog="$1" lines="$2"
+  local first
+  first="$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' "${changelog}" || true)"
+  if [[ -n "${first}" && -n "${lines}" ]]; then
+    printf 'version: the changelog records a release (%s), and the documentation still says to use a clone\n' "${first#\#\# }" >&2
     printf '%s\n' "${lines}" | sed 's/^/  /' >&2
     printf '  rewrite each line for the released package, and drop the early-development badge\n' >&2
     return 1
@@ -401,7 +404,7 @@ docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
     printf '%s\n' "${changelog}" >"${fixtures}/CHANGELOG.md"
     local got=0
     local said
-    said="$(pre_release_wording "${fixtures}/CHANGELOG.md" "0.1.0" "${lines}" 2>&1 >/dev/null)" || got=$?
+    said="$(pre_release_wording "${fixtures}/CHANGELOG.md" "${lines}" 2>&1 >/dev/null)" || got=$?
     if [[ "${got}" -ne "${wanted}" ]]; then
       bad=$((bad + 1))
       printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
@@ -418,6 +421,9 @@ docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
   prerelease 0 '' '## Unreleased' "${clone}" 'unreleased, wording present'
   prerelease 0 '' '## 0.1.0 (2026-11-02)' '' 'released, wording gone'
   prerelease 1 'still says' '## 0.1.0 (2026-11-02)' "${clone}" 'released, wording left behind'
+  prerelease 1 'still says' '## Unreleased
+
+## 0.0.9 (2026-08-01)' "${clone}" 'released before, the next version still unreleased'
 
   if [[ ${bad} -gt 0 ]]; then
     printf 'version: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
@@ -484,7 +490,7 @@ fi
 # settle it, and that is a decision rather than a check.
 
 citation_date CHANGELOG.md CITATION.cff "${manifest}"
-pre_release_wording CHANGELOG.md "${manifest}" \
+pre_release_wording CHANGELOG.md \
   "$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
     -- README.md ':(glob)docs/**/*.qmd' || true)"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
