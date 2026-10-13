@@ -501,9 +501,15 @@ fi
 # settle it, and that is a decision rather than a check.
 
 citation_date CHANGELOG.md CITATION.cff "${manifest}"
-pre_release_wording CHANGELOG.md \
-  "$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
-    -- README.md ':(glob)docs/**/*.qmd' || true)"
+# A git failure is not a scan that found nothing: only grep's "no match" (exit 1)
+# reads as empty, and anything above it stops the script with git's own error.
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "version: not a git checkout, so the import lines and the pre-release wording cannot be read" >&2
+  exit 1
+fi
+wording="$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
+  -- README.md ':(glob)docs/**/*.qmd')" || [[ $? -eq 1 ]]
+pre_release_wording CHANGELOG.md "${wording}"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
 manifest_categories typst.toml
 
@@ -523,10 +529,6 @@ manifest_categories typst.toml
 #
 # A placeholder is not a version. ARCHITECTURE.md writes `x.y.z` and
 # CONTRIBUTING.md writes `<version>`, and a semantic version matches neither.
-if ! git rev-parse --git-dir >/dev/null 2>&1; then
-  echo "version: not a git checkout, so the import lines cannot be read" >&2
-  exit 1
-fi
 
 # git grep reads the tracked files, skips the binary ones, and carries a path
 # with a space in it through unharmed. Finding nothing is not an error to git, so
