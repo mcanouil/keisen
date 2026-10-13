@@ -201,6 +201,27 @@ import_versions() {
 
 # Every branch of the rule above, against fixtures. A guard nothing exercises is
 # a guard that passes because its pattern stopped matching.
+# Until the first release, the README and the documentation tell a reader to use
+# Keisen from a clone. Nothing removes that wording when the release lands, so it
+# is refused once the changelog dates the manifest version: a release cannot ship
+# pages that say there is no release.
+#
+# Written as a function of the scanned lines, as import_versions is, so
+# --self-test can run each branch against fixtures.
+pre_release_wording() {
+  local changelog="$1" version="$2" lines="$3"
+  local escaped="${version//./\\.}"
+  if ! grep -qE "^## ${escaped} \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$" "${changelog}"; then
+    return 0
+  fi
+  if [[ -n "${lines}" ]]; then
+    printf 'version: %s is released, and the documentation still says to use a clone\n' "${version}" >&2
+    printf '%s\n' "${lines}" | sed 's/^/  /' >&2
+    printf '  rewrite each line for the released package, and drop the early-development badge\n' >&2
+    return 1
+  fi
+}
+
 if [[ "${1:-}" == "--self-test" ]]; then
   fixtures="$(mktemp -d)"
   trap 'rm -rf "${fixtures}"' EXIT
@@ -373,6 +394,31 @@ docs/index.qmd:4:${mark}:0.1.0" 'two imports that agree'
 docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
   imported 1 'read at all' '' 'a scan that read nothing'
 
+  # The pre-release wording, held against the changelog: present while the
+  # version is unreleased, refused once the changelog dates it.
+  prerelease() {
+    local wanted="$1" reported="$2" changelog="$3" lines="$4" name="$5"
+    cases=$((cases + 1))
+    printf '%s\n' "${changelog}" >"${fixtures}/CHANGELOG.md"
+    local got=0
+    local said
+    said="$(pre_release_wording "${fixtures}/CHANGELOG.md" "0.1.0" "${lines}" 2>&1 >/dev/null)" || got=$?
+    if [[ "${got}" -ne "${wanted}" ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
+      return
+    fi
+    if [[ -n "${reported}" && "${said}" != *"${reported}"* ]]; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  %s  wanted the %s branch\n' "${name}" "${reported}" >&2
+    fi
+  }
+
+  clone='docs/index.qmd:49:[Early development: use from a clone]{.keisen-badge}'
+  prerelease 0 '' '## Unreleased' "${clone}" 'unreleased, wording present'
+  prerelease 0 '' '## 0.1.0 (2026-11-02)' '' 'released, wording gone'
+  prerelease 1 'still says' '## 0.1.0 (2026-11-02)' "${clone}" 'released, wording left behind'
+
   if [[ ${bad} -gt 0 ]]; then
     printf 'version: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
     exit 1
@@ -438,6 +484,9 @@ fi
 # settle it, and that is a decision rather than a check.
 
 citation_date CHANGELOG.md CITATION.cff "${manifest}"
+pre_release_wording CHANGELOG.md "${manifest}" \
+  "$(git grep -niE 'no release yet|until the first release|once the package is released|use from a clone' \
+    -- README.md ':(glob)docs/**/*.qmd' || true)"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
 manifest_categories typst.toml
 
