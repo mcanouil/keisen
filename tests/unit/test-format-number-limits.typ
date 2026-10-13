@@ -162,17 +162,30 @@
 
 // --- a quotient that cannot be held exactly ---
 
-// The answer is measured in units of the scale, and at a far place that
-// quotient needs more than the 28 fractional digits a decimal holds. The
-// division rounds, and a value just above a tie then reads as one.
-//
-// Typst's own rounding reads it the same way, so both modes answer alike and
-// half-even is not the odd one out. The true answer is 1e28 and both give zero.
-// Filed as `fn2a`; pinned here so a change to either mode is seen.
+// The answer counted in units of the scale needs more than the 28 fractional
+// digits a decimal holds at a far place, so dividing by the scale rounds, and a
+// value just above a tie reads as one. Typst's own rounding reads it that way.
+// The place is read from the digits instead, so neither mode divides.
 #let past-a-tie = decimal("5000000000000000000000000000.5")
 #assert.eq(past-a-tie / calc.pow(decimal(10), 28), decimal("0.5"))
-#assert.eq(round-decimal(past-a-tie, -28, "half-even"), decimal("0"))
-#assert.eq(round-decimal(past-a-tie, -28, "half-up"), decimal("0"))
+#let far = decimal("10000000000000000000000000000")
+#let below-a-tie = decimal("4999999999999999999999999999.5")
+#for mode in ("half-even", "half-up") {
+  assert.eq(round-decimal(past-a-tie, -28, mode), far)
+  assert.eq(round-decimal(-past-a-tie, -28, mode), -far)
+  assert.eq(round-decimal(below-a-tie, -28, mode), decimal("0"))
+  assert.eq(round-decimal(-below-a-tie, -28, mode), decimal("0"))
+}
+
+// A tie at the far place itself still parts the two modes.
+#let on-a-tie = decimal("5000000000000000000000000000")
+#assert.eq(round-decimal(on-a-tie, -28, "half-even"), decimal("0"))
+#assert.eq(round-decimal(on-a-tie, -28, "half-up"), far)
+#assert.eq(round-decimal(-on-a-tie, -28, "half-even"), decimal("0"))
+#assert.eq(round-decimal(-on-a-tie, -28, "half-up"), -far)
+
+// An odd count on a tie rounds away to the even one in half-even.
+#assert.eq(round-decimal(decimal("15000000000000000000000000000"), -28, "half-even"), decimal("20000000000000000000000000000"))
 
 // --- the directive, which is the path a caller takes ---
 
