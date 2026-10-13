@@ -12,6 +12,13 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "docs/**"
+      # Every table on the site is compiled, at render time, from a visual test
+      # through the package, so a change to either changes the site.
+      - "tests/visual/**"
+      - "src/**"
+      - "lib.typ"
+      - "typst.toml"
+      - "tools/package-path.sh"
       - "_extensions/**"
       - "CHANGELOG.md"
       - ".github/workflows/pages.yml"

@@ -3,7 +3,7 @@
 // their symbols, exponents under one another, and units under units, none of
 // which happens unless every slot is padded to the column's widest.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

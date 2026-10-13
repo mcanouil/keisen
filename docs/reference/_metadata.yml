@@ -3,3 +3,9 @@
 # its href in one, and the section's index page is in no sidebar by design, so
 # the choice is made here rather than inferred.
 sidebar: reference
+
+# typst-render names each page's images after the page, and two sections hold an
+# index.qmd, so each section writes into a directory of its own.
+extensions:
+  typst-render:
+    output-directory: "/assets/typst-render/reference"

@@ -89,20 +89,15 @@ mkdir -p "${SMOKE_DIR}"
 failures=0
 total=0
 
-# Every visual test, with its relative import rewritten to the package
-# specification. These exercise the whole public surface, since most of them
-# import it wholesale.
-#
-# anatomy.typ reads grouped.typ as text and evaluates its call, so a copy of
-# grouped.typ under its own name sits beside the smoke copies for it to read.
-cp tests/visual/grouped.typ "${SMOKE_DIR}/grouped.typ"
+# Every visual test, compiled in place against the installed package. They
+# import @preview/keisen as a reader does, so nothing is rewritten; the root is
+# the repository, so anatomy.typ's read of /tests/visual/grouped.typ resolves.
+# These exercise the whole public surface, since most of them import it
+# wholesale.
 for f in tests/visual/*.typ; do
   total=$((total + 1))
   name="$(basename "${f%.typ}")"
-  smoke="${SMOKE_DIR}/visual-${name}.typ"
-  sed -E "s|\"\.\./\.\./lib\.typ\"|\"@preview/keisen:${VERSION}\"|" "${f}" >"${smoke}"
-
-  if ! typst compile "${smoke}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
+  if ! typst compile "${f}" --root "${REPO_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
     failures=$((failures + 1))
     printf '  FAIL  installed  %s\n' "${f}" >&2
     sed -n '1,5p' "${SMOKE_DIR}/visual-${name}.err" >&2
@@ -145,9 +140,17 @@ for qmd in docs/**/*.qmd; do
   ' "${qmd}")))
 done
 
+# Most pages show a visual test through a `//| file:` block rather than a pasted
+# listing, and the loop above has already compiled each of those files against
+# the installed package. They count as listings here.
+# Distinct visual tests, since one test can fill several blocks and only the
+# visual tests were compiled above.
+shown="$(grep -rhE --include='*.qmd' --exclude-dir='_*' '^[[:space:]]*//\| file: ' docs |
+  grep -oE 'tests/visual/[^/"[:space:]]+\.typ' | sort -u | grep -c . || true)"
+
 # Finding no listing would report success without compiling one, and a
 # documentation site whose imports nobody checks is what this script is for.
-if [[ ${listings} -eq 0 ]]; then
+if [[ $((listings + shown)) -eq 0 ]]; then
   echo "dry-release: no documentation listing imports the package" >&2
   exit 1
 fi
@@ -162,8 +165,8 @@ for smoke in "${SMOKE_DIR}"/listing-*.typ; do
   fi
 done
 
-printf 'installed: %d/%d compiled (%d from documentation listings)\n' \
-  "$((total - failures))" "${total}" "${listings}"
+printf 'installed: %d/%d compiled (%d from documentation listings, %d test files shown through file blocks)\n' \
+  "$((total - failures))" "${total}" "${listings}" "${shown}"
 
 if [[ ${failures} -gt 0 ]]; then
   printf '\n%d failure(s) compiling against the installed package.\n' "${failures}" >&2

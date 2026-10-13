@@ -20,3 +20,11 @@
 # directories, so no parent of theirs is excluded; Git will not re-include
 # anything inside a directory that is.
 !/_extensions/**/*.html
+
+# Created by _scripts/package-path.sh: a package path linking @preview/keisen to
+# the working tree, so the pages compile the visual tests as a reader would.
+/.typst-packages/
+
+# Written by typst-render on every render. The gallery cards read their
+# thumbnails from here, so the listing needs the files on disk, not in git.
+/assets/typst-render/

@@ -2,13 +2,10 @@
 // sources, which is why the estimate keeps two decimals and the error three:
 // each source was formatted by its own directive before the pattern saw it.
 //
-// The labels are centred here, which is the one thing that reads
-// `column-labels-align` as anything but `auto`. Both label rows follow the
-// option, the stubhead and the column labels alike, and a call site that stopped
-// reading it would leave a label back on its column's own edge and the tracked
-// image stale.
+// The labels are centred with `column-labels-align`. The stubhead and the
+// column labels both follow it.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
@@ -41,9 +38,8 @@
     label: [95% CI],
   ),
   columns-label(p: [_p_]),
-  // A combined column holds figures but carries content, so nothing infers an
-  // edge for it. Saying so is the only way it reaches the end edge, and this is
-  // the case that used to be resolved before the column existed.
+  // A combined column holds content, not numbers, so no alignment is inferred
+  // for it. This puts it against the end edge.
   columns-align(end, columns: "effect"),
   table-options(column-labels-align: center),
   table-source-note([Source: association study.]),

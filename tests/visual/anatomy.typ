@@ -2,19 +2,20 @@
 // landing page of the documentation shows it, so a reader learns the parts
 // before the functions that build them.
 //
-// The table is grouped.typ's own call, read and evaluated here, so the figure
-// cannot drift from the source the documentation quotes. Each label finds its
-// row from the table itself: a show rule leaves a marker in the first cell of
-// every row, and the label sits at the height of the row whose first cell reads
-// as expected. The labels therefore follow the table when its rows or spacing
-// change, and a part that disappears stops the compile.
+// The table is grouped.typ's own call, read from /tests/visual/grouped.typ and
+// evaluated here, so the figure cannot drift from the source the documentation
+// shows. Each label finds its row from the table itself: a show rule leaves a
+// marker in the first cell of every row, and the label sits at the height of
+// the row whose first cell reads as expected. The labels therefore follow the
+// table when its rows or spacing change, and a part that disappears stops the
+// compile.
 
-#import "../../lib.typ" as keisen
+#import "@preview/keisen:0.1.0" as keisen
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
 
-#let source = read("grouped.typ")
+#let source = read("/tests/visual/grouped.typ")
 #let start = source.position("#display-table(")
 #assert(
   start != none,

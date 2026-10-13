@@ -1,8 +1,6 @@
-// The rules a theme draws, on tables whose parts differ. The suite used to be
-// green while the closing rule was missing, because every table here carried a
-// source note and the footer was drawing it.
+// The rules a theme draws, on tables whose parts differ.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 9pt)

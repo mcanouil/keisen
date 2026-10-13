@@ -40,18 +40,20 @@ fail_check() {
 compile_glob() {
   local label="$1"
   local glob="$2"
+  shift 2
+  local extra=("$@")
   local label_passed=0
   local label_total=0
 
   for f in ${glob}; do
     label_total=$((label_total + 1))
     compiles=$((compiles + 1))
-    if typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
+    if typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" 2>/dev/null; then
       label_passed=$((label_passed + 1))
     else
       documents_failed=$((documents_failed + 1))
       printf '  FAIL  %s  %s\n' "${label}" "${f}"
-      typst compile "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
+      typst compile ${extra[@]+"${extra[@]}"} "${f}" --root "${REPO_ROOT}" "${OUT_DIR}/$(basename "${f%.typ}").pdf" || true
     fi
   done
 
@@ -174,6 +176,28 @@ fitted_pages() {
 }
 
 fitted_pages
+
+# The documentation shows each visual test as written, so an import of a path,
+# relative or root-absolute, would put a line on the page that no reader can run.
+# Anchored at the start of a line, so a commented-out import is not read.
+relative_visual_imports() {
+  local offenders=()
+  local f
+  while IFS= read -r f; do
+    offenders+=("${f}")
+  done < <(grep -HE '^[[:space:]]*#(import|include)[[:space:]]+"' tests/visual/*.typ |
+    grep -v '"@preview/keisen:' | cut -d: -f1 | sort -u)
+  if [[ ${#offenders[@]} -gt 0 ]]; then
+    printf 'imports: a visual test imports the working tree; got %d file(s)\n' "${#offenders[@]}" >&2
+    printf '  %s\n' "${offenders[@]}" >&2
+    printf '  use #import "@preview/keisen:<version>": * as the documentation shows it\n' >&2
+    fail_check "imports"
+    return
+  fi
+  printf 'imports:  ok\n'
+}
+
+relative_visual_imports
 
 # Two unit tests scan a list of files written out by hand, because Typst cannot
 # walk a directory. Each list can go stale without a word: the scan still runs,
@@ -492,148 +516,102 @@ if ! tools/accessibility-check.sh; then
   fail_check "accessibility"
 fi
 
-compile_glob "visual" "tests/visual/*.typ"
+# The visual tests are the documentation's examples, so they import the package
+# the way a reader does. This links that import back to the working tree.
+if ! tools/package-path.sh --self-test; then
+  fail_check "package path self-test"
+fi
+PACKAGE_PATH="$(tools/package-path.sh "${OUT_DIR}/packages")"
+compile_glob "visual" "tests/visual/*.typ" --package-path "${PACKAGE_PATH}"
 compile_glob "examples" "examples/*.typ"
 
-# The documentation shows a listing beside a picture and says the picture is
-# what the listing produces. Nothing held it to that: tools/render-docs-assets.sh
-# is run by hand, and two tracked images were found to be the output of source
-# that had changed three times since.
-#
-# The render is reproducible, so comparing the bytes is enough. It runs after
-# the visual tests so a failure to compile is reported as a compile failure
-# rather than as a stale image.
-fresh_assets() {
-  # The manifest names the compiler the package needs, and an older one renders
-  # something this repository never agreed to. It is a floor rather than a pin:
-  # 0.15.0, which CI installs, and 0.15.1 render all fourteen visual tests to
-  # identical bytes, so requiring equality would fail the suite over a
-  # difference that makes none.
-  #
-  # A newer Typst that does change a render is caught by the comparison below,
-  # which is why the running version is named when an image is reported stale.
-  local wanted running
-  wanted="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
-  running="$(typst --version | awk '{ print $2; exit }')"
-  if [[ "$(printf '%s\n%s\n' "${wanted}" "${running}" | sort -V | head -1)" != "${wanted}" ]]; then
-    printf 'assets: this Typst is older than the package declares\n' >&2
-    printf '  typst.toml: %s\n' "${wanted}" >&2
-    printf '  running:    %s\n' "${running}" >&2
-    fail_check "assets"
-    return
-  fi
-
-  local stage
-  stage="${OUT_DIR}/asset-freshness"
-  rm -rf "${stage}"
-
-  if ! tools/render-docs-assets.sh "${stage}" >/dev/null; then
-    printf 'assets: the visual tests could not be rendered\n' >&2
-    fail_check "assets"
-    return
-  fi
-
-  local stale=()
-  local rendered
-  for rendered in "${stage}"/*.png; do
-    local name
-    name="$(basename "${rendered}")"
-    if ! cmp -s "${rendered}" "docs/assets/examples/${name}"; then
-      stale+=("${name}")
-    fi
-  done
-
-  # A tracked image whose visual test is gone is served by the site and produced
-  # by nothing, which is the same defect read from the other end.
-  local tracked
-  for tracked in docs/assets/examples/*.png; do
-    local name
-    name="$(basename "${tracked}")"
-    if [[ ! -f "${stage}/${name}" ]]; then
-      stale+=("${name} (no visual test renders it)")
-    fi
-  done
-
-  # A second copy of every image is nothing to leave behind after a check that
-  # has read them.
-  rm -rf "${stage}"
-
-  if [[ ${#stale[@]} -gt 0 ]]; then
-    printf 'assets: a documentation image is not what its source renders\n' >&2
-    printf '  %s\n' "${stale[@]}" >&2
-    printf '  run tools/render-docs-assets.sh and commit the result\n' >&2
-    printf '  rendered here by typst %s; the manifest declares %s\n' "${running}" "${wanted}" >&2
-    fail_check "assets"
-    return
-  fi
-
-  printf 'assets:   ok\n'
-}
-
-# The renderer refuses a pair of visual tests whose names cannot be told apart,
-# and the packaging script refuses a payload entry that would ship nothing. This
-# tree holds neither shape, and `package.sh archive` is reached by no script
-# here, so both run against their own fixtures.
-#
-# Before the render below, as every other self-test runs before its live
-# counterpart: a broken guard is then reported as a broken guard rather than as
-# a stale image.
-if ! tools/render-docs-assets.sh --self-test; then
-  fail_check "assets self-test"
-fi
-
+# The packaging script refuses a payload entry that would ship nothing. This
+# tree holds no such entry, and `package.sh archive` is reached by no script
+# here, so it runs against its own fixtures.
 if ! tools/package.sh --self-test; then
   fail_check "package self-test"
 fi
 
-fresh_assets
-
-# The landing page quotes code from three test files: grouped.typ's call under
-# "Quick look", and the native and Keisen income statements under "Keisen and
-# native Typst". The asset check keeps each picture in step with its source;
-# this keeps the quoted text in step too.
+# Each table on the site is compiled from the file a page names in a
+# `//| file:` line. A renamed or deleted test would otherwise surface only when
+# the site is built, so every name is resolved here against its page. A page
+# whose card image typst-render writes must also hold the block that writes it,
+# or its listing card and social card point at nothing.
 #
-# A quote is the body of the first fence that matches its opening line inside
-# its heading's section. From the line that opens the range to the end of the
-# fence, it must equal the lines the range selects from the source, so a line
-# added after the range counts as drift; only lines before it, such as the
-# package import that stands in for the test's local one, are left out.
-quoted_block() {
-  awk -v heading="$1" -v fence="$2" '
-    $0 == heading { section = 1; next }
-    section && !inside && /^## / { exit }
-    section && $0 == fence { inside = 1; next }
-    inside && /^```$/ { exit }
-    inside
-  ' docs/index.qmd
-}
-
-quoted_listing() {
-  local stale=()
-  local heading fence source range wanted quoted
-  while IFS='|' read -r heading fence source range; do
-    wanted="$(sed -n "${range}" "${source}")"
-    quoted="$(quoted_block "${heading}" "${fence}" | sed -n "${range%%,*},\$p")"
-    if [[ -z "${wanted}" || "${quoted}" != "${wanted}" ]]; then
-      stale+=("${heading#\#\# } (${fence}) against ${source}")
+# Every page at any depth, as tools/dry-release.sh sweeps them; directories
+# Quarto ignores (_site, _extensions) are skipped.
+documented_files() {
+  local missing=()
+  local page line target image expected
+  for page in docs/**/*.qmd; do
+    [[ "${page}" == */_* ]] && continue
+    # Quarto runs a {typst} block as code to execute unless the page sets the
+    # markdown engine, and fails the build when it cannot start a kernel.
+    if grep -qE '^[[:space:]]*```\{typst\}' "${page}" && ! grep -q '^engine: markdown' "${page}"; then
+      missing+=("${page}: engine: markdown (the page holds a {typst} block)")
     fi
-  done <<'QUOTES'
-## Quick look|```typst|tests/visual/grouped.typ|/^#display-table(/,$p
-## Keisen and native Typst|```{.typst filename="Native Typst"}|tests/visual/gallery-income-statement-native.typ|/^#for section in/,/^}$/p
-## Keisen and native Typst|```{.typst filename="Keisen"}|tests/visual/gallery-income-statement-keisen.typ|/^#display-table(/,$p
-QUOTES
-
-  if [[ ${#stale[@]} -gt 0 ]]; then
-    printf 'listing: docs/index.qmd quotes code that differs from its source\n' >&2
-    printf '  %s\n' "${stale[@]}" >&2
-    printf '  copy the lines from the source file into the quote\n' >&2
-    fail_check "listing"
+    image="$(sed -n 's|^image: \(.*assets/typst-render/.*\)$|\1|p' "${page}")"
+    if [[ -n "${image}" ]]; then
+      # A section writes into assets/typst-render/<section>/, as its _metadata.yml
+      # sets, so the card must name that directory and a file a block writes.
+      expected="../assets/typst-render/$(basename "$(dirname "${page}")")/$(basename "${image}")"
+      if [[ "${image}" != "${expected}" ]] ||
+        ! grep -qF "//| output-filename: \"$(basename "${image}")\"" "${page}"; then
+        missing+=("${page}: ${image} (no block on the page writes it)")
+      fi
+    fi
+    while IFS= read -r line; do
+      # A block indented inside a list carries its options indented too.
+      target="${line#*//| file: }"
+      target="${target%\"}"
+      target="${target#\"}"
+      if [[ ! -f "$(dirname "${page}")/${target}" ]]; then
+        missing+=("${page}: ${target}")
+      fi
+    done < <(grep -E '^[[:space:]]*//\| file: ' "${page}" || true)
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    printf 'docs: a page names a file that does not exist; got %d\n' "${#missing[@]}" >&2
+    printf '  %s\n' "${missing[@]}" >&2
+    printf '  point the //| file: path at the test that renders the table,\n' >&2
+    printf '  give the card image the output-filename its block writes,\n' >&2
+    printf '  and set engine: markdown on a page that holds a {typst} block\n' >&2
+    fail_check "docs files"
     return
   fi
-  printf 'listing:  ok\n'
+  printf 'docs:     files ok\n'
 }
 
-quoted_listing
+documented_files
+
+# The landing page highlights a range of lines in a file it shows, by number. A
+# line added above the range would move the highlight off the code the prose
+# describes, so each range is held to the lines it must open and close on.
+highlighted_lines() {
+  local stale=()
+  local page source range first last from to
+  while IFS='|' read -r page source range first last; do
+    from="${range%-*}"
+    to="${range#*-}"
+    if ! grep -q "data-highlight-lines=\"${range}\"" "${page}" ||
+      [[ "$(sed -n "${from}p" "${source}")" != ${first}* ]] ||
+      [[ "$(sed -n "${to}p" "${source}")" != "${last}" ]]; then
+      stale+=("${page}: lines ${range} of ${source}")
+    fi
+  done <<'RANGES'
+docs/index.qmd|tests/visual/gallery-income-statement-native.typ|40-54|#for section in|}
+RANGES
+  if [[ ${#stale[@]} -gt 0 ]]; then
+    printf 'docs: a highlighted range no longer covers its code; got %d\n' "${#stale[@]}" >&2
+    printf '  %s\n' "${stale[@]}" >&2
+    printf '  update data-highlight-lines on the page and the range here\n' >&2
+    fail_check "docs highlight"
+    return
+  fi
+  printf 'docs:     highlight ok\n'
+}
+
+highlighted_lines
 
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.

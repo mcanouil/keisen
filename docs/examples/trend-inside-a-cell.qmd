@@ -1,4 +1,5 @@
 ---
+engine: markdown
 title: "Show a trend inside a cell"
 subtitle: "Sparklines and bars sharing one scale down the column."
 description: "format-nanoplot draws a series inside a table cell, with the domain taken from the whole column so the rows can be compared."
@@ -7,34 +8,11 @@ description: "format-nanoplot draws a series inside a table cell, with the domai
 A column of series is a column of shapes, and a reader compares them by eye.
 `format-nanoplot` draws each cell through whichever renderer is passed, and the domain is shared down the column so the comparison means something.
 
-```typst
-#import "@preview/keisen:0.1.0": *
-
-#let trends = (
-  (1.0, 1.2, 1.1, 1.4, 1.8, 2.1),
-  (2.0, 1.8, 1.6, 1.5, 1.2, 0.9),
-  (1.5, 1.5, 1.6, 1.5, 1.7, 1.6),
-)
-
-#display-table(
-  (
-    asset: ("Equities", "Bonds", "Cash"),
-    trend: trends,
-    volume: trends,
-    weight: (0.62, 0.31, 0.07),
-  ),
-  table-header(title: [Portfolio], subtitle: [Twelve-month trends]),
-  table-stub(rowname: "asset", label: [Asset]),
-  columns-label(trend: [Trend], volume: [Volume], weight: [Weight]),
-  format-nanoplot("trend", plot: nanoplot-line, width: 6em, height: 1em, baseline: 25%),
-  format-nanoplot("volume", plot: nanoplot-bar, width: 6em, height: 1em, baseline: 25%),
-  format-percent("weight", decimals: 1),
-  table-options(cell-vertical-align: horizon),
-  table-source-note([Source: portfolio ledger.]),
-)
+```{typst}
+//| file: ../../tests/visual/nanoplots.typ
+//| echo: true
+//| alt: "A portfolio table with a sparkline and a bar plot per row, the asset name and the weight centred against the plots beside them: equities rising, bonds falling, and cash nearly flat."
 ```
-
-![A portfolio table with a sparkline and a bar plot per row, the asset name and the weight centred against the plots beside them: equities rising, bonds falling, and cash nearly flat.](../assets/examples/nanoplots.png)
 
 Cash reads as flat because all three rows share one scale, taken from the column itself rather than passed in.
 Scaled per cell, its small wobble would draw exactly like the others' real movement, which is how a nanoplot lies.

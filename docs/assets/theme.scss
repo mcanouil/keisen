@@ -161,3 +161,23 @@ h1.keisen-wordmark {
     white-space: nowrap;
   }
 }
+
+// typst-render writes each table as an SVG at its natural size, about 1.33
+// pixels per point, which sets the tables smaller than the text around them.
+// One and a half times that is two pixels per point, the size the tables had
+// when they were PNGs at 144 pixels per inch, and the SVG stays sharp. A
+// listing card sizes its thumbnail itself, so the cards are left alone.
+img[src*="assets/typst-render/"]:not(.thumbnail-image) {
+  zoom: 1.5;
+}
+
+// The native file is the longest on the page. It scrolls within a fixed height
+// so the comparison stays readable, with its loop highlighted.
+.keisen-native div.sourceCode {
+  max-height: 28rem;
+  overflow-y: auto;
+}
+
+.keisen-highlight {
+  background-color: rgba(var(--bs-primary-rgb), 0.12);
+}

@@ -6,7 +6,7 @@
 // saying which rows belong together, so this grouping exists only because the
 // document says so.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

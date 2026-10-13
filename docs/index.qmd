@@ -1,4 +1,5 @@
 ---
+engine: markdown
 pagetitle: "Keisen"
 description: "Keisen brings the display-table grammar to Typst: parts, formatters, and styling addressed by what the data says."
 authors:
@@ -54,7 +55,13 @@ _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
 ::: {.keisen-anatomy}
 
-![The parts of a display table, named on the table they build.](assets/examples/anatomy.png){fig-alt="A sales table titled Regional sales with each part named in red in the right margin: header, spanner, column labels, row group, stub and body, summary row, grand summary, and source note."}
+```{typst}
+//| file: ../tests/visual/anatomy.typ
+//| echo: false
+//| alt: "A sales table titled Regional sales with each part named in red in the right margin: header, spanner, column labels, row group, stub and body, summary row, grand summary, and source note."
+```
+
+[The parts of a display table, named on the table they build.]{.figure-caption}
 
 :::
 
@@ -76,50 +83,55 @@ Native code says how to build the table: loop over the sections, sum each column
 Keisen says what the table is, so when the rows change, the table follows.
 Add a section or another line to the data, and there's no code to touch.
 
-```{.typst filename="Native Typst"}
-#for section in ("Revenue", "Operating costs") {
-  let rows = range(data.line.len()).filter(row => (
-    data.section.at(row) == section
-  ))
-  body.push(table.cell(colspan: 3, strong(section)))
-  for row in rows {
-    body.push(data.line.at(row))
-    body += years.map(year => pounds(data.at(year).at(row)))
-  }
-  body.push(table.hline(stroke: 0.5pt))
-  body.push([*Subtotal*])
-  body += years.map(year => pounds(
-    rows.map(row => data.at(year).at(row)).sum(),
-  ))
-}
+[Native Typst]{.figure-caption}
+
+::: {.keisen-native data-highlight-lines="40-54"}
+
+```{typst}
+//| file: ../tests/visual/gallery-income-statement-native.typ
+//| echo: true
+//| eval: false
+//| code-line-numbers: true
 ```
 
-```{.typst filename="Keisen"}
-#display-table(
-  data,
-  table-header(title: [Income statement], subtitle: [Years ending 31 March]),
-  table-stub(rowname: "line", group: "section", label: [Line]),
-  columns-label(fy2025: [2025], fy2026: [2026]),
-  table-spanner([Pounds sterling], ("fy2025", "fy2026")),
-  format-currency(("fy2025", "fy2026"), currency: "GBP", decimals: 0),
-  summary-rows(functions: (Subtotal: aggregate-sum), columns: (
-    "fy2025",
-    "fy2026",
-  )),
-  grand-summary-rows(functions: ("Operating profit": aggregate-sum), columns: (
-    "fy2025",
-    "fy2026",
-  )),
-  table-style(style(fill: luma(240)), locations: cells-grand-summary()),
-  table-source-note([Source: synthetic accounts.]),
-  theme: theme-booktabs(),
-)
+:::
+
+```{=html}
+<script>
+  // Highlights the lines a wrapper names in data-highlight-lines, a range such
+  // as "40-54" or a single line such as "40", and scrolls its code window so
+  // they are the first thing in view.
+  document.addEventListener("DOMContentLoaded", () => {
+    for (const box of document.querySelectorAll("[data-highlight-lines]")) {
+      const [first, last = first] = box.dataset.highlightLines.split("-").map(Number);
+      const lines = box.querySelectorAll("pre code > span");
+      lines.forEach((line, index) => {
+        if (index + 1 >= first && index + 1 <= last) {
+          line.classList.add("keisen-highlight");
+        }
+      });
+      const codeWindow = box.querySelector("div.sourceCode");
+      const target = lines[first - 1];
+      if (codeWindow && target) {
+        codeWindow.scrollTop += target.getBoundingClientRect().top - codeWindow.getBoundingClientRect().top - 16;
+      }
+    }
+  });
+</script>
+```
+
+[Keisen]{.figure-caption}
+
+```{typst}
+//| file: ../tests/visual/gallery-income-statement-keisen.typ
+//| echo: true
+//| eval: false
 ```
 
 Both come from the [income statement](gallery/income-statement.qmd).
-The first is the loop that builds the body of the native table.
-The rest of that file places the header, the rules and the total, and brings its own helpers to group the digits and print the pounds.
-The second is the whole Keisen table.
+The first is the whole native file, with the loop that builds the body of the table highlighted.
+Around that loop, the file places the header, the rules and the total, and brings its own helpers to group the digits and print the pounds.
+The second is the whole Keisen file.
 
 Keisen also looks after the details that are easy to get wrong.
 Sums stay exact because they run in decimals, footnote marks are numbered in reading order, a group's label comes back after a page break, and negative numbers get a true minus sign.
@@ -147,29 +159,12 @@ Keisen implements the display-table grammar that R's [`gt`](https://gt.rstudio.c
 
 ::: {.keisen-quick-look-code}
 
-The table at the top of this page comes from this call, with each part labelled.
+The table at the top of this page comes from this file, with each part labelled.
 
-```typst
-#import "@preview/keisen:0.1.0": *
-
-#display-table(
-  (
-    product: ("Bolt", "Nut", "Beam", "Plate"),
-    region: ("North", "North", "South", "South"),
-    units: (1250, 860, 430, 2100),
-    revenue: (18750.5, 12900.25, 21500, 31500.75),
-  ),
-  table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
-  table-stub(rowname: "product", group: "region", label: [Product]),
-  columns-label(units: [Units], revenue: [Revenue]),
-  table-spanner([Performance], ("units", "revenue")),
-  format-integer("units"),
-  format-number("revenue", decimals: 2),
-  summary-rows(functions: (Subtotal: aggregate-sum), columns: ("units", "revenue")),
-  grand-summary-rows(functions: (Total: aggregate-sum), columns: ("units", "revenue")),
-  table-source-note([Source: internal ledger.]),
-  table-options(row-striping: true),
-)
+```{typst}
+//| file: ../tests/visual/grouped.typ
+//| echo: true
+//| eval: false
 ```
 
 :::

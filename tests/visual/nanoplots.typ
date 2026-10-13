@@ -2,14 +2,10 @@
 // column so the sparklines can be compared. Cash must read as flat: scaled per
 // cell, its small wobble would draw exactly like real movement.
 //
-// A plot is taller than the figures beside it, so this is the table where the
-// theme's vertical placement shows. Nothing in the suite had ever set
-// `cell-vertical-align`, and the option reaches `table.cell` through the
-// renderer, which no assertion can read back. The render is the reader: with
-// the option discarded, every short cell falls back to the top of its row,
-// which is where Typst puts a table cell, and the tracked image goes stale.
+// A plot is taller than the figures beside it. The theme's
+// `cell-vertical-align` places the shorter cells in each row.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

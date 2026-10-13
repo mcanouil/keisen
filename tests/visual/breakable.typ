@@ -1,11 +1,9 @@
-// Milestone 4: a table long enough to break, so the column labels and the
-// current group label both reprint on the following page.
+// A table long enough to break across pages. The column labels and the current
+// group label print again at the top of each new page.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
-// The height is fixed, because a page that grows to hold the table never breaks
-// and breaking is what this test is for. The width still fits its content, as
-// every other page here does.
+// The page height is fixed, so the table breaks. The width fits the table.
 #set page(width: auto, height: 9cm, margin: 1cm)
 #set text(font: "Libertinus Serif", size: 9pt)
 

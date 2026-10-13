@@ -1,9 +1,7 @@
-// Styling and marking the summary rows, which no location could address until
-// cells-summary and cells-grand-summary existed: the renderer looked their
-// styles up and nothing ever produced the addresses, so every such style
-// silently did nothing.
+// Styling and marking the summary rows, addressed with cells-summary and
+// cells-grand-summary.
 
-#import "../../lib.typ": *
+#import "@preview/keisen:0.1.0": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)
@@ -18,10 +16,8 @@
   table-header(title: [Regional sales], subtitle: [Financial year 2025 to 2026]),
   table-stub(rowname: "product", group: "region", label: [Product]),
   columns-label(units: [Units], revenue: [Revenue]),
-  // The stub takes an alignment of its own, and the stubhead above it and the
-  // summary labels below it follow it, so the column reads as one column. Three
-  // separate cells carry that, and reverting any one of them to start shows
-  // here.
+  // The stub takes an alignment of its own. The stubhead above it and the
+  // summary labels below it follow it, so the column reads as one column.
   columns-align(end, columns: "product"),
   format-integer("units"),
   format-number("revenue", decimals: 2),
