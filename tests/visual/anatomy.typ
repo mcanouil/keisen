@@ -10,7 +10,7 @@
 // table when its rows or spacing change, and a part that disappears stops the
 // compile.
 
-#import "@preview/keisen:0.1.0" as keisen
+#import "/lib.typ" as keisen
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

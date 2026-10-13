@@ -6,7 +6,6 @@ project:
   # underscore keeps Quarto from treating it as content.
   pre-render:
     - ./_scripts/pre-render.sh
-    - ./_scripts/package-path.sh
   post-render:
     - ./_scripts/post-render.sh
     - ./_scripts/typst-render-check.sh
@@ -99,6 +98,9 @@ metadata-files:
 filters:
   # Before code-window, so the source typst-render echoes gets its window.
   - typst-render
+  # After typst-render, which compiles the "/lib.typ" import, and before
+  # code-window, so the window shows the import a reader writes.
+  - _filters/package-import.lua
   - code-window
   - gitlink
 
@@ -142,21 +144,18 @@ extensions:
       style-navbar-tools: true
   # Every table on the site is compiled from the visual test the page shows,
   # with `//| file:`. A leading slash is the docs project, so the root is the
-  # repository and a test reads another by its path from there, as anatomy.typ
-  # reads /tests/visual/grouped.typ. The package path is made before each render
-  # by _scripts/package-path.sh. The images stay light, on white, as the tests
-  # draw them.
+  # repository: a test imports "/lib.typ" from there, and reads another by its
+  # path, as anatomy.typ reads /tests/visual/grouped.typ. The images stay light,
+  # on white, as the tests draw them.
   typst-render:
     root: "/.."
-    package-path: "/.typst-packages"
     # One directory for every page, ignored by git, whatever the page depth.
     output-directory: "/assets/typst-render"
     background: "#ffffff"
     width: auto
     height: auto
     margin: 0pt
-    # Off: the cache key hashes local imports only, and the tests import the
-    # package by name, so an edit under src/ would keep serving old tables.
+    # Off, so each render compiles every table from the working tree.
     cache: false
   code-window:
     style: "macos"

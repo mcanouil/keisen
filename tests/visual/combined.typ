@@ -5,7 +5,7 @@
 // The labels are centred with `column-labels-align`. The stubhead and the
 // column labels both follow it.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

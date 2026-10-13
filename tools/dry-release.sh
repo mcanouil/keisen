@@ -89,15 +89,22 @@ mkdir -p "${SMOKE_DIR}"
 failures=0
 total=0
 
-# Every visual test, compiled in place against the installed package. They
-# import @preview/keisen as a reader does, so nothing is rewritten; the root is
-# the repository, so anatomy.typ's read of /tests/visual/grouped.typ resolves.
-# These exercise the whole public surface, since most of them import it
-# wholesale.
+# Every visual test, compiled against the installed package. A test imports
+# "/lib.typ", so each is copied with that import written as the reader's
+# `@preview/keisen:<version>`, the line the documentation shows. The copies keep
+# their paths under a root of their own, so anatomy.typ's read of
+# /tests/visual/grouped.typ resolves, and an import the rewrite missed fails
+# there, since that root holds no lib.typ. These exercise the whole public
+# surface, since most of them import it wholesale.
+VISUAL_ROOT="${STAGE_ROOT}/visual-root"
+mkdir -p "${VISUAL_ROOT}/tests/visual"
+for f in tests/visual/*.typ; do
+  sed "s|#import \"/lib\.typ\"|#import \"@preview/keisen:${VERSION}\"|" "${f}" >"${VISUAL_ROOT}/${f}"
+done
 for f in tests/visual/*.typ; do
   total=$((total + 1))
   name="$(basename "${f%.typ}")"
-  if ! typst compile "${f}" --root "${REPO_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
+  if ! typst compile "${VISUAL_ROOT}/${f}" --root "${VISUAL_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
     failures=$((failures + 1))
     printf '  FAIL  installed  %s\n' "${f}" >&2
     sed -n '1,5p' "${SMOKE_DIR}/visual-${name}.err" >&2

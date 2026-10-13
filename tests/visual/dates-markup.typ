@@ -2,7 +2,7 @@
 // alignment slots: there is no decimal point in either, so both follow the
 // column alignment like any other text.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

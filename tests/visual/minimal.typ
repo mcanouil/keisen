@@ -1,6 +1,6 @@
 // A title, a subtitle, column labels, formatted numbers and a source note.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

@@ -5,11 +5,11 @@ subtitle: "One page per thing a reader is trying to do."
 description: "A worked Keisen table to start from, and a page for each outcome: totals by group, declared groups, estimates with their error, local notation, threshold marks, long tables, in-cell plots, and right-to-left text."
 ---
 
-The listings import `@preview/keisen:0.1.0`, which is how they will read once the package is released.
+The listings import `@preview/keisen`, which is how they will read once the package is released.
 There is no release yet, so a reader trying them today imports `lib.typ` from a clone instead.
 
 Every table in this section is compiled, when the site is built, from the file in the repository's `tests/visual/` directory that the page shows.
-The listings are those files as they are.
+The listings are those files as they are, except that the site writes their `/lib.typ` import as the package import a reader writes.
 `tools/check.sh` compiles them on every run, and `tools/dry-release.sh` compiles them against an installed copy of the package.
 
 ## A table, built and formatted

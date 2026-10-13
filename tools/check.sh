@@ -177,27 +177,30 @@ fitted_pages() {
 
 fitted_pages
 
-# The documentation shows each visual test as written, so an import of a path,
-# relative or root-absolute, would put a line on the page that no reader can run.
+# A visual test imports the working tree as "/lib.typ", and nothing else. The
+# documentation shows that line as `@preview/keisen:<version>`, read from
+# typst.toml, and tools/dry-release.sh compiles it as the installed package, so
+# the version is written in no test. Both rewrite that exact string, so a
+# relative path or a versioned import would reach the page as written.
 # Anchored at the start of a line, so a commented-out import is not read.
-relative_visual_imports() {
+visual_imports() {
   local offenders=()
   local f
   while IFS= read -r f; do
     offenders+=("${f}")
   done < <(grep -HE '^[[:space:]]*#(import|include)[[:space:]]+"' tests/visual/*.typ |
-    grep -v '"@preview/keisen:' | cut -d: -f1 | sort -u)
+    grep -vE '^[^:]+:[[:space:]]*#import[[:space:]]+"/lib\.typ"' | cut -d: -f1 | sort -u)
   if [[ ${#offenders[@]} -gt 0 ]]; then
-    printf 'imports: a visual test imports the working tree; got %d file(s)\n' "${#offenders[@]}" >&2
+    printf 'imports: a visual test imports something other than "/lib.typ"; got %d file(s)\n' "${#offenders[@]}" >&2
     printf '  %s\n' "${offenders[@]}" >&2
-    printf '  use #import "@preview/keisen:<version>": * as the documentation shows it\n' >&2
+    printf '  use #import "/lib.typ": *; the documentation shows it as @preview/keisen:<version>\n' >&2
     fail_check "imports"
     return
   fi
   printf 'imports:  ok\n'
 }
 
-relative_visual_imports
+visual_imports
 
 # Two unit tests scan a list of files written out by hand, because Typst cannot
 # walk a directory. Each list can go stale without a word: the scan still runs,
@@ -516,13 +519,7 @@ if ! tools/accessibility-check.sh; then
   fail_check "accessibility"
 fi
 
-# The visual tests are the documentation's examples, so they import the package
-# the way a reader does. This links that import back to the working tree.
-if ! tools/package-path.sh --self-test; then
-  fail_check "package path self-test"
-fi
-PACKAGE_PATH="$(tools/package-path.sh "${OUT_DIR}/packages")"
-compile_glob "visual" "tests/visual/*.typ" --package-path "${PACKAGE_PATH}"
+compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
 
 # The packaging script refuses a payload entry that would ship nothing. This
@@ -612,6 +609,38 @@ RANGES
 }
 
 highlighted_lines
+
+# The site shows each visual test's "/lib.typ" import as the package import, and
+# a filter that stopped matching would publish a line no reader can run. Run on
+# a listing of each import form, the filter must write every one as the
+# manifest's version and leave a listing in another language alone.
+documented_imports() {
+  local filter="${1:-docs/_filters/package-import.lua}"
+  local version want got
+  version="$(awk -F'"' '/^version[[:space:]]*=/ { print $2; exit }' typst.toml)"
+  want="#import \"@preview/keisen:${version}\": *
+#import \"@preview/keisen:${version}\" as keisen
+#import \"@preview/keisen:${version}\": nanoplot-bar
+#import \"/lib.typ\""
+  if ! got="$(printf '%s\n' '```typst' '#import "/lib.typ": *' '#import "/lib.typ" as keisen' \
+    '#import "/lib.typ": nanoplot-bar' '```' '' '```bash' '#import "/lib.typ"' '```' |
+    quarto pandoc -f markdown -t plain -L "${filter}" 2>&1)"; then
+    printf 'docs: the import filter failed; got %s\n' "${got}" >&2
+    fail_check "docs imports"
+    return
+  fi
+  got="$(grep -v '^[[:space:]]*$' <<<"${got}" | sed 's/^[[:space:]]*//')"
+  if [[ "${got}" != "${want}" ]]; then
+    printf 'docs: the import filter does not write the package import; got\n' >&2
+    printf '  %s\n' "${got//$'\n'/$'\n'  }" >&2
+    printf '  %s matches #import "/lib.typ" in typst listings only\n' "${filter}" >&2
+    fail_check "docs imports"
+    return
+  fi
+  printf 'docs:     imports ok\n'
+}
+
+documented_imports
 
 # Last, because it is the only check that leaves this repository: it renders a
 # table through Quarto, which is how most R and Python users reach the package.
