@@ -628,7 +628,7 @@ documented_imports() {
     fail_check "docs imports"
     return
   fi
-  got="$(grep -v '^[[:space:]]*$' <<<"${got}" | sed 's/^[[:space:]]*//')"
+  got="$(grep -v '^[[:space:]]*$' <<<"${got}" | sed 's/^[[:space:]]*//' || true)"
   if [[ "${got}" != "${want}" ]]; then
     printf 'docs: the import filter does not write the package import; got\n' >&2
     printf '  %s\n' "${got//$'\n'/$'\n'  }" >&2

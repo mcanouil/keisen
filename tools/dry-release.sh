@@ -115,8 +115,9 @@ for f in tests/visual/*.typ; do
 done
 
 # The documentation's own listings, which is where the unreachable import was
-# printed. A listing that names the package is a whole document; the fragments
-# that show a directive or two are skipped by that same test.
+# printed. A listing that imports "/lib.typ" is a whole document, which the site
+# shows as the package import, so it is written out with that import; the
+# fragments that show a directive or two are skipped by that same test.
 listings=0
 # Every page of the site, at any depth. The documentation is laid out as a
 # section per topic, so a non-recursive glob would walk past every page that
@@ -133,11 +134,11 @@ for qmd in docs/**/*.qmd; do
   name="${qmd#docs/}"
   name="${name%.qmd}"
   name="${name//\//-}"
-  listings=$((listings + $(awk -v dir="${SMOKE_DIR}" -v name="${name}" '
+  listings=$((listings + $(awk -v dir="${SMOKE_DIR}" -v name="${name}" -v import="#import \"@preview/keisen:${VERSION}\"" '
     /^```typst$/ { inside = 1; body = ""; next }
     inside && /^```$/ {
       inside = 0
-      if (body ~ /@preview\/keisen:/) {
+      if (gsub(/#import "\/lib\.typ"/, import, body) > 0) {
         count += 1
         file = sprintf("%s/listing-%s-%02d.typ", dir, name, count)
         printf "%s", body > file
