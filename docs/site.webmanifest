@@ -14,8 +14,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#191C1F",
-  "background_color": "#191C1F",
+  "theme_color": "#FBFBF8",
+  "background_color": "#FBFBF8",
   "display": "standalone",
   "start_url": "/keisen/"
 }

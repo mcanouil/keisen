@@ -8,6 +8,7 @@
 website:
   sidebar:
     - id: gallery
+      logo: false
       # Floating, for the reason recorded in _sidebar-reference.yml.
       style: floating
       search: false

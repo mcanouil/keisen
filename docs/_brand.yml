@@ -5,6 +5,15 @@ meta:
   link:
     home: https://m.canouil.dev/keisen/
 
+logo:
+  images:
+    # The alt text names the navbar's logo link before scripts run; atelier
+    # replaces that name with its own "home" label once they do.
+    seal:
+      path: assets/icons/icon.svg
+      alt: "Keisen"
+  small: seal
+
 color:
   palette:
     paper-light: "#FBFBF8"

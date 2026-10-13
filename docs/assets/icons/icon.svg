@@ -1,9 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 121.8 118.8" role="img" aria-labelledby="site-icon-title">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-labelledby="site-icon-title">
   <title id="site-icon-title">Keisen</title>
-  <g fill="#74AADB" fill-rule="evenodd" clip-rule="evenodd">
-    <path d="M56,54.4V1.5C27.9,3.5,5.6,26.2,4.1,54.4H56z"/>
-    <path d="M63,54.4h52.9C114.4,25.9,91.5,3,63,1.5V54.4z"/>
-    <path d="M56,61.4H4.2c2,27.7,24.1,49.9,51.8,51.8V61.4z"/>
-    <path d="M63,61.4v51.9c28.2-1.5,50.9-23.8,52.8-51.9H63z"/>
+  <rect width="32" height="32" rx="5" fill="#C8442F"/>
+  <g fill="#FBFBF8">
+    <path d="M6 4h20a2 2 0 0 1 2 2v20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0.5 2.5v4.5h19v-4.5zm0 7v12h5v-12zm7.5 0v12h11.5v-12z" fill-rule="evenodd"/>
   </g>
 </svg>
