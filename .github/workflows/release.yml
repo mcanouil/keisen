@@ -1,0 +1,252 @@
+name: Release
+
+# Run by hand. It checks the tree, writes the next version through a pull
+# request that it merges, tags that commit, publishes a GitHub Release with the
+# package archives, and publishes the site from the new tag.
+#
+# The version is written by tools/bump-version.sh, which anyone can run, and
+# held by tools/version-check.sh. The Typst Universe submission is not here: it
+# needs a person's GitHub identity, so it is run from a clone afterwards with
+# .github/scripts/publish-typst-universe.sh.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: choice
+        description: "Version bump"
+        default: "minor"
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+
+permissions:
+  contents: read
+
+# One release at a time, and never cancelled: a run stopped part way could
+# leave the bump merged with no tag or Release behind it.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Check the tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Read Typst version from typst.toml
+        id: typst-version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
+          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: ${{ steps.typst-version.outputs.version }}
+
+      # tools/check.sh renders a table through Quarto's Typst path.
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2.2.0
+
+      - name: Run the checks
+        run: tools/check.sh
+
+      # The manifest lint is skipped here, as in the Checks workflow, and runs
+      # in .github/scripts/publish-typst-universe.sh on the archive it submits.
+      - name: Rehearse the release
+        shell: bash
+        env:
+          XDG_DATA_HOME: ${{ runner.temp }}
+          STAGE_ROOT: ${{ runner.temp }}/stage
+          SKIP_MANIFEST_LINT: "1"
+        run: tools/dry-release.sh
+
+  bump-version:
+    name: Bump the version
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      commit_sha: ${{ steps.merge.outputs.commit_sha }}
+
+    env:
+      BRANCH: ci/bump-version
+
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up the Git user
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          user_id="$(gh api "/users/${APP_SLUG}[bot]" --jq .id)"
+          git config --global user.name "${APP_SLUG}[bot]"
+          git config --global user.email "${user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+      - name: Write the next version
+        id: bump
+        shell: bash
+        env:
+          BUMP: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version="$(tools/bump-version.sh "${BUMP}")"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Merge the bump
+        id: merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            git push origin --delete "${BRANCH}"
+          fi
+          git checkout -b "${BRANCH}"
+          git add typst.toml CITATION.cff CHANGELOG.md README.md
+          git commit -m "ci: bump version to ${VERSION}"
+          git push origin "${BRANCH}"
+
+          pr_url="$(gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "${BRANCH}" \
+            --title "ci: bump version to ${VERSION}" \
+            --body "Writes ${VERSION} into the files that hold the version, for the release." \
+            --label "Type: CI/CD :robot:")"
+
+          merged=false
+          for attempt in {1..10}; do
+            if gh pr merge "${pr_url}" --merge --delete-branch; then
+              merged=true
+              break
+            fi
+            echo "The bump pull request cannot merge yet (attempt ${attempt}/10); retrying in 6s."
+            sleep 6
+          done
+          if [[ "${merged}" != "true" ]]; then
+            echo "::error::The bump pull request ${pr_url} did not merge."
+            exit 1
+          fi
+
+          commit_sha=""
+          for attempt in {1..10}; do
+            commit_sha="$(gh pr view "${pr_url}" --json mergeCommit --jq '.mergeCommit.oid // empty')"
+            [[ -n "${commit_sha}" ]] && break
+            echo "The merge commit is not available yet (attempt ${attempt}/10); retrying in 3s."
+            sleep 3
+          done
+          if [[ -z "${commit_sha}" ]]; then
+            echo "::error::No merge commit was found for ${pr_url}."
+            exit 1
+          fi
+          echo "commit_sha=${commit_sha}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "## Version bump"
+            echo ""
+            echo "- Version: \`${VERSION}\`"
+            echo "- Commit: \`${commit_sha}\`"
+            echo "- Pull request: ${pr_url}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  github-release:
+    name: Publish the GitHub Release
+    needs: bump-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    env:
+      VERSION: ${{ needs.bump-version.outputs.version }}
+      COMMIT_SHA: ${{ needs.bump-version.outputs.commit_sha }}
+
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_KEY }}
+
+      # The bump commit by its SHA: the branch may already have moved on.
+      - name: Checkout the bump commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.bump-version.outputs.commit_sha }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Read the release notes from CHANGELOG.md
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk -v heading="## ${VERSION} (" '
+            index($0, heading) == 1 { inside = 1; next }
+            /^## / && inside { exit }
+            inside
+          ' CHANGELOG.md | sed '/./,$!d' > "${RUNNER_TEMP}/notes.md"
+          if [[ ! -s "${RUNNER_TEMP}/notes.md" ]]; then
+            echo "::error::CHANGELOG.md holds no notes under ## ${VERSION}."
+            exit 1
+          fi
+
+      - name: Build the package archives
+        run: tools/package.sh archive "${RUNNER_TEMP}/assets"
+
+      - name: Create the GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${VERSION}" \
+            "${RUNNER_TEMP}/assets/keisen-${VERSION}.tar.gz#keisen ${VERSION} (tar.gz)" \
+            "${RUNNER_TEMP}/assets/keisen-${VERSION}.zip#keisen ${VERSION} (zip)" \
+            --target "${COMMIT_SHA}" \
+            --title "${VERSION}" \
+            --notes-file "${RUNNER_TEMP}/notes.md"
+          {
+            echo "## GitHub Release"
+            echo ""
+            echo "- Release: $(gh release view "${VERSION}" --json url --jq .url)"
+            echo "- Typst Universe: run \`.github/scripts/publish-typst-universe.sh ${VERSION}\` from a clone."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  # The Pages workflow renders the latest version tag, which is now this one.
+  pages:
+    name: Publish the site
+    needs: github-release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: mcanouil/quarto-workflows/.github/workflows/pages.yml@v2
