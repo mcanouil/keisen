@@ -123,11 +123,13 @@ manifest_categories() {
 }
 
 # The date of the changelog section for a version, or nothing while the version
-# is still under Unreleased.
+# is still under Unreleased. With no version, the date of the newest section of
+# any version, which is how the pre-release check knows a release exists.
 released_on() {
-  local changelog="$1" version="$2"
-  local escaped="${version//./\\.}"
-  sed -n "s/^## ${escaped} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1
+  local changelog="$1" version="${2:-}"
+  local heading='[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}'
+  [[ -n "${version}" ]] && heading="${version//./\\.}"
+  sed -n "s/^## ${heading} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1
 }
 
 citation_date() {
@@ -209,13 +211,21 @@ import_versions() {
 # Pages cannot say there is no release once there is one: as soon as the
 # changelog dates any version, the pre-release wording the scan found is refused.
 # Any version, not only the manifest's, so the wording cannot come back while the
-# next version is gathered under Unreleased.
+# next version is gathered under Unreleased. Before a release the wording must be
+# found, as import_versions refuses a scan that read nothing: a page reworded
+# past the phrases would otherwise pass this check at release without notice.
 pre_release_wording() {
   local changelog="$1" lines="$2"
-  local first
-  first="$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' "${changelog}" || true)"
-  if [[ -n "${first}" && -n "${lines}" ]]; then
-    printf 'version: the changelog records a release (%s), and the documentation still says to use a clone\n' "${first#\#\# }" >&2
+  if [[ -z "$(released_on "${changelog}")" ]]; then
+    if [[ -z "${lines}" ]]; then
+      printf 'version: nothing is released, and the scan read no pre-release wording\n' >&2
+      printf '  the README and the pages say Keisen is used from a clone; reworded, update the phrases here\n' >&2
+      return 1
+    fi
+    return 0
+  fi
+  if [[ -n "${lines}" ]]; then
+    printf 'version: the changelog records a release, and the documentation still says to use a clone\n' >&2
     printf '%s\n' "${lines}" | sed 's/^/  /' >&2
     printf '  rewrite each line for the released package, and drop the early-development badge\n' >&2
     return 1
@@ -420,6 +430,7 @@ docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
   clone='docs/index.qmd:49:[Early development: use from a clone]{.keisen-badge}'
   prerelease 0 '' '## Unreleased' "${clone}" 'unreleased, wording present'
   prerelease 0 '' '## 0.1.0 (2026-11-02)' '' 'released, wording gone'
+  prerelease 1 'read no' '## Unreleased' '' 'unreleased, a scan that read nothing'
   prerelease 1 'still says' '## 0.1.0 (2026-11-02)' "${clone}" 'released, wording left behind'
   prerelease 1 'still says' '## Unreleased
 
