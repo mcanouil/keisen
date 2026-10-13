@@ -98,21 +98,22 @@ Add a section or another line to the data, and there's no code to touch.
 
 ```{=html}
 <script>
-  // Highlights the lines a wrapper names in data-highlight-lines, such as
-  // "40-54", and scrolls its code window so they are the first thing in view.
+  // Highlights the lines a wrapper names in data-highlight-lines, a range such
+  // as "40-54" or a single line such as "40", and scrolls its code window so
+  // they are the first thing in view.
   document.addEventListener("DOMContentLoaded", () => {
     for (const box of document.querySelectorAll("[data-highlight-lines]")) {
-      const [first, last] = box.dataset.highlightLines.split("-").map(Number);
+      const [first, last = first] = box.dataset.highlightLines.split("-").map(Number);
       const lines = box.querySelectorAll("pre code > span");
       lines.forEach((line, index) => {
         if (index + 1 >= first && index + 1 <= last) {
           line.classList.add("keisen-highlight");
         }
       });
-      const window = box.querySelector("div.sourceCode");
+      const codeWindow = box.querySelector("div.sourceCode");
       const target = lines[first - 1];
-      if (window && target) {
-        window.scrollTop += target.getBoundingClientRect().top - window.getBoundingClientRect().top - 16;
+      if (codeWindow && target) {
+        codeWindow.scrollTop += target.getBoundingClientRect().top - codeWindow.getBoundingClientRect().top - 16;
       }
     }
   });

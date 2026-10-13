@@ -177,13 +177,14 @@ fitted_pages() {
 
 fitted_pages
 
-# The documentation shows each visual test as written, so a relative import
-# would put a line on the page that no reader can run.
+# The documentation shows each visual test as written, so an import of a path,
+# relative or root-absolute, would put a line on the page that no reader can run.
 relative_visual_imports() {
   local offenders=()
   local f
   for f in tests/visual/*.typ; do
-    if grep -q '"\.\./\.\./lib\.typ"' "${f}"; then
+    # Any import or include of a path, in either quote, rather than the package.
+    if grep -E '#(import|include)[[:space:]]+["'"'"']' "${f}" | grep -qv '"@preview/keisen:'; then
       offenders+=("${f}")
     fi
   done
@@ -556,13 +557,15 @@ documented_files() {
       fi
     fi
     while IFS= read -r line; do
-      target="${line#//| file: }"
+      # A block indented inside a list carries its options indented too.
+      target="${line#"${line%%[![:space:]]*}"}"
+      target="${target#//| file: }"
       target="${target%\"}"
       target="${target#\"}"
       if [[ ! -f "$(dirname "${page}")/${target}" ]]; then
         missing+=("${page}: ${target}")
       fi
-    done < <(grep -E '^//\| file: ' "${page}" || true)
+    done < <(grep -E '^[[:space:]]*//\| file: ' "${page}" || true)
   done
   if [[ ${#missing[@]} -gt 0 ]]; then
     printf 'docs: a page names a file that does not exist; got %d\n' "${#missing[@]}" >&2
