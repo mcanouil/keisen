@@ -122,12 +122,20 @@ manifest_categories() {
   fi
 }
 
+# The date of the changelog section for a version, or nothing while the version
+# is still under Unreleased. Read by the citation and the pre-release checks, so
+# the heading grammar is written once.
+released_on() {
+  local changelog="$1" version="$2"
+  local escaped="${version//./\\.}"
+  sed -n "s/^## ${escaped} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1
+}
+
 citation_date() {
   local changelog="$1" citation="$2" version="$3"
-  local escaped="${version//./\\.}"
   local released dated
 
-  released="$(sed -n "s/^## ${escaped} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1)"
+  released="$(released_on "${changelog}" "${version}")"
 
   # CFF writes a scalar bare, in single quotes, or in double ones, and all three
   # resolve to the same date, so all three are read here. Each form is matched
@@ -199,22 +207,11 @@ import_versions() {
   fi
 }
 
-# Every branch of the rule above, against fixtures. A guard nothing exercises is
-# a guard that passes because its pattern stopped matching.
-# Until the first release, the README and the documentation tell a reader to use
-# Keisen from a clone. Nothing removes that wording when the release lands, so it
-# is refused once the changelog dates the manifest version: a release cannot ship
-# pages that say there is no release.
-#
-# Written as a function of the scanned lines, as import_versions is, so
-# --self-test can run each branch against fixtures.
+# A release cannot ship pages that say there is no release: once the changelog
+# dates the manifest version, the pre-release wording the scan found is refused.
 pre_release_wording() {
   local changelog="$1" version="$2" lines="$3"
-  local escaped="${version//./\\.}"
-  if ! grep -qE "^## ${escaped} \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$" "${changelog}"; then
-    return 0
-  fi
-  if [[ -n "${lines}" ]]; then
+  if [[ -n "$(released_on "${changelog}" "${version}")" && -n "${lines}" ]]; then
     printf 'version: %s is released, and the documentation still says to use a clone\n' "${version}" >&2
     printf '%s\n' "${lines}" | sed 's/^/  /' >&2
     printf '  rewrite each line for the released package, and drop the early-development badge\n' >&2
@@ -222,6 +219,8 @@ pre_release_wording() {
   fi
 }
 
+# Every branch of the rule above, against fixtures. A guard nothing exercises is
+# a guard that passes because its pattern stopped matching.
 if [[ "${1:-}" == "--self-test" ]]; then
   fixtures="$(mktemp -d)"
   trap 'rm -rf "${fixtures}"' EXIT
@@ -411,6 +410,7 @@ docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
     if [[ -n "${reported}" && "${said}" != *"${reported}"* ]]; then
       bad=$((bad + 1))
       printf '  FAIL  self-test  %s  wanted the %s branch\n' "${name}" "${reported}" >&2
+      printf '        said: %s\n' "${said%%$'\n'*}" >&2
     fi
   }
 
@@ -485,7 +485,7 @@ fi
 
 citation_date CHANGELOG.md CITATION.cff "${manifest}"
 pre_release_wording CHANGELOG.md "${manifest}" \
-  "$(git grep -niE 'no release yet|until the first release|once the package is released|use from a clone' \
+  "$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
     -- README.md ':(glob)docs/**/*.qmd' || true)"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
 manifest_categories typst.toml
