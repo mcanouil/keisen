@@ -53,6 +53,40 @@
   none
 }
 
+// Even without an int to divide: halving an even number lands on a whole one,
+// and doubling it back returns what it started as.
+#let _is-even(whole) = calc.round(whole / decimal(2), digits: 0) * decimal(2) == whole
+
+// `value` rounded to a multiple of ten to the `places`, counted in units of it
+// and signed like `value`.
+//
+// Dividing by the scale would round whenever the quotient needs more than the
+// 28 fractional digits a decimal holds, and a value just past a tie would then
+// read as one. The whole count is read off the integer digits instead, and the
+// remainder beside it is exact, since the count times the scale never exceeds
+// the value.
+#let _count-above-point(value, places, mode) = {
+  let scale = calc.pow(decimal(10), places)
+  let magnitude = calc.abs(value)
+  let integer = str(magnitude).split(".").first()
+  let count = if integer.len() > places {
+    decimal(integer.slice(0, integer.len() - places))
+  } else {
+    decimal(0)
+  }
+  let remainder = magnitude - count * scale
+  let half = scale / decimal(2)
+  let up = if remainder > half {
+    true
+  } else if remainder == half {
+    mode == "half-up" or not _is-even(count)
+  } else {
+    false
+  }
+  if up { count += decimal(1) }
+  if value < decimal(0) { -count } else { count }
+}
+
 // `digits` may be negative, which rounds to tens, hundreds, and so on; that is
 // how significant-digit formatting reaches the integer part.
 //
@@ -69,8 +103,9 @@
 // A place above the point asks for a multiple of ten, and the one nearest a
 // large value can be larger than the type holds. The answer is measured against
 // the range before it is taken, in both modes: a decimal raises rather than
-// saturating, and Typst has no try. Dividing by the scale never raises, so the
-// quotient is the safe place to measure from.
+// saturating, and Typst has no try. The count of the scale is read from the
+// digits rather than by dividing, so it is exact and the safe place to measure
+// from.
 #let round-decimal(value, digits, mode) = {
   if mode not in ("half-up", "half-even") {
     fail-enum("format-number", "rounding", mode, ("half-up", "half-even"))
@@ -91,24 +126,24 @@
     hint: "Round to a place nearer the point, or use format-scientific.",
   )
 
-  if mode == "half-up" {
-    if digits < 0 { _check-holds(calc.round(value / scale, digits: 0)) }
-    return calc.round(value, digits: digits)
+  if digits < 0 {
+    let rounded = _count-above-point(value, -digits, mode)
+    _check-holds(rounded)
+    return rounded * scale
   }
+
+  if mode == "half-up" { return calc.round(value, digits: digits) }
 
   // The shift is measured before it is taken: a decimal raises rather than
   // saturating, and Typst has no try, so an overflow cannot be caught after the
   // fact. The room falls as the place rises, and a value with none left has no
   // fractional digit at that place to sit a tie on, so plain rounding is exact
   // for it.
-  //
-  // Only the multiplying side is measured. Dividing shrinks, and the un-shift
-  // that follows it has a limit of its own, named in the header above.
   if digits > 0 and calc.abs(value) > _decimal-max / scale {
     return calc.round(value, digits: digits)
   }
 
-  let shifted = if digits < 0 { value / scale } else { value * scale }
+  let shifted = value * scale
 
   // Both halves of the tie test are read in decimal. Through an int they were
   // held to the 64-bit range, and a shifted value past it took plain rounding:
@@ -122,24 +157,15 @@
   let nearest = calc.round(shifted, digits: 0)
   let gap = nearest - shifted
 
-  // Even without an int to divide: halving an even number lands on a whole one,
-  // and doubling it back returns what it started as.
-  let is-even = whole => calc.round(whole / decimal(2), digits: 0) * decimal(2) == whole
-
   let rounded = if gap == decimal("0.5") {
-    if is-even(nearest) { nearest } else { nearest - decimal(1) }
+    if _is-even(nearest) { nearest } else { nearest - decimal(1) }
   } else if gap == decimal("-0.5") {
-    if is-even(nearest) { nearest } else { nearest + decimal(1) }
+    if _is-even(nearest) { nearest } else { nearest + decimal(1) }
   } else {
     nearest
   }
 
-  if digits < 0 {
-    _check-holds(rounded)
-    rounded * scale
-  } else {
-    rounded / scale
-  }
+  rounded / scale
 }
 
 // A size of `none` or anything below one means no grouping; a size of zero
