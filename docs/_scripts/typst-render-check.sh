@@ -46,9 +46,11 @@ for page in "${pages[@]}"; do
   if grep -q 'typst-render-error' "${page}"; then
     failed+=("${page#"${DOCS_DIR}"/} (a table did not compile)")
   fi
-  # Highlighting splits a line into spans, so the tags are removed first. grep
-  # reads to the end, rather than -q, so pipefail does not see sed cut short.
-  if sed 's/<[^>]*>//g; s/&quot;/"/g' "${page}" | grep '#import "/lib\.typ"' >/dev/null; then
+  # Only the listings, inside <pre>, so prose may name the import. Highlighting
+  # splits a line into spans, so the tags are removed first. grep reads to the
+  # end, rather than -q, so pipefail does not see the pipe cut short.
+  if awk '/<pre/ { inside = 1 } inside { print } /<\/pre>/ { inside = 0 }' "${page}" |
+    sed 's/<[^>]*>//g; s/&quot;/"/g' | grep '#import "/lib\.typ"' >/dev/null; then
     failed+=("${page#"${DOCS_DIR}"/} (a listing shows the \"/lib.typ\" import)")
   fi
 

@@ -178,8 +178,9 @@ fitted_pages
 # A visual test imports the working tree as "/lib.typ", and nothing else. The
 # documentation shows that line as `@preview/keisen:<version>`, read from
 # typst.toml, and tools/dry-release.sh compiles it as the installed package, so
-# the version is written in no test. Both rewrite that exact string, so a
-# relative path or a versioned import would reach the page as written.
+# the version is written in no test. Both rewrite that exact string, one space
+# included, so a relative path, a versioned import or another spacing would
+# reach the page as written.
 # Anchored at the start of a line, so a commented-out import is not read.
 visual_imports() {
   local offenders=()
@@ -187,7 +188,7 @@ visual_imports() {
   while IFS= read -r f; do
     offenders+=("${f}")
   done < <(grep -HE '^[[:space:]]*#(import|include)[[:space:]]+"' tests/visual/*.typ |
-    grep -vE '^[^:]+:[[:space:]]*#import[[:space:]]+"/lib\.typ"' | cut -d: -f1 | sort -u)
+    grep -vE '^[^:]+:[[:space:]]*#import "/lib\.typ"' | cut -d: -f1 | sort -u)
   if [[ ${#offenders[@]} -gt 0 ]]; then
     printf 'imports: a visual test imports something other than "/lib.typ"; got %d file(s)\n' "${#offenders[@]}" >&2
     printf '  %s\n' "${offenders[@]}" >&2
