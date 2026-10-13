@@ -179,15 +179,14 @@ fitted_pages
 
 # The documentation shows each visual test as written, so an import of a path,
 # relative or root-absolute, would put a line on the page that no reader can run.
+# Anchored at the start of a line, so a commented-out import is not read.
 relative_visual_imports() {
   local offenders=()
   local f
-  for f in tests/visual/*.typ; do
-    # Any import or include of a path, in either quote, rather than the package.
-    if grep -E '#(import|include)[[:space:]]+["'"'"']' "${f}" | grep -qv '"@preview/keisen:'; then
-      offenders+=("${f}")
-    fi
-  done
+  while IFS= read -r f; do
+    offenders+=("${f}")
+  done < <(grep -HE '^[[:space:]]*#(import|include)[[:space:]]+"' tests/visual/*.typ |
+    grep -v '"@preview/keisen:' | cut -d: -f1 | sort -u)
   if [[ ${#offenders[@]} -gt 0 ]]; then
     printf 'imports: a visual test imports the working tree; got %d file(s)\n' "${#offenders[@]}" >&2
     printf '  %s\n' "${offenders[@]}" >&2
@@ -558,8 +557,7 @@ documented_files() {
     fi
     while IFS= read -r line; do
       # A block indented inside a list carries its options indented too.
-      target="${line#"${line%%[![:space:]]*}"}"
-      target="${target#//| file: }"
+      target="${line#*//| file: }"
       target="${target%\"}"
       target="${target#\"}"
       if [[ ! -f "$(dirname "${page}")/${target}" ]]; then

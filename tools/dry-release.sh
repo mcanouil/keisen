@@ -145,10 +145,8 @@ done
 # the installed package. They count as listings here.
 # Distinct visual tests, since one test can fill several blocks and only the
 # visual tests were compiled above.
-shown="$(for qmd in docs/**/*.qmd; do
-  [[ "${qmd}" == */_* ]] && continue
-  grep -hE '^[[:space:]]*//\| file: ' "${qmd}" || true
-done | grep -oE 'tests/visual/[^/"[:space:]]+\.typ' | sort -u | grep -c . || true)"
+shown="$(grep -rhE --include='*.qmd' --exclude-dir='_*' '^[[:space:]]*//\| file: ' docs |
+  grep -oE 'tests/visual/[^/"[:space:]]+\.typ' | sort -u | grep -c . || true)"
 
 # Finding no listing would report success without compiling one, and a
 # documentation site whose imports nobody checks is what this script is for.
