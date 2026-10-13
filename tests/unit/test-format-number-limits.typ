@@ -169,11 +169,10 @@
 #let past-a-tie = decimal("5000000000000000000000000000.5")
 #assert.eq(past-a-tie / calc.pow(decimal(10), 28), decimal("0.5"))
 #let far = decimal("10000000000000000000000000000")
+#let below-a-tie = decimal("4999999999999999999999999999.5")
 #for mode in ("half-even", "half-up") {
   assert.eq(round-decimal(past-a-tie, -28, mode), far)
   assert.eq(round-decimal(-past-a-tie, -28, mode), -far)
-
-  let below-a-tie = decimal("4999999999999999999999999999.5")
   assert.eq(round-decimal(below-a-tie, -28, mode), decimal("0"))
   assert.eq(round-decimal(-below-a-tie, -28, mode), decimal("0"))
 }

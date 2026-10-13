@@ -58,14 +58,14 @@
 #let _is-even(whole) = calc.round(whole / decimal(2), digits: 0) * decimal(2) == whole
 
 // `value` rounded to a multiple of ten to the `places`, counted in units of it
-// and signed like `value`.
+// and signed like `value`. Zero places rounds to a whole number.
 //
 // Dividing by the scale would round whenever the quotient needs more than the
 // 28 fractional digits a decimal holds, and a value just past a tie would then
 // read as one. The whole count is read off the integer digits instead, and the
 // remainder beside it is exact, since the count times the scale never exceeds
-// the value.
-#let _count-above-point(value, places, mode) = {
+// the value. Nothing passes through an int, so the 64-bit range plays no part.
+#let _round-count(value, places, mode) = {
   let scale = calc.pow(decimal(10), places)
   let magnitude = calc.abs(value)
   let integer = str(magnitude).split(".").first()
@@ -76,13 +76,7 @@
   }
   let remainder = magnitude - count * scale
   let half = scale / decimal(2)
-  let up = if remainder > half {
-    true
-  } else if remainder == half {
-    mode == "half-up" or not _is-even(count)
-  } else {
-    false
-  }
+  let up = remainder > half or (remainder == half and (mode == "half-up" or not _is-even(count)))
   if up { count += decimal(1) }
   if value < decimal(0) { -count } else { count }
 }
@@ -127,7 +121,7 @@
   )
 
   if digits < 0 {
-    let rounded = _count-above-point(value, -digits, mode)
+    let rounded = _round-count(value, -digits, mode)
     _check-holds(rounded)
     return rounded * scale
   }
@@ -143,29 +137,7 @@
     return calc.round(value, digits: digits)
   }
 
-  let shifted = value * scale
-
-  // Both halves of the tie test are read in decimal. Through an int they were
-  // held to the 64-bit range, and a shifted value past it took plain rounding:
-  // a value keeps a fractional part whenever its own scale runs past the place
-  // asked for, so one that large can still sit on a tie, and half-even then
-  // answered what half-up would.
-  //
-  // calc.round takes a tie away from zero, so the gap to it is half a unit on a
-  // tie and nothing else reaches that. The two neighbours are then that answer
-  // and the one step back towards zero, and half-even keeps whichever is even.
-  let nearest = calc.round(shifted, digits: 0)
-  let gap = nearest - shifted
-
-  let rounded = if gap == decimal("0.5") {
-    if _is-even(nearest) { nearest } else { nearest - decimal(1) }
-  } else if gap == decimal("-0.5") {
-    if _is-even(nearest) { nearest } else { nearest + decimal(1) }
-  } else {
-    nearest
-  }
-
-  rounded / scale
+  _round-count(value * scale, 0, mode) / scale
 }
 
 // A size of `none` or anything below one means no grouping; a size of zero
