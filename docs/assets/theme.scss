@@ -171,9 +171,9 @@ img[src*="assets/typst-render/"]:not(.thumbnail-image) {
   zoom: 1.5;
 }
 
-// The native file is the longest on the page. It scrolls within a fixed height
-// so the comparison stays readable, with its loop highlighted.
-.keisen-native div.sourceCode {
+// The two files sit in tabs of one height, each scrolling within it, so the
+// comparison takes one screen and switching tabs does not move the page.
+.keisen-compare div.sourceCode {
   max-height: 28rem;
   overflow-y: auto;
 }
