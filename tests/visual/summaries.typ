@@ -1,7 +1,7 @@
 // Styling and marking the summary rows, addressed with cells-summary and
 // cells-grand-summary.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

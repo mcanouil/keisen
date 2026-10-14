@@ -8,7 +8,7 @@ Everything in this section is read from the source.
 `tests/unit/test-exports.typ` holds `lib.typ` to a list of public names, so an accidental export cannot slip in, though nothing yet checks that list against these pages.
 
 Keisen has no release yet, so import `lib.typ` from a clone rather than from Typst Universe.
-Everything a document needs comes out of that one file, the nanoplot renderers included, because a Typst package specification cannot carry a subpath: `@preview/keisen:0.1.0/src/...` is not valid syntax, so a module reachable only from a clone would be reachable by nobody who installs the package.
+Everything a document needs comes out of that one file, the nanoplot renderers included, because a Typst package specification cannot carry a subpath: `@preview/keisen:x.y.z/src/...` is not valid syntax, so a module reachable only from a clone would be reachable by nobody who installs the package.
 
 ## The pages
 

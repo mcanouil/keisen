@@ -1,7 +1,7 @@
 // A table long enough to break across pages. The column labels and the current
 // group label print again at the top of each new page.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 // The page height is fixed, so the table breaks. The width fits the table.
 #set page(width: auto, height: 9cm, margin: 1cm)

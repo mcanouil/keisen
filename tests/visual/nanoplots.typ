@@ -5,7 +5,7 @@
 // A plot is taller than the figures beside it. The theme's
 // `cell-vertical-align` places the shorter cells in each row.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

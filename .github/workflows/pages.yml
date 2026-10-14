@@ -18,7 +18,6 @@ on:
       - "src/**"
       - "lib.typ"
       - "typst.toml"
-      - "tools/package-path.sh"
       - "_extensions/**"
       - "CHANGELOG.md"
       - ".github/workflows/pages.yml"

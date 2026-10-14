@@ -89,15 +89,25 @@ mkdir -p "${SMOKE_DIR}"
 failures=0
 total=0
 
-# Every visual test, compiled in place against the installed package. They
-# import @preview/keisen as a reader does, so nothing is rewritten; the root is
-# the repository, so anatomy.typ's read of /tests/visual/grouped.typ resolves.
-# These exercise the whole public surface, since most of them import it
-# wholesale.
+# Every visual test, compiled against the installed package. A test imports
+# "/lib.typ", so each is copied with that import written as the reader's
+# `@preview/keisen:<version>`, the line the documentation shows. The copies keep
+# their paths under a root of their own, so anatomy.typ's read of
+# /tests/visual/grouped.typ resolves, and an import the rewrite missed fails
+# there, since that root holds no lib.typ. These exercise the whole public
+# surface, since most of them import it wholesale.
+#
+# Every copy is written before the first compile, since anatomy.typ sorts before
+# the grouped.typ it reads.
+VISUAL_ROOT="${STAGE_ROOT}/visual-root"
+mkdir -p "${VISUAL_ROOT}/tests/visual"
+for f in tests/visual/*.typ; do
+  sed "s|#import \"/lib\.typ\"|#import \"@preview/keisen:${VERSION}\"|" "${f}" >"${VISUAL_ROOT}/${f}"
+done
 for f in tests/visual/*.typ; do
   total=$((total + 1))
   name="$(basename "${f%.typ}")"
-  if ! typst compile "${f}" --root "${REPO_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
+  if ! typst compile "${VISUAL_ROOT}/${f}" --root "${VISUAL_ROOT}" "${SMOKE_DIR}/visual-${name}.pdf" 2>"${SMOKE_DIR}/visual-${name}.err"; then
     failures=$((failures + 1))
     printf '  FAIL  installed  %s\n' "${f}" >&2
     sed -n '1,5p' "${SMOKE_DIR}/visual-${name}.err" >&2
@@ -105,8 +115,9 @@ for f in tests/visual/*.typ; do
 done
 
 # The documentation's own listings, which is where the unreachable import was
-# printed. A listing that names the package is a whole document; the fragments
-# that show a directive or two are skipped by that same test.
+# printed. A listing that imports "/lib.typ" is a whole document, which the site
+# shows as the package import, so it is written out with that import; the
+# fragments that show a directive or two are skipped by that same test.
 listings=0
 # Every page of the site, at any depth. The documentation is laid out as a
 # section per topic, so a non-recursive glob would walk past every page that
@@ -123,11 +134,11 @@ for qmd in docs/**/*.qmd; do
   name="${qmd#docs/}"
   name="${name%.qmd}"
   name="${name//\//-}"
-  listings=$((listings + $(awk -v dir="${SMOKE_DIR}" -v name="${name}" '
+  listings=$((listings + $(awk -v dir="${SMOKE_DIR}" -v name="${name}" -v import="#import \"@preview/keisen:${VERSION}\"" '
     /^```typst$/ { inside = 1; body = ""; next }
     inside && /^```$/ {
       inside = 0
-      if (body ~ /@preview\/keisen:/) {
+      if (gsub(/#import "\/lib\.typ"/, import, body) > 0) {
         count += 1
         file = sprintf("%s/listing-%s-%02d.typ", dir, name, count)
         printf "%s", body > file

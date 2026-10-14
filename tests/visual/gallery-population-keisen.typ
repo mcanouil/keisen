@@ -1,7 +1,7 @@
 // Gallery: population by region, built with Keisen.
 // Its native twin is gallery-population-native.typ; the two render alike.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

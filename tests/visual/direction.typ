@@ -6,7 +6,7 @@
 //   - the amounts sit against the left edge, still lined up on their decimal
 //     separators, and each still reads 1 256.750 rather than 750.256 1.
 
-#import "@preview/keisen:0.1.0": *
+#import "/lib.typ": *
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

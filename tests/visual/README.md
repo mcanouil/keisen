@@ -4,8 +4,9 @@ Each file renders a table to inspect by eye.
 They compile in `tools/check.sh`, so a broken document fails the check even when nobody looks at the output.
 
 The documentation shows each file with a `//| file:` block, and the site build compiles it.
-Each file imports `@preview/keisen:<version>` as a reader does.
-`tools/package-path.sh` links that import to the working tree, for `tools/check.sh` and for the site.
+Each file imports the working tree with `#import "/lib.typ"`.
+The site shows that line as `@preview/keisen:<version>`, with the version from `typst.toml`.
+`tools/dry-release.sh` compiles each file against the installed package with the same change.
 Set the page to fit its content, so the picture on the site is the table rather than the table and a field of white:
 
 ```typ

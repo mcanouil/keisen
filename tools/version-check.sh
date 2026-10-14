@@ -179,7 +179,12 @@ citation_date() {
   fi
 }
 
-# The import lines a scan read, held to the manifest's version.
+# The import lines a scan read: README.md alone, naming the manifest's version.
+#
+# README.md is the one file that writes the version into an import, and the
+# release bump rewrites it. Every other listing imports "/lib.typ", and the
+# documentation and tools/dry-release.sh show or compile it as the package. A
+# version written anywhere else is a line the bump does not know about.
 #
 # Written as a function of the lines rather than of the scan, so --self-test can
 # run every branch: `git grep` finding nothing and every import being correct
@@ -187,12 +192,21 @@ citation_date() {
 # here. A guard that read nothing is a guard that passes for the wrong reason.
 import_versions() {
   local wanted="$1" lines="$2"
-  local read_lines stale
+  local read_lines outside stale
 
   read_lines="$(grep -c '@preview/keisen:' <<<"${lines}" || true)"
   if [[ "${read_lines}" -eq 0 ]]; then
     printf 'version: no import of @preview/keisen was read at all\n' >&2
-    printf '  the install line is written in the README, the reference and the examples\n' >&2
+    printf '  the install line is written in the quick look of README.md\n' >&2
+    return 1
+  fi
+
+  outside="$(grep -v '^README\.md:' <<<"${lines}" || true)"
+  if [[ -n "${outside}" ]]; then
+    printf 'version: an import names a version outside README.md\n' >&2
+    printf '%s\n' "${outside}" |
+      awk -F'@preview/keisen:' '{ sub(/:$/, "", $1); printf "  %s names %s\n", $1, $2 }' >&2
+    printf '  import "/lib.typ" instead; the documentation shows it as the package\n' >&2
     return 1
   fi
 
@@ -399,11 +413,12 @@ website:
   mark='@preview/keisen'
 
   imported 0 '' "README.md:12:${mark}:0.1.0" 'one import, the manifest version'
-  imported 0 '' "README.md:12:${mark}:0.1.0
-docs/index.qmd:4:${mark}:0.1.0" 'two imports that agree'
   imported 1 'a version the manifest does not' "README.md:12:${mark}:0.2.0" 'an import that drifted'
-  imported 1 'a version the manifest does not' "README.md:12:${mark}:0.1.0
-docs/index.qmd:4:${mark}:0.0.9" 'one of two that drifted'
+  imported 1 'outside README.md' "README.md:12:${mark}:0.1.0
+docs/index.qmd:4:${mark}:0.1.0" 'a second file that agrees'
+  imported 1 'outside README.md' "README.md:12:${mark}:0.1.0
+tests/visual/minimal.typ:3:${mark}:0.0.9" 'a second file that drifted'
+  imported 1 'outside README.md' "docs/index.qmd:4:${mark}:0.1.0" 'a file other than README.md alone'
   imported 1 'read at all' '' 'a scan that read nothing'
 
   # The pre-release wording, held against the changelog: present while the
@@ -513,19 +528,13 @@ pre_release_wording CHANGELOG.md "${wording}"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
 manifest_categories typst.toml
 
-# The import line is what a reader copies, and it carries the version by hand.
-# README.md reaches furthest: tools/stage-readme.sh keeps its quick look for the
-# packaged README, which Typst Universe renders on the package page, so a stale
-# import there is published alongside the release it misnames.
+# The import line is what a reader copies, and README.md is the one file that
+# carries the version by hand. tools/stage-readme.sh keeps its quick look for
+# the packaged README, which Typst Universe renders on the package page, so a
+# stale import there is published alongside the release it misnames.
 #
-# The documentation's listings are compiled against an installed copy by
-# tools/dry-release.sh, which catches a stale one as a Typst compile error. That
-# is the release rehearsal; tools/check.sh runs before every commit and runs
-# this script instead, so without this check the first report comes late and
-# names a missing package rather than a version.
-#
-# Tracked files are scanned rather than listed, so a page written after this was
-# is covered on the day it is written.
+# Tracked files are scanned rather than listed, so a versioned import written
+# anywhere else is refused on the day it is written.
 #
 # A placeholder is not a version. ARCHITECTURE.md writes `x.y.z` and
 # CONTRIBUTING.md writes `<version>`, and a semantic version matches neither.

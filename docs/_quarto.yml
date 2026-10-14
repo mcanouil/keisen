@@ -6,7 +6,6 @@ project:
   # underscore keeps Quarto from treating it as content.
   pre-render:
     - ./_scripts/pre-render.sh
-    - ./_scripts/package-path.sh
   post-render:
     - ./_scripts/post-render.sh
     - ./_scripts/typst-render-check.sh
@@ -99,6 +98,12 @@ metadata-files:
 filters:
   # Before code-window, so the source typst-render echoes gets its window.
   - typst-render
+  # Rewrites the "/lib.typ" import in the listings typst-render echoes, in
+  # place, so it runs after typst-render. code-window runs earlier, in its own
+  # pre-quarto pass, and wraps the listing without hiding it.
+  # _scripts/typst-render-check.sh fails a render whose listing still shows
+  # "/lib.typ".
+  - _filters/package-import.lua
   - code-window
   - gitlink
 
@@ -142,21 +147,20 @@ extensions:
       style-navbar-tools: true
   # Every table on the site is compiled from the visual test the page shows,
   # with `//| file:`. A leading slash is the docs project, so the root is the
-  # repository and a test reads another by its path from there, as anatomy.typ
-  # reads /tests/visual/grouped.typ. The package path is made before each render
-  # by _scripts/package-path.sh. The images stay light, on white, as the tests
-  # draw them.
+  # repository: a test imports "/lib.typ" from there, and reads another by its
+  # path, as anatomy.typ reads /tests/visual/grouped.typ. The images stay light,
+  # on white, as the tests draw them.
   typst-render:
     root: "/.."
-    package-path: "/.typst-packages"
     # One directory for every page, ignored by git, whatever the page depth.
     output-directory: "/assets/typst-render"
     background: "#ffffff"
     width: auto
     height: auto
     margin: 0pt
-    # Off: the cache key hashes local imports only, and the tests import the
-    # package by name, so an edit under src/ would keep serving old tables.
+    # Off: the cache key hashes local imports, but resolves each nested import
+    # against the root, and the modules under src/ import one another by
+    # relative paths, so an edit under src/ would keep serving old tables.
     cache: false
   code-window:
     style: "macos"

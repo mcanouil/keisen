@@ -2,7 +2,7 @@
 // fraction of the box, so an em size needs no absolute resolution and no
 // minimum canvas: these run inline, at the height of the text around them.
 
-#import "@preview/keisen:0.1.0": nanoplot-bar, nanoplot-line, nanoplot-points
+#import "/lib.typ": nanoplot-bar, nanoplot-line, nanoplot-points
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 #set text(font: "Libertinus Serif", size: 10pt)

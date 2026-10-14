@@ -89,8 +89,9 @@ A unit test or an expect-fail fixture renders nothing anyone looks at, so it may
 
 The visual tests are the examples in the documentation.
 Each page shows a test with a `//| file:` block, and the site build compiles that file, so there is no image to regenerate.
-A visual test imports the package as a reader does, with `#import "@preview/keisen:<version>": *`.
-`tools/check.sh` links that import to the working tree, and it refuses a visual test that imports `lib.typ` directly.
+A visual test imports the working tree with `#import "/lib.typ": *`, and `tools/check.sh` refuses any other import.
+The site shows that line as `#import "@preview/keisen:<version>": *`, with the version from `typst.toml`.
+No file other than `README.md` writes the version in an import, and `tools/version-check.sh` refuses one that does.
 To show a new test on a page, add a block that names it:
 
 ````markdown
