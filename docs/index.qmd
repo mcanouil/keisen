@@ -194,7 +194,7 @@ Row groups are native repeating subheaders, so a group that spans a page break p
 
 Import Keisen from Typst Universe, as each example shows.
 The API can still change between 0.x releases.
-Follow the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
+Read the [changelog](changelog.qmd) for what each release changed.
 
 :::
 
