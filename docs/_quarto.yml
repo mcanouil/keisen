@@ -1,7 +1,6 @@
 project:
   type: atelier
-  # Generates changelog.qmd from CHANGELOG.md and _variables.yml from the
-  # project's version, and removes both afterwards. The leading ./ is required;
+  # Generates changelog.qmd from CHANGELOG.md, and removes it afterwards. The leading ./ is required;
   # a bare name fails to spawn. The scripts live in _scripts/, whose leading
   # underscore keeps Quarto from treating it as content.
   pre-render:
