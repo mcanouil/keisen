@@ -25,19 +25,12 @@ tools/version-check.sh
 # and compiles everything, then stops because a linter is missing, has spent
 # minutes to say what it knew at the start.
 #
-# The runner is the one place the lint is allowed to be missing. CI rehearses
-# the staged package on every pull request, and installing a Rust tool there
-# would cost minutes per run to lint a file that changes a few times a year. The
-# release itself is run from a machine that carries the tool, and that is the
-# run this gate is for, so the workflow opts out by name rather than by silence.
-LINT_MANIFEST=1
-if [[ "${SKIP_MANIFEST_LINT:-0}" == "1" ]]; then
-  LINT_MANIFEST=0
-elif ! command -v typst-package-check >/dev/null 2>&1; then
+# CI installs the tool too, cached by its upstream revision, so no run skips
+# the lint.
+if ! command -v typst-package-check >/dev/null 2>&1; then
   printf 'manifest: typst-package-check is not installed\n' >&2
   printf '  a rehearsal that skips the manifest lint is not a rehearsal\n' >&2
-  printf '  cargo install --git https://github.com/typst/package-check\n' >&2
-  printf '  or set SKIP_MANIFEST_LINT=1, which the checks workflow does\n' >&2
+  printf '  install it with: cargo install --git https://github.com/typst/package-check --locked\n' >&2
   exit 1
 fi
 
@@ -194,20 +187,15 @@ fi
 #
 # It was advisory while the documentation site was unpublished, because the
 # homepage 404ed and nothing could tell that apart from a real finding.
-if [[ "${LINT_MANIFEST}" == "0" ]]; then
-  printf '\nManifest lint skipped: SKIP_MANIFEST_LINT is set.\n'
-  printf 'A release is not rehearsed with it set.\n'
-else
-  printf '\nManifest lint (reaches the network):\n'
-  if ! typst-package-check check "${STAGE}"; then
-    printf '\nmanifest: typst-package-check reported the above\n' >&2
-    printf '  the entry it lints is permanent, so this stops the release rather than a commit\n' >&2
-    printf '  it fetches the homepage and the repository, so a network fault reads the same\n' >&2
-    printf '  as a finding: run it again before treating the report as one\n' >&2
-    exit 1
-  fi
-  printf 'Manifest lint clean.\n'
+printf '\nManifest lint (reaches the network):\n'
+if ! typst-package-check check "${STAGE}"; then
+  printf '\nmanifest: typst-package-check reported the above\n' >&2
+  printf '  the entry it lints is permanent, so this stops the release rather than a commit\n' >&2
+  printf '  it fetches the homepage and the repository, so a network fault reads the same\n' >&2
+  printf '  as a finding: run it again before treating the report as one\n' >&2
+  exit 1
 fi
+printf 'Manifest lint clean.\n'
 
 # The design asks for the 2000-row timing to be recorded per release, and this
 # is the script a release is rehearsed with. It records rather than judges, so
@@ -215,12 +203,4 @@ fi
 printf '\n'
 tools/benchmark.sh
 
-# The banner says whether the gate ran. The skip notice is printed above the
-# benchmark, which is the longest thing this script prints, so a release read
-# from the last line alone should not be able to mistake a skipped lint for a
-# clean one.
-if [[ "${LINT_MANIFEST}" == "0" ]]; then
-  printf '\nDry-run OK for keisen:%s, with the manifest lint skipped\n' "${VERSION}"
-else
-  printf '\nDry-run OK for keisen:%s\n' "${VERSION}"
-fi
+printf '\nDry-run OK for keisen:%s\n' "${VERSION}"
