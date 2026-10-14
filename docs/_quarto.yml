@@ -1,8 +1,9 @@
 project:
   type: atelier
-  # Generates changelog.qmd from CHANGELOG.md, and removes it afterwards. The leading ./ is required;
-  # a bare name fails to spawn. The scripts live in _scripts/, whose leading
-  # underscore keeps Quarto from treating it as content.
+  # Generates changelog.qmd from CHANGELOG.md, and removes it afterwards. The
+  # leading ./ is required; a bare name fails to spawn. The scripts live in
+  # _scripts/, whose leading underscore keeps Quarto from treating it as
+  # content.
   pre-render:
     - ./_scripts/pre-render.sh
   post-render:
