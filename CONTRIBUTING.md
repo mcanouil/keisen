@@ -156,7 +156,7 @@ If a run stops after the bump merged but before the GitHub Release exists, finis
 tools/package.sh archive release_assets
 gh release create <version> release_assets/keisen-<version>.tar.gz release_assets/keisen-<version>.zip \
   --target <bump commit> --title <version> --notes-file <the changelog section>
-gh workflow run pages.yml
+gh workflow run docs.yml
 ```
 
 `tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.

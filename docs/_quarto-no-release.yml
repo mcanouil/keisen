@@ -1,0 +1,7 @@
+website:
+  announcement:
+    icon: exclamation-circle
+    dismissable: false
+    content: "**Development** - No stable release of *Keisen* has been published yet. This documentation is built from the `main` branch and will change without notice."
+    type: warning
+    position: above-navbar

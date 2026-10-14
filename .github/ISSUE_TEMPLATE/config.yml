@@ -6,3 +6,9 @@ contact_links:
   - name: Support
     url: https://github.com/mcanouil/keisen/discussions/new?category=q-a
     about: Please ask and answer questions here.
+  - name: Documentation
+    url: https://m.canouil.dev/keisen
+    about: Read the documentation for the latest release.
+  - name: Development documentation
+    url: https://m.canouil.dev/keisen/dev
+    about: Read the documentation for the development version.

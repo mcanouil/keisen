@@ -1,0 +1,4 @@
+# Used by the tagged-release docs build. It adds nothing to the base
+# configuration; the file exists so the profile name resolves.
+project:
+  output-dir: _site
