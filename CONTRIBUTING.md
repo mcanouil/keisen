@@ -130,6 +130,11 @@ Run the Release workflow from the Actions tab, and choose `patch`, `minor` or `m
 The workflow runs `tools/check.sh` and `tools/dry-release.sh`, then `tools/bump-version.sh`, and merges the result through a pull request.
 It then tags that commit, publishes a GitHub Release with the package archives, and publishes the site from the new tag.
 
+The Docs workflow also publishes the site on every push to `main` that changes the docs or the package.
+It renders the latest tag at the site root and `main` at `/dev/`, or `main` alone at the root before the first tag.
+To publish again without a push, run it from the Actions tab or with `gh workflow run docs.yml`.
+It takes no inputs, and the Quarto version is always the current release.
+
 `tools/bump-version.sh` writes the next version into four files and nowhere else:
 
 - `typst.toml`.
