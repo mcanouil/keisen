@@ -107,8 +107,7 @@ A page that holds such a block sets `engine: markdown` in its front matter.
 ## Rehearsing a release
 
 ```bash
-SKIP_MANIFEST_LINT=1 tools/dry-release.sh   # a routine run
-tools/dry-release.sh                        # what a release is rehearsed with
+tools/dry-release.sh
 ```
 
 The script stages the payload a release publishes, installs it as `@preview/keisen:<version>` through a symlink under Typst's data directory, and compiles every visual test and every documentation listing against that installed copy before removing the symlink.
@@ -121,9 +120,9 @@ Run it alone with `tools/benchmark.sh`.
 Run it after touching `lib.typ`, the `exclude` list in `typst.toml`, or any listing in `docs/`.
 A module the working tree can import is not necessarily a module a package specification can reach, and compiling from an installed copy is the only check that tells the difference.
 
-The second form also lints the manifest, through [`typst-package-check`](https://github.com/typst/package-check), which is installed with `cargo install --git https://github.com/typst/package-check`.
+The script also lints the manifest, through [`typst-package-check`](https://github.com/typst/package-check), which is installed with `cargo install --git https://github.com/typst/package-check --locked`.
 That linter is the one Typst Universe runs on a submission, and the entry it checks is permanent, so a finding stops the rehearsal, and so does a missing linter.
-`SKIP_MANIFEST_LINT=1` runs everything else without it, which is what the checks workflow does and what a routine run wants; a release is not rehearsed that way, and the closing line says which of the two ran.
+The checks workflow installs the same linter, so every pull request runs the full rehearsal.
 
 ## Releasing
 

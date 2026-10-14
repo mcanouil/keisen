@@ -1,29 +1,23 @@
 name: Checks
 
-# Everything tools/check.sh runs: the import boundary, the empty-module and
-# fitted-page guards, the unit tests, the expect-fail suite, the probes, the
-# visual tests and the examples.
-#
-# Until this workflow existed, the only check on a pull request was the Pages
-# render, so a green tick meant the documentation site built and said nothing
-# about the package.
+# Runs the shared checks from mcanouil/typst-workflows: tools/check.sh, the
+# release rehearsal in tools/dry-release.sh with its manifest lint, and the
+# shell lint.
 #
 # The two path lists are the same list written twice: GitHub Actions does not
 # honour YAML anchors, so they must be kept in step by hand.
 #
-# `**` is what crosses a directory separator; a bare `*` does not. The pages
-# moved into sections, so `docs/*.qmd` reached two of twenty-five and every
-# listing under docs/examples and docs/reference went unchecked.
+# `**` is what crosses a directory separator; a bare `*` does not.
 #
 # Three things under docs are read by the suite, and they are named one by one
-# rather than as a blanket `docs/**`, which would start three jobs on a Quarto
-# setting nothing here compiles:
+# rather than as a blanket `docs/**`:
 #
 #   - the pages, whose import lines tools/version-check.sh and
 #     tools/dry-release.sh compile, and whose `//| file:` blocks tools/check.sh
 #     resolves against the visual tests;
-#   - docs/_scripts, which the lint job below runs shellcheck over;
+#   - docs/_scripts, which the lint job runs shellcheck over;
 #   - docs/_filters, whose import filter tools/check.sh runs on a listing.
+
 on:
   push:
     branches:
@@ -48,11 +42,11 @@ on:
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
+      - ".editorconfig"
       - ".github/workflows/checks.yml"
   pull_request:
-    # A draft runs the suite like any other pull request, so leaving draft has
-    # nothing left to run: `ready_for_review` would re-run the same commit.
-    types: [opened, synchronize, reopened]
+    # Drafts start no job. Leaving draft runs the suite once.
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "src/**"
       - "lib.typ"
@@ -73,6 +67,7 @@ on:
       - "README.md"
       - "CITATION.cff"
       - "CHANGELOG.md"
+      - ".editorconfig"
       - ".github/workflows/checks.yml"
   workflow_dispatch:
 
@@ -97,114 +92,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  suite:
-    name: Compile the suite
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Read Typst version from typst.toml
-        id: typst-version
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
-          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Set up Typst
-        uses: typst-community/setup-typst@v5
-        with:
-          typst-version: ${{ steps.typst-version.outputs.version }}
-
-      # tools/quarto-check.sh renders a table through Quarto's Typst path, and
-      # fails rather than skips when Quarto is absent, so the suite needs it
-      # here. The script points Quarto at the Typst installed above, since the
-      # one Quarto carries is older than typst.toml requires.
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2.2.0
-
-      # No font is installed, and none is needed. Typst carries Libertinus Serif
-      # among the four families it embeds, which is the one the visual tests
-      # name, so the runner renders what the author's machine renders rather
-      # than falling back to something else. `typst fonts --ignore-system-fonts`
-      # lists the four.
-      #
-      # This comment used to say the opposite, and a review took it at its word
-      # and concluded that no check could compare a render across machines.
-      - name: Run the checks
-        run: tools/check.sh
-
-  package:
-    name: Compile from the staged package
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Read Typst version from typst.toml
-        id: typst-version
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="$(awk -F'"' '/^compiler[[:space:]]*=/ { print $2; exit }' typst.toml)"
-          [[ -n "${version}" ]] || { echo "::error::compiler not found in typst.toml"; exit 1; }
-          echo "version=${version}" >> "${GITHUB_OUTPUT}"
-
-      - name: Set up Typst
-        uses: typst-community/setup-typst@v5
-        with:
-          typst-version: ${{ steps.typst-version.outputs.version }}
-
-      # A module that no package specification can reach compiles from the
-      # working tree and fails for everyone who installs it, which is how an
-      # unreachable nanoplot module reached the documentation. Staging and
-      # importing through @preview is the only check that sees it, and the
-      # documentation's own listings are where that import is printed.
-      #
-      # The same script the author runs, pointed at the runner's temporary
-      # directory instead of a home one.
-      #
-      # Its manifest lint gates a release, and it is skipped here by name:
-      # installing the linter would cost minutes on every pull request to check
-      # a file that changes a few times a year, and the release is rehearsed
-      # from a machine that carries it.
-      - name: Rehearse the release
-        shell: bash
-        env:
-          XDG_DATA_HOME: ${{ runner.temp }}
-          STAGE_ROOT: ${{ runner.temp }}/stage
-          SKIP_MANIFEST_LINT: "1"
-        run: tools/dry-release.sh
-
-  lint:
-    name: Lint the shell scripts
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      # shellcheck ships with the runner image; shfmt does not.
-      - name: Install shfmt
-        shell: bash
-        run: |
-          set -euo pipefail
-          go install mvdan.cc/sh/v3/cmd/shfmt@v3.13.1
-          printf '%s/bin\n' "$(go env GOPATH)" >> "${GITHUB_PATH}"
-
-      - name: Run shellcheck
-        run: shellcheck tools/*.sh docs/_scripts/*.sh .github/scripts/*.sh
-
-      # Formatting is checked on this repository's own scripts alone. The two
-      # under docs/_scripts come from the site scaffold and keep its tab
-      # indentation; reformatting them here would only diverge from the source
-      # they are regenerated from. shellcheck above covers them either way.
-      - name: Run shfmt
-        run: shfmt -d tools/*.sh .github/scripts/*.sh
+  checks:
+    uses: mcanouil/typst-workflows/.github/workflows/checks.yml@v1
+    with:
+      needs-quarto: true

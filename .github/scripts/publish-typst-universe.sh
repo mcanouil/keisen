@@ -4,8 +4,8 @@
 # needs a real user identity, so it authenticates with the user's own `gh`
 # session (a GitHub App token cannot open that PR). Run it after each release.
 #
-# The payload is linted with typst-package-check before anything is pushed: the
-# Release workflow skips that lint, and an entry on Typst Universe is permanent.
+# The payload is linted with typst-package-check before anything is pushed, on
+# the archive it submits: an entry on Typst Universe is permanent.
 #
 # Usage:
 #   .github/scripts/publish-typst-universe.sh [--dry-run] [--pr=NUM] [VERSION]

@@ -71,14 +71,14 @@ jobs:
       - name: Run the checks
         run: tools/check.sh
 
-      # The manifest lint is skipped here, as in the Checks workflow, and runs
-      # in .github/scripts/publish-typst-universe.sh on the archive it submits.
+      - name: Set up typst-package-check
+        uses: mcanouil/typst-workflows/actions/setup-package-check@v1
+
       - name: Rehearse the release
         shell: bash
         env:
           XDG_DATA_HOME: ${{ runner.temp }}
           STAGE_ROOT: ${{ runner.temp }}/stage
-          SKIP_MANIFEST_LINT: "1"
         run: tools/dry-release.sh
 
   bump-version:
