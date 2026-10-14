@@ -127,8 +127,7 @@ That linter is the one Typst Universe runs on a submission, and the entry it che
 
 The release itself rolls `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md) into `## <version> (YYYY-MM-DD)` and writes the same day as `date-released` in [`CITATION.cff`](CITATION.cff).
 `tools/version-check.sh` holds the two to each other, and it refuses a `date-released` while the changelog says nothing has been released, so the development bump after a release removes the field again.
-The release also rewrites the pre-release wording in `README.md` and the pages under `docs/`, such as "no release yet" and the early-development badge on the home page.
-Once the changelog dates any version, `tools/version-check.sh` refuses that wording and lists each line that still holds it.
+`tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
 Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.

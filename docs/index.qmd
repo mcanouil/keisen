@@ -46,7 +46,7 @@ listing:
 Describe the parts and the formatting, and Keisen does the bookkeeping: subtotals, spanners, footnote marks, and numbers aligned on the decimal point.
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
-[Early development: use from a clone]{.keisen-badge}
+[On Typst Universe]{.keisen-badge}
 
 [See the gallery](gallery/index.qmd){.btn .btn-primary}
 [Browse examples](examples/index.qmd){.btn .btn-outline-primary}
@@ -192,8 +192,8 @@ Row groups are native repeating subheaders, so a group that spans a page break p
 
 ### Status {.no-anchor}
 
-Until the first release, use Keisen from a clone of the repository.
-The API settles milestone by milestone.
+Import Keisen from Typst Universe, as each example shows.
+The API can still change between 0.x releases.
 Follow the [issue tracker](https://github.com/{{< var repository.slug >}}/issues), or read the [changelog](changelog.qmd).
 
 :::

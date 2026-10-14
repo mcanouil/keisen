@@ -123,12 +123,10 @@ manifest_categories() {
 }
 
 # The date of the changelog section for a version, or nothing while the version
-# is still under Unreleased. With no version, the date of the newest section of
-# any version, which is how the pre-release check knows a release exists.
+# is still under Unreleased.
 released_on() {
-  local changelog="$1" version="${2:-}"
-  local heading='[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}'
-  [[ -n "${version}" ]] && heading="${version//./\\.}"
+  local changelog="$1" version="$2"
+  local heading="${version//./\\.}"
   sed -n "s/^## ${heading} (\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\))$/\1/p" "${changelog}" | head -1
 }
 
@@ -222,26 +220,17 @@ import_versions() {
   fi
 }
 
-# Pages cannot say there is no release once there is one: as soon as the
-# changelog dates any version, the pre-release wording the scan found is refused.
-# Any version, not only the manifest's, so the wording cannot come back while the
-# next version is gathered under Unreleased. Before a release the wording must be
-# found, as import_versions refuses a scan that read nothing: a page reworded
-# past the phrases would otherwise pass this check at release without notice.
+# Pages cannot tell a reader to use a clone. The package is installed from
+# Typst Universe, and the release bump cannot rewrite prose, so the wording is
+# refused at every commit rather than at the release.
+PRE_RELEASE_PHRASES='early development|no release yet|until the first release|once the package is released|use from a clone'
+
 pre_release_wording() {
-  local changelog="$1" lines="$2"
-  if [[ -z "$(released_on "${changelog}")" ]]; then
-    if [[ -z "${lines}" ]]; then
-      printf 'version: nothing is released, and the scan read no pre-release wording\n' >&2
-      printf '  the README and the pages say Keisen is used from a clone; reworded, update the phrases here\n' >&2
-      return 1
-    fi
-    return 0
-  fi
+  local lines="$1"
   if [[ -n "${lines}" ]]; then
-    printf 'version: the changelog records a release, and the documentation still says to use a clone\n' >&2
+    printf 'version: the documentation still says to use a clone\n' >&2
     printf '%s\n' "${lines}" | sed 's/^/  /' >&2
-    printf '  rewrite each line for the released package, and drop the early-development badge\n' >&2
+    printf '  rewrite each line for the released package\n' >&2
     return 1
   fi
 }
@@ -421,15 +410,13 @@ tests/visual/minimal.typ:3:${mark}:0.0.9" 'a second file that drifted'
   imported 1 'outside README.md' "docs/index.qmd:4:${mark}:0.1.0" 'a file other than README.md alone'
   imported 1 'read at all' '' 'a scan that read nothing'
 
-  # The pre-release wording, held against the changelog: present while the
-  # version is unreleased, refused once the changelog dates it.
+  # The pre-release wording, refused wherever the scan finds it.
   prerelease() {
-    local wanted="$1" reported="$2" changelog="$3" lines="$4" name="$5"
+    local wanted="$1" reported="$2" lines="$3" name="$4"
     cases=$((cases + 1))
-    printf '%s\n' "${changelog}" >"${fixtures}/CHANGELOG.md"
     local got=0
     local said
-    said="$(pre_release_wording "${fixtures}/CHANGELOG.md" "${lines}" 2>&1 >/dev/null)" || got=$?
+    said="$(pre_release_wording "${lines}" 2>&1 >/dev/null)" || got=$?
     if [[ "${got}" -ne "${wanted}" ]]; then
       bad=$((bad + 1))
       printf '  FAIL  self-test  %s  wanted exit %s, got %s\n' "${name}" "${wanted}" "${got}" >&2
@@ -443,13 +430,24 @@ tests/visual/minimal.typ:3:${mark}:0.0.9" 'a second file that drifted'
   }
 
   clone='docs/index.qmd:49:[Early development: use from a clone]{.keisen-badge}'
-  prerelease 0 '' '## Unreleased' "${clone}" 'unreleased, wording present'
-  prerelease 0 '' '## 0.1.0 (2026-11-02)' '' 'released, wording gone'
-  prerelease 1 'read no' '## Unreleased' '' 'unreleased, a scan that read nothing'
-  prerelease 1 'still says' '## 0.1.0 (2026-11-02)' "${clone}" 'released, wording left behind'
-  prerelease 1 'still says' '## Unreleased
+  prerelease 0 '' '' 'wording gone'
+  prerelease 1 'says to use a clone' "${clone}" 'wording left behind'
 
-## 0.0.9 (2026-08-01)' "${clone}" 'released before, the next version still unreleased'
+  # The phrases the live scan reads, each in the wording the pages once used, so
+  # a pattern that stops matching fails here rather than passing the scan.
+  phrased() {
+    local line="$1"
+    cases=$((cases + 1))
+    if ! grep -qiE "${PRE_RELEASE_PHRASES}" <<<"${line}"; then
+      bad=$((bad + 1))
+      printf '  FAIL  self-test  the pre-release phrases miss: %s\n' "${line}" >&2
+    fi
+  }
+  phrased '> _Keisen_ is in early development.'
+  phrased 'Keisen has no release yet, so import lib.typ from a clone.'
+  phrased 'Until the first release, use Keisen from a clone of the repository.'
+  phrased 'which is how they will read once the package is released.'
+  phrased '[Early development: use from a clone]{.keisen-badge}'
 
   if [[ ${bad} -gt 0 ]]; then
     printf 'version: %d/%d self-test case(s) failed\n' "${bad}" "${cases}" >&2
@@ -522,9 +520,9 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   echo "version: not a git checkout, so the import lines and the pre-release wording cannot be read" >&2
   exit 1
 fi
-wording="$(git grep -niE 'early development|no release yet|until the first release|once the package is released|use from a clone' \
+wording="$(git grep -niE "${PRE_RELEASE_PHRASES}" \
   -- README.md ':(glob)docs/**/*.qmd')" || [[ $? -eq 1 ]]
-pre_release_wording CHANGELOG.md "${wording}"
+pre_release_wording "${wording}"
 package_description typst.toml README.md docs/_quarto.yml docs/site.webmanifest
 manifest_categories typst.toml
 
