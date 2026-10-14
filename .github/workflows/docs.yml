@@ -1,0 +1,55 @@
+name: Docs
+
+# The release at the site root and main at /dev/, or main alone at the root
+# before the first tag. A pull request builds every site and deploys nothing.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      # Every table on the site is compiled, at render time, from a visual test
+      # through the package, so a change to either changes the site.
+      - "tests/visual/**"
+      - "src/**"
+      - "lib.typ"
+      - "typst.toml"
+      - "CHANGELOG.md"
+      - ".github/workflows/docs.yml"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "docs/**"
+      - "tests/visual/**"
+      - "src/**"
+      - "lib.typ"
+      - "typst.toml"
+      - "CHANGELOG.md"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Commit or ref to build. Defaults to the triggering ref."
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+# GitHub Pages takes one deployment at a time, so every deploy shares one group.
+# Pull requests never deploy, so each gets a group of its own.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
+
+jobs:
+  docs:
+    uses: mcanouil/typst-workflows/.github/workflows/docs.yml@v1
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      ref: ${{ inputs.ref }}

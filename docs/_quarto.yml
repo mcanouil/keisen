@@ -73,9 +73,15 @@ website:
         text: "Gallery"
       - href: changelog.qmd
         text: "Changelog"
-    # The gitlink widget replaces this item wholesale, so the `text` and `icon`
-    # here are only what a reader sees if the filter never runs.
     right:
+      # The version switcher script replaces the placeholder below with one
+      # entry per version, read from the site-root versions.json.
+      - text: "{{< env VERSION >}}"
+        menu:
+          - text: "Versions"
+            href: "#version-switcher"
+      # The gitlink widget replaces this item wholesale, so the `text` and `icon`
+      # here are only what a reader sees if the filter never runs.
       - href: "#gitlink-widget"
         text: "GitHub"
         icon: github
@@ -185,3 +191,5 @@ format:
       dark:
         - brand
         - assets/theme.scss
+    include-after-body:
+      - file: assets/scripts/version-switcher.html

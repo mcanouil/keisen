@@ -269,12 +269,15 @@ jobs:
             echo "- Typst Universe: run \`.github/scripts/publish-typst-universe.sh ${VERSION}\` from a clone."
           } >> "${GITHUB_STEP_SUMMARY}"
 
-  # The Pages workflow renders the latest version tag, which is now this one.
+  # The latest version tag, now this one, renders at the root, and the bump
+  # commit at /dev/.
   pages:
     name: Publish the site
-    needs: github-release
+    needs: [bump-version, github-release]
     permissions:
       contents: read
       pages: write
       id-token: write
-    uses: mcanouil/quarto-workflows/.github/workflows/pages.yml@v2
+    uses: ./.github/workflows/docs.yml
+    with:
+      ref: ${{ needs.bump-version.outputs.commit_sha }}
