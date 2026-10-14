@@ -90,6 +90,12 @@ if ! tools/version-check.sh --self-test; then
   fail_check "version self-test"
 fi
 
+# The Release workflow writes the next version with this, and a release is the
+# one time it runs on the real files, so it runs against fixtures here.
+if ! tools/bump-version.sh --self-test; then
+  fail_check "bump self-test"
+fi
+
 if ! tools/version-check.sh; then
   fail_check "version"
 fi

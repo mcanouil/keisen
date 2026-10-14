@@ -125,8 +125,41 @@ The second form also lints the manifest, through [`typst-package-check`](https:/
 That linter is the one Typst Universe runs on a submission, and the entry it checks is permanent, so a finding stops the rehearsal, and so does a missing linter.
 `SKIP_MANIFEST_LINT=1` runs everything else without it, which is what the checks workflow does and what a routine run wants; a release is not rehearsed that way, and the closing line says which of the two ran.
 
-The release itself rolls `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md) into `## <version> (YYYY-MM-DD)` and writes the same day as `date-released` in [`CITATION.cff`](CITATION.cff).
-`tools/version-check.sh` holds the two to each other, and it refuses a `date-released` while the changelog says nothing has been released, so the development bump after a release removes the field again.
+## Releasing
+
+Run the Release workflow from the Actions tab, and choose `patch`, `minor` or `major`.
+The workflow runs `tools/check.sh` and `tools/dry-release.sh`, then `tools/bump-version.sh`, and merges the result through a pull request.
+It then tags that commit, publishes a GitHub Release with the package archives, and publishes the site from the new tag.
+
+`tools/bump-version.sh` writes the next version into four files and nowhere else:
+
+- `typst.toml`.
+- [`CITATION.cff`](CITATION.cff), as `version` and as `date-released`.
+- [`CHANGELOG.md`](CHANGELOG.md), where `## Unreleased` becomes `## <version> (YYYY-MM-DD)`.
+- The import in the quick look of `README.md`.
+
+`tools/version-check.sh` holds the four to each other, and refuses a versioned import in any other file.
+The version stays at the last release until the next release, so start each new set of changes with a `## Unreleased` heading above the last release in the changelog.
+
+The Typst Universe submission needs your own GitHub identity, so run it from a clone after the workflow ends:
+
+```bash
+.github/scripts/publish-typst-universe.sh <version>
+```
+
+The script downloads the release archive, lints it with `typst-package-check`, and opens the pull request on `typst/packages` from the fork in `TYPST_PACKAGES_FORK`.
+`--dry-run` does all of this except the push and the pull request.
+
+The workflow refuses to bump when the branch moved after the dispatch, so dispatch it again.
+If a run stops after the bump merged but before the GitHub Release exists, finish it by hand from the bump commit:
+
+```bash
+tools/package.sh archive release_assets
+gh release create <version> release_assets/keisen-<version>.tar.gz release_assets/keisen-<version>.zip \
+  --target <bump commit> --title <version> --notes-file <the changelog section>
+gh workflow run pages.yml
+```
+
 `tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.

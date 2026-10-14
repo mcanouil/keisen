@@ -39,6 +39,8 @@ on:
       - "docs/_scripts/**.sh"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
+      # The lint job checks the release scripts.
+      - ".github/scripts/**.sh"
       # tools/version-check.sh reads both, holding the one-line description in
       # every place it is written to the manifest's.
       - "docs/_quarto.yml"
@@ -62,6 +64,8 @@ on:
       - "docs/_scripts/**.sh"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
+      # The lint job checks the release scripts.
+      - ".github/scripts/**.sh"
       # tools/version-check.sh reads both, holding the one-line description in
       # every place it is written to the manifest's.
       - "docs/_quarto.yml"
@@ -196,11 +200,11 @@ jobs:
           printf '%s/bin\n' "$(go env GOPATH)" >> "${GITHUB_PATH}"
 
       - name: Run shellcheck
-        run: shellcheck tools/*.sh docs/_scripts/*.sh
+        run: shellcheck tools/*.sh docs/_scripts/*.sh .github/scripts/*.sh
 
       # Formatting is checked on this repository's own scripts alone. The two
       # under docs/_scripts come from the site scaffold and keep its tab
       # indentation; reformatting them here would only diverge from the source
       # they are regenerated from. shellcheck above covers them either way.
       - name: Run shfmt
-        run: shfmt -d tools/*.sh
+        run: shfmt -d tools/*.sh .github/scripts/*.sh
