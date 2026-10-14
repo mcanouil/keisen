@@ -33,8 +33,8 @@
 # extension gets an `extension` block as well, carrying the reference a reader
 # installs, so the pages can write `quarto add {{< var extension.reference >}}`.
 # The version comes from the extension manifest, which the release workflow
-# bumps; without a manifest it comes from the newest version tag, which is what
-# the Pages workflow renders from.
+# bumps; without a manifest it comes from the newest version tag, which is the
+# tag the Docs workflow renders at the site root.
 #
 # Version headings are restructured into a three-level hierarchy:
 #
@@ -114,8 +114,8 @@ if [[ -n "${EXTENSION_NAME}" ]]; then
 	fi
 else
 	# No manifest to read, so the version is the newest version tag, which is the
-	# same one the Pages workflow checks out to render. An untagged repository
-	# has no version to name, and the pages have to stand without one.
+	# one the Docs workflow checks out to render the site root. An untagged
+	# repository has no version to name, and the pages have to stand without one.
 	VERSION="$(git -C "${ROOT_DIR}" tag -l --sort=-v:refname '[0-9]*' 2>/dev/null |
 		head -n 1 || true)"
 	if [[ -z "${VERSION}" ]]; then
