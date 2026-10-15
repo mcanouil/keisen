@@ -33,8 +33,6 @@ on:
       - "docs/_scripts/**.sh"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
-      # The lint job checks the release scripts.
-      - ".github/scripts/**.sh"
       # tools/version-check.sh reads both, holding the one-line description in
       # every place it is written to the manifest's.
       - "docs/_quarto.yml"
@@ -58,8 +56,6 @@ on:
       - "docs/_scripts/**.sh"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
-      # The lint job checks the release scripts.
-      - ".github/scripts/**.sh"
       # tools/version-check.sh reads both, holding the one-line description in
       # every place it is written to the manifest's.
       - "docs/_quarto.yml"
@@ -96,3 +92,5 @@ jobs:
     uses: mcanouil/typst-workflows/.github/workflows/checks.yml@v1
     with:
       needs-quarto: true
+      shellcheck-paths: "tools/*.sh docs/_scripts/*.sh"
+      shfmt-paths: "tools/*.sh"
