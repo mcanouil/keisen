@@ -126,9 +126,19 @@ The checks workflow installs the same linter, so every pull request runs the ful
 
 ## Releasing
 
-Run the Release workflow from the Actions tab, and choose `patch`, `minor` or `major`.
-The workflow runs `tools/check.sh` and `tools/dry-release.sh`, then `tools/bump-version.sh`, and merges the result through a pull request.
-It then tags that commit, publishes a GitHub Release with the package archives, and publishes the site from the new tag.
+A release takes two workflows, both run from the Actions tab.
+Their runbook, and the way to submit from a clone if CI can't, are in the [typst-workflows README](https://github.com/mcanouil/typst-workflows#release-runbook).
+
+Run Release first, and choose `patch`, `minor` or `major`.
+It runs the checks, writes the version on `main` with `tools/bump-version.sh`, and drafts a GitHub Release with the package archives.
+It then waits for your approval on the `typst-universe` environment, and opens the pull request on `typst/packages` from the archive of the draft.
+Tick `dry-run` to rehearse all of it without a push, a draft or a pull request.
+
+If the reviewers on `typst/packages` ask for a change, fix it on `main` and run Release again with `none`.
+It rebuilds the archives, updates the draft, and updates the open pull request.
+
+Run Publish once Typst Universe serves the new version.
+It publishes the draft, which creates the tag, and publishes the site from that tag.
 
 The Docs workflow also publishes the site on every push to `main` that changes the docs or the package.
 It renders the latest tag at the site root and `main` at `/dev/`, or `main` alone at the root before the first tag.
@@ -145,24 +155,7 @@ It takes no inputs, and the Quarto version is always the current release.
 `tools/version-check.sh` holds the four to each other, and refuses a versioned import in any other file.
 The version stays at the last release until the next release, so start each new set of changes with a `## Unreleased` heading above the last release in the changelog.
 
-The Typst Universe submission needs your own GitHub identity, so run it from a clone after the workflow ends:
-
-```bash
-.github/scripts/publish-typst-universe.sh <version>
-```
-
-The script downloads the release archive, lints it with `typst-package-check`, and opens the pull request on `typst/packages` from the fork in `TYPST_PACKAGES_FORK`.
-`--dry-run` does all of this except the push and the pull request.
-
-The workflow refuses to bump when the branch moved after the dispatch, so dispatch it again.
-If a run stops after the bump merged but before the GitHub Release exists, finish it by hand from the bump commit:
-
-```bash
-tools/package.sh archive release_assets
-gh release create <version> release_assets/keisen-<version>.tar.gz release_assets/keisen-<version>.zip \
-  --target <bump commit> --title <version> --notes-file <the changelog section>
-gh workflow run docs.yml
-```
+Release refuses to bump when `main` moved after the dispatch, so dispatch it again.
 
 `tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.
 
