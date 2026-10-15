@@ -46,7 +46,13 @@ listing:
 Describe the parts and the formatting, and Keisen does the bookkeeping: subtotals, spanners, footnote marks, and numbers aligned on the decimal point.
 _Keisen_ (罫線) is Japanese for the ruled lines of a table.
 
-[On Typst Universe]{.keisen-badge}
+::: {.content-visible when-profile="release"}
+[Keisen {{< env VERSION >}} on Typst Universe](https://typst.app/universe/package/keisen){.keisen-badge}
+:::
+
+::: {.content-hidden when-profile="release"}
+[Development version]{.keisen-badge}
+:::
 
 [See the gallery](gallery/index.qmd){.btn .btn-primary}
 [Browse examples](examples/index.qmd){.btn .btn-outline-primary}
