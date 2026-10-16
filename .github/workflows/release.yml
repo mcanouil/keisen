@@ -47,7 +47,7 @@ jobs:
       # The citation has no date-released before the first release, and the
       # bump replaces lines but never adds them, so the first bump adds it here.
       after-bump: |
-        if ! grep -q '^date-released:' CITATION.cff; then
+        if ! grep -qE '^date-released[[:space:]]*:' CITATION.cff; then
           version="$(awk -F'"' '/^version = / { print $2; exit }' typst.toml)"
           date="$(sed -n "s/^## ${version} (\(.*\))\$/\1/p" CHANGELOG.md)"
           sed -i "/^version: /a date-released: \"${date}\"" CITATION.cff
