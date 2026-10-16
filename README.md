@@ -12,7 +12,7 @@ Documentation: <https://m.canouil.dev/keisen>.
 ## Quick look
 
 ```typst
-#import "@preview/keisen:0.0.1": *
+#import "@preview/keisen:0.1.0": *
 
 #display-table(
   sales,
