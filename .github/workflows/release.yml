@@ -31,11 +31,28 @@ concurrency:
 
 jobs:
   release:
-    uses: mcanouil/typst-workflows/.github/workflows/release.yml@v1
+    uses: mcanouil/typst-workflows/.github/workflows/release.yml@v2
     secrets: inherit
     with:
       bump: ${{ inputs.bump }}
       dry-run: ${{ inputs.dry-run }}
+      targets: |
+        - file: CITATION.cff
+          pattern: '^version: {version}$'
+        - file: CITATION.cff
+          pattern: '^date-released: "{date}"$'
+          required: false
+        - file: README.md
+          pattern: '@preview/keisen:{version}'
+      # The citation has no date-released before the first release, and the
+      # bump replaces lines but never adds them, so the first bump adds it here.
+      after-bump: |
+        if ! grep -q '^date-released:' CITATION.cff; then
+          version="$(awk -F'"' '/^version = / { print $2; exit }' typst.toml)"
+          date="$(sed -n "s/^## ${version} (\(.*\))\$/\1/p" CHANGELOG.md)"
+          sed -i "/^version: /a date-released: \"${date}\"" CITATION.cff
+        fi
+        tools/version-check.sh
       needs-quarto: true
       shellcheck-paths: "tools/*.sh docs/_scripts/*.sh"
       shfmt-paths: "tools/*.sh"
