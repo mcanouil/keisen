@@ -130,7 +130,7 @@ A release takes two workflows, both run from the Actions tab.
 Their runbook, and the way to submit from a clone if CI can't, are in the [typst-workflows README](https://github.com/mcanouil/typst-workflows#release-runbook).
 
 Run Release first, and choose `patch`, `minor` or `major`.
-It runs the checks, writes the version on `main` with `tools/bump-version.sh`, and drafts a GitHub Release with the package archives.
+It runs the checks, writes the version on `main`, and drafts a GitHub Release with the package archives.
 It then waits for your approval on the `typst-universe` environment, and opens the pull request on `typst/packages` from the archive of the draft.
 Tick `dry-run` to rehearse all of it without a push, a draft or a pull request.
 
@@ -145,7 +145,7 @@ It renders the latest tag at the site root and `main` at `/dev/`, or `main` alon
 To publish again without a push, run it from the Actions tab or with `gh workflow run docs.yml`.
 It takes no inputs, and the Quarto version is always the current release.
 
-`tools/bump-version.sh` writes the next version into four files and nowhere else:
+Release writes the next version into four files and nowhere else:
 
 - `typst.toml`.
 - [`CITATION.cff`](CITATION.cff), as `version` and as `date-released`.
