@@ -41,18 +41,9 @@ jobs:
           pattern: '^version: {version}$'
         - file: CITATION.cff
           pattern: '^date-released: "{date}"$'
-          required: false
         - file: README.md
           pattern: '@preview/keisen:{version}'
-      # The citation has no date-released before the first release, and the
-      # bump replaces lines but never adds them, so the first bump adds it here.
-      after-bump: |
-        if ! grep -qE '^date-released[[:space:]]*:' CITATION.cff; then
-          version="$(awk -F'"' '/^version = / { print $2; exit }' typst.toml)"
-          date="$(sed -n "s/^## ${version} (\(.*\))\$/\1/p" CHANGELOG.md)"
-          sed -i "/^version: /a date-released: \"${date}\"" CITATION.cff
-        fi
-        tools/version-check.sh
+      after-bump: tools/version-check.sh
       needs-quarto: true
       shellcheck-paths: "tools/*.sh docs/_scripts/*.sh"
       shfmt-paths: "tools/*.sh"
