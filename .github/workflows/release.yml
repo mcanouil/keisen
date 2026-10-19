@@ -37,10 +37,6 @@ jobs:
       bump: ${{ inputs.bump }}
       dry-run: ${{ inputs.dry-run }}
       targets: |
-        - file: CITATION.cff
-          pattern: '^version: {version}$'
-        - file: CITATION.cff
-          pattern: '^date-released: "{date}"$'
         - file: README.md
           pattern: '@preview/keisen:{version}'
       after-bump: tools/version-check.sh
