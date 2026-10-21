@@ -7,8 +7,6 @@ The library implements the **display-table grammar** in a declarative API for Ty
 
 Documentation: <https://m.canouil.dev/keisen>.
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcanouil/keisen)
-
 ## Quick look
 
 ```typst
