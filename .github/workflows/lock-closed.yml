@@ -1,0 +1,26 @@
+name: Lock closed issues and pull requests
+
+# Locks closed issues and pull requests after seven days with no activity,
+# through mcanouil/typst-workflows.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lock closed threads with no activity for more than this many days."
+        type: number
+        required: false
+        default: 7
+
+permissions:
+  contents: read
+
+jobs:
+  lock:
+    uses: mcanouil/typst-workflows/.github/workflows/lock-closed.yml@v2
+    permissions:
+      issues: write
+      pull-requests: write
+    with:
+      days: ${{ inputs.days || 7 }}
