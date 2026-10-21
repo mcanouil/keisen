@@ -1,0 +1,8 @@
+title: "Announcement title"
+labels:
+  - "Type: Valorisation :tada:"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This category is reserved for maintainer announcements such as releases, major changes, and project updates.

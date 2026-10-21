@@ -5,22 +5,38 @@ body:
   - type: markdown
     attributes:
       value: |
-        First, please check if your feature request has already been discussed.
-        If it has, please consider adding a comment to the existing discussion instead of creating a new one.
+        Thanks for sharing an idea for Keisen.
+        Please describe the problem you are trying to solve and the behaviour you would like to see.
 
-        If you want to ask for help, please consider using the Q&A GitHub Discussions, as it is better suited for answering your question.
+  - type: checkboxes
+    attributes:
+      label: Before posting
+      options:
+        - label: I have searched existing [Discussions](https://github.com/mcanouil/keisen/discussions) and this idea has not already been proposed.
+          required: true
 
-        Finally, try to describe the best you can what you want to achieve and why you think it is important.
-        This will help us to understand your request and prioritise it.
-
-        _Thank you for opening this feature request!_
   - type: textarea
     attributes:
-      label: Description
-      description: Start your discussion!
+      label: What problem does this solve?
+      description: Describe the use case or limitation that motivates this idea.
     validations:
       required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed solution or desired behaviour
+      description: Describe what you would like Keisen to do, ideally with a small Typst sketch.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you have tried or considered, and why they fall short.
+    validations:
+      required: false
+
   - type: markdown
     attributes:
       value: |
-        _Thank you for opening this feature request!_
+        If you attach screenshots or mockups, please add alt text (`![alt text describing the image](url)`) and avoid relying on colour alone to convey meaning.

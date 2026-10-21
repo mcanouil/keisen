@@ -1,0 +1,48 @@
+title: "What you made with Keisen"
+labels:
+  - "Type: Discussion :speech_balloon:"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your work with the community.
+        Show us what you have built or created using Keisen.
+
+  - type: checkboxes
+    attributes:
+      label: Before posting
+      options:
+        - label: I have searched existing [Discussions](https://github.com/mcanouil/keisen/discussions) and this has not already been shared.
+          required: true
+
+  - type: textarea
+    attributes:
+      label: What did you make?
+      description: Briefly describe your project, document, or visualisation.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How did you use Keisen?
+      description: Describe which features or components you used and how they helped.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Link or example
+      description: Share a link, repository, or a minimal Typst snippet illustrating your work.
+      placeholder: |
+        ```typst
+        #import "@preview/keisen:x.y.z": *
+
+        // Snippet from your project.
+        ```
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        If you attach screenshots or mockups, please add alt text (`![alt text describing the image](url)`) and avoid relying on colour alone to convey meaning.
