@@ -118,15 +118,19 @@ if [[ -n "${EXTENSION_NAME}" ]]; then
 	printf '[pre-render] _variables.yml (%s@%s)\n' "${REPO_SLUG}" "${VERSION}"
 fi
 
-# The Open Graph card, for a site that draws its own; see
+# The Open Graph card, compiled for a site whose configuration names it; see
 # assets/social/README.md. It compiles from the repository root, so its
-# `/lib.typ` import resolves. A card that does not compile ends the render,
-# because Quarto says nothing about a `website.image` that does not resolve.
-CARD_SOURCE="${DOCS_DIR}/assets/social/og-image.typ"
-if [[ -f "${CARD_SOURCE}" ]]; then
+# `/lib.typ` import resolves. A card that is missing or does not compile ends
+# the render, because Quarto says nothing about a `website.image` that does not
+# resolve. Comments are stripped first, so a comment that mentions the path
+# does not count. The process substitution keeps sed out of the exit status:
+# `grep -q` stops at the first match, and under pipefail the SIGPIPE that sed
+# then gets would read as no match.
+CARD_REL="assets/social/og-image.png"
+if grep -qF "${CARD_REL}" < <(sed 's/#.*//' "${DOCS_DIR}/_quarto.yml"); then
 	quarto typst compile --root "${ROOT_DIR}" --ppi 144 --ignore-system-fonts \
-		"${CARD_SOURCE}" "${CARD_SOURCE%.typ}.png"
-	printf '[pre-render] assets/social/og-image.typ -> assets/social/og-image.png\n'
+		"${DOCS_DIR}/${CARD_REL%.png}.typ" "${DOCS_DIR}/${CARD_REL}"
+	printf '[pre-render] %s -> %s\n' "${CARD_REL%.png}.typ" "${CARD_REL}"
 fi
 
 if [[ ! -f "${ROOT_DIR}/CHANGELOG.md" ]]; then
