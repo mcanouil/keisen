@@ -2,9 +2,8 @@
 # Strips the repository-only parts of README.md for the published package.
 #
 # Typst Universe renders the README itself, and several things in ours mean
-# nothing there: the Ask DeepWiki badge points at this repository, GitHub's
-# alert blocks (`> [!WARNING]`) render as plain quotes outside GitHub, and a
-# `<picture>` element is dropped rather than shown.
+# nothing there: GitHub's alert blocks (`> [!WARNING]`) render as plain quotes
+# outside GitHub, and a `<picture>` element is dropped rather than shown.
 #
 # Everything from "## Dependencies" onward is repository business too:
 # dependencies, contributing, citation, licence. The published README keeps
@@ -37,7 +36,6 @@ fi
 
 perl -0777 -pe '
   s{[ \t]*<picture\b[^>]*>.*?</picture>}{}gs;
-  s{^\[!\[Ask DeepWiki\]\([^\n]*\n\n?}{}gm;
   s{^> \[![A-Z]+\][ \t]*\n(?:> [^\n]*\n)*\n?}{}gm;
   s{(^## Quick look\b[^\n]*\n.*?\n)^## Dependencies\b.*\z}{$1}ms;
 ' "${SRC}" >"${DEST}"
