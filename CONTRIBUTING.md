@@ -20,15 +20,20 @@ This document explains where to file what, and the basics of working on the sour
 
 A bug report must include the Typst version, the Keisen version, and a minimal document that reproduces the problem.
 
-## Working on the source
+## Development setup
 
-This section describes how I work on the source, and the checks a patch must pass once I accept pull requests.
-It is also what a fork needs to keep the suite green.
+This section and the next describe how I work on the source, and the checks a patch must pass once I accept pull requests.
+They are also what a fork needs to keep the suite green.
 
 Requirements: Typst 0.15.0 or later, Bash 5 or later, [Quarto](https://quarto.org), and `shellcheck` plus `shfmt` if you touch the scripts.
 
 Quarto is not optional.
 `tools/check.sh` renders a table through it, and that check fails and says so when Quarto is absent rather than skipping, because a suite that reports success without running a check reports coverage it does not have.
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
+Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.
+
+## Checks
 
 Run everything before you commit:
 
@@ -74,7 +79,6 @@ See [`tests/quarto/README.md`](tests/quarto/README.md).
 - Public names use full words, British spelling, and no abbreviations.
 - Every failure goes through `src/utils/errors.typ`; no inline panic strings.
 - Nothing fallible is attempted speculatively, because Typst has no `try`.
-- Commit messages follow Conventional Commits, subject line only, ideally under 50 characters.
 - Record user-facing changes under `## Unreleased` in [`CHANGELOG.md`](CHANGELOG.md).
 
 Set every test page to grow with what it holds, so a rendered image is the table rather than the table and a field of white:
@@ -159,5 +163,6 @@ Release refuses to bump when `main` moved after the dispatch, so dispatch it aga
 
 `tools/version-check.sh` refuses wording that tells a reader to use a clone, such as "no release yet", in `README.md` and the pages under `docs/`, and lists each line that holds it.
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) before adding a part, a formatter, or a theme option.
-Its "Typst constraints that shaped this" section is worth reading first: several decisions look arbitrary until you know which language behaviour forced them.
+## Commit conventions
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/), subject line only, ideally under 50 characters.
