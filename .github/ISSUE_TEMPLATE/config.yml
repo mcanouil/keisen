@@ -1,14 +1,17 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Feature Request
+  - name: Feature request or idea
     url: https://github.com/mcanouil/keisen/discussions/new?category=ideas
-    about: Suggest an idea or a new feature here.
-  - name: Support
+    about: Propose a new feature or enhancement in Discussions, not as an issue.
+  - name: Question or help
     url: https://github.com/mcanouil/keisen/discussions/new?category=q-a
-    about: Please ask and answer questions here.
+    about: Ask a usage question or request help here.
+  - name: Browse existing discussions
+    url: https://github.com/mcanouil/keisen/discussions
+    about: Search existing threads before opening a new one.
   - name: Documentation
     url: https://m.canouil.dev/keisen
-    about: Read the documentation for the latest release.
-  - name: Development documentation
+    about: Read the documentation before opening an issue.
+  - name: Documentation (development version)
     url: https://m.canouil.dev/keisen/dev
-    about: Read the documentation for the development version.
+    about: Read the development documentation for unreleased features.

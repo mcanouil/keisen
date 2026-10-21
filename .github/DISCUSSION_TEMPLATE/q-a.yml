@@ -3,23 +3,21 @@ body:
   - type: markdown
     attributes:
       value: |
-        First, please check if your question has already been asked.
-        If it has, please consider adding a comment to the existing discussion instead of creating a new one.
+        Thanks for opening a discussion.
+        Please check existing [Discussions](https://github.com/mcanouil/keisen/discussions) first and comment on the relevant thread if your question is already covered.
 
-        Finally, try to describe the best you can what you want to achieve or what is your issue, especially by providing a complete self-contained reproducible example.
-        This will help us to understand your question and answer it.
-
-        _Thank you for opening this discussion either to ask for help or to report a possible bug!_
   - type: textarea
     attributes:
       label: Description
-      description: Start your question/report!
+      description: Describe what you are trying to achieve and where you are stuck.
       placeholder: |
-        You can include a minimal reproducible example, a code snippet, or a link to a repository.
-        Please make sure to include all the necessary information to reproduce your issue.
+        Include the Keisen version and Typst compiler version you are using.
+        Provide a minimal reproducible Typst example that shows the problem, for instance:
+
+        ```typst
+        #import "@preview/keisen:x.y.z": *
+
+        // Minimal example illustrating the question.
+        ```
     validations:
       required: true
-  - type: markdown
-    attributes:
-      value: |
-        _Thank you for opening this discussion either to ask for help or to report a possible bug!_

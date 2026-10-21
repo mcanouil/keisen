@@ -1,5 +1,5 @@
 name: Bug report
-description: Report an error or unexpected behaviour
+description: Report an error or unexpected behaviour in Keisen.
 labels:
   - "Type: Bug :bug:"
 
@@ -7,46 +7,120 @@ body:
   - type: markdown
     attributes:
       value: |
-        Welcome!
+        Thanks for taking the time to report a bug.
+
+        > [!IMPORTANT]
+        > This form is for **bug reports only**.
+        > Feature requests belong in [Discussions → Ideas](https://github.com/mcanouil/keisen/discussions/new?category=ideas).
+        > Usage questions belong in [Discussions → Q&A](https://github.com/mcanouil/keisen/discussions/new?category=q-a).
 
   - type: checkboxes
     attributes:
-      label: "I Have checked the following"
+      label: Before submitting
+      description: Please confirm each item before opening this issue.
       options:
-        - label: I have searched the issue tracker for similar issues
+        - label: I have searched the [issue tracker](https://github.com/mcanouil/keisen/issues?q=is%3Aissue) and could not find a similar report.
           required: true
+        - label: I have updated to the latest released version of Keisen and reproduced the bug on that version.
+          required: true
+        - label: I confirm this is a bug report, not a feature request or a question.
+          required: true
+
+  - type: input
+    attributes:
+      label: Keisen version
+      description: Version of Keisen used to reproduce the bug.
+      placeholder: "e.g., 0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Typst compiler version
+      description: Output of `typst --version`.
+      placeholder: "e.g., 0.15.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Installation source
+      description: How Keisen was installed in the failing setup.
+      options:
+        - Typst Universe
+        - Local package directory
+        - Git clone / source checkout
+        - Other
+    validations:
+      required: true
 
   - type: textarea
     attributes:
       label: Bug description
-      description: Description of the bug.
-      placeholder: Please describe the bug here.
+      description: A clear and concise description of the bug.
+      placeholder: Describe what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Minimal reproducible example
+      description: |
+        Paste a self-contained Typst document that reproduces the bug.
+        Import Keisen via `#import "@preview/keisen:<version>": *` and keep the example as small as possible.
+      render: typst
+      placeholder: |
+        #import "@preview/keisen:x.y.z": *
+
+        // Minimal example that reproduces the bug.
+    validations:
+      required: true
 
   - type: textarea
     attributes:
       label: Steps to reproduce
-      description: |
-        Tell us how to reproduce this bug.
-
-  - type: textarea
-    attributes:
-      label: Actual behaviour
-      description: Tell us what happens instead.
+      description: Numbered steps to reproduce the bug from a clean state.
+      placeholder: |
+        1. Compile the example above with `typst compile bug.typ`.
+        2. Observe the error.
+    validations:
+      required: true
 
   - type: textarea
     attributes:
       label: Expected behaviour
-      description: Tell us what should happen.
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Actual behaviour
+      description: |
+        What actually happened.
+        Paste any error output or stack trace verbatim inside a fenced code block.
+    validations:
+      required: true
 
   - type: textarea
     attributes:
       label: Your environment
-      description: |
-        Please document the IDE (_e.g._ RStudio, Positron, VSCode, NVim), its version, and the operating system you're running (_e.g., MacOS Ventura 13.4, Windows 11, Linux Debian 11, _etc._).
+      description: IDE / editor and operating system used to reproduce the bug.
       placeholder: |
-        - IDE: RStudio 2023.03.1+446 | VSCode | Positron
-        - OS: MacOS Ventura 13.4 | Windows | Ubuntu
+        - Editor: VS Code 1.95 | Positron | NeoVim | Typst.app
+        - OS: macOS 14.5 | Windows 11 | Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: |
+        Screenshots, related issues, or anything else that may help.
+        For accessibility, please add alt text to every screenshot (`![alt text describing the image](url)`) and avoid relying on colour alone to convey meaning.
+    validations:
+      required: false
 
   - type: markdown
     attributes:
-      value: "_Thanks for submitting this bug report!_"
+      value: "_Thanks for submitting this bug report._"
