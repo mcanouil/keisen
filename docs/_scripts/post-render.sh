@@ -10,9 +10,7 @@
 # changelog.qmd is always removed. _variables.yml is removed only when its
 # first line marks it as generated, so a hand-written one stays.
 #
-# assets/social/og-image.png is left alone. It is ignored by Git and
-# pre-render.sh compiles it on every full render, but a preview that re-renders
-# a single page runs no pre-render, and still needs the file to copy.
+# assets/social/og-image.png is left alone; see assets/social/README.md.
 #
 
 set -euo pipefail

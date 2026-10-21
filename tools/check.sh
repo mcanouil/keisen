@@ -520,6 +520,9 @@ fi
 
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
+# The social card draws a table through the package, so a package change can
+# break it. Caught here, before the docs render that publishes it.
+compile_glob "card" "docs/assets/social/*.typ"
 
 # The packaging script refuses a payload entry that would ship nothing. This
 # tree holds no such entry, and `package.sh archive` is reached by no script

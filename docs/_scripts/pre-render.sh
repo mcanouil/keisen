@@ -16,9 +16,8 @@
 # before any pre-render script runs, so the sync is a separate step, run before
 # the render rather than during it.
 #
-# assets/social/og-image.png is ignored by Git as well. It is compiled from
-# assets/social/og-image.typ on every render, and post-render.sh leaves it in
-# place. See assets/social/README.md.
+# assets/social/og-image.png is ignored by Git as well, and post-render.sh
+# leaves it in place. See assets/social/README.md.
 #
 # A repository that publishes a Quarto extension gets _variables.yml with an
 # `extension` block, carrying the reference a reader installs, so the pages can
@@ -119,16 +118,16 @@ if [[ -n "${EXTENSION_NAME}" ]]; then
 	printf '[pre-render] _variables.yml (%s@%s)\n' "${REPO_SLUG}" "${VERSION}"
 fi
 
-# The Open Graph card, drawn with the working tree's own package. It compiles
-# from the repository root so that its `/lib.typ` import resolves, and at 144
-# ppi, which turns its 600x315pt page into the 1200x630 pixels link previews
-# expect. Quarto's own Typst is used because the render already needs Quarto.
-# System fonts are ignored, so the card looks the same on every machine: both
-# of its fonts ship with Typst. A card that does not compile ends the render,
-# since Quarto says nothing about a `website.image` that does not resolve.
-quarto typst compile --root "${ROOT_DIR}" --ppi 144 --ignore-system-fonts \
-	"${DOCS_DIR}/assets/social/og-image.typ" "${DOCS_DIR}/assets/social/og-image.png"
-printf '[pre-render] assets/social/og-image.typ -> assets/social/og-image.png\n'
+# The Open Graph card, for a site that draws its own; see
+# assets/social/README.md. It compiles from the repository root, so its
+# `/lib.typ` import resolves. A card that does not compile ends the render,
+# because Quarto says nothing about a `website.image` that does not resolve.
+CARD_SOURCE="${DOCS_DIR}/assets/social/og-image.typ"
+if [[ -f "${CARD_SOURCE}" ]]; then
+	quarto typst compile --root "${ROOT_DIR}" --ppi 144 --ignore-system-fonts \
+		"${CARD_SOURCE}" "${CARD_SOURCE%.typ}.png"
+	printf '[pre-render] assets/social/og-image.typ -> assets/social/og-image.png\n'
+fi
 
 if [[ ! -f "${ROOT_DIR}/CHANGELOG.md" ]]; then
 	cat >"${DOCS_DIR}/changelog.qmd" <<'EOF'

@@ -31,6 +31,7 @@ on:
       - "typst.toml"
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
+      - "docs/assets/social/*.typ"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
       # tools/version-check.sh reads both, holding the one-line description in
@@ -54,6 +55,7 @@ on:
       - "typst.toml"
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
+      - "docs/assets/social/*.typ"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
       # tools/version-check.sh reads both, holding the one-line description in

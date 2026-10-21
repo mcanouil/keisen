@@ -6,8 +6,7 @@
 # changelog.qmd from CHANGELOG.md.
 /changelog.qmd
 
-# Compiled by _scripts/pre-render.sh from assets/social/og-image.typ, and kept
-# between renders. See assets/social/README.md.
+# Compiled by _scripts/pre-render.sh. See assets/social/README.md.
 /assets/social/og-image.png
 
 # A repository root that ignores *.html, as one holding rendered output often

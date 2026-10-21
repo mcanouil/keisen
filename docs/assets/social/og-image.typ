@@ -1,17 +1,15 @@
 // The Open Graph card for the documentation site, drawn with keisen itself.
-// _scripts/pre-render.sh compiles it to og-image.png, from the repository root,
-// so /lib.typ is the working tree's own package. See README.md beside this file.
-//
-// The page is 600x315pt and is exported at 144 ppi, which gives the 1200x630
-// pixels that link previews expect.
+// See README.md beside this file.
 
 #import "/lib.typ": *
 
-#let paper = rgb("#FBFBF8")
-#let ink = rgb("#1A1D20")
-#let muted = rgb("#585C60")
-#let rule-blue = rgb("#2C5F82")
-#let vermilion = rgb("#C8442F")
+#let palette = yaml("/docs/_brand.yml").color.palette
+#let paper = rgb(palette.paper-light)
+#let ink = rgb(palette.ink-light)
+#let muted = rgb(palette.muted-light)
+#let rule-blue = rgb(palette.rule-blue)
+#let vermilion = rgb(palette.vermilion)
+// A wash of the brand ochre, which the palette does not carry.
 #let ochre-wash = rgb("#F3E9D6")
 
 #set page(width: 600pt, height: 315pt, margin: 0pt, fill: paper)
