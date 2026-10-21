@@ -34,10 +34,10 @@ website:
   # `<site-url>/assets/social/og-image.png` and measures to fill the image width
   # and height tags. An absolute URL would emit neither: Quarto returns no size
   # for one, then writes that over whatever the configuration set.
-  # _scripts/pre-render.sh writes the file, from GitHub's own preview for this
-  # repository; see assets/social/README.md.
+  # _scripts/pre-render.sh compiles the file from assets/social/og-image.typ;
+  # see assets/social/README.md.
   image: /assets/social/og-image.png
-  image-alt: "GitHub's repository card for mcanouil/keisen: the repository name and its one-line description beside the owner's avatar, over the contributor, issue, star, and fork counts."
+  image-alt: "The Keisen seal and wordmark above the tagline “Display tables for Typst, built from data, not by hand”, beside a tilted regional sales table with rows grouped by continent, subtotal rows, and quarterly figures shaded from pale to deep blue."
   page-navigation: true
   # A section is a set of pages, so a reader reaching the end of one wants the
   # next rather than the sidebar they came from, and a reader at the foot of a

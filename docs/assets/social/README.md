@@ -1,26 +1,27 @@
 # Social card
 
-`og-image.png` is the Open Graph preview for this site, referenced from `website.image` in `_quarto.yml`.
+`og-image.png` is the Open Graph preview for this site.
+`website.image` in `_quarto.yml` and `image` in `index.qmd` refer to it.
 
-It is not authored here, and it is not committed.
-`_scripts/pre-render.sh` fetches GitHub's own repository preview card for this repository, from `https://opengraph.githubassets.com/1/<owner>/<repo>`, and caches it beside this file on every render.
-The card carries the repository name, its description, the owner's avatar, and the contributor, issue, star, and fork counts, so it tracks the repository without anything here having to be regenerated.
-`image-alt` in `_quarto.yml` describes exactly that, and has to be corrected if GitHub ever changes the layout: it is what a screen reader announces for a link preview.
+`og-image.typ` is the source of the card.
+It uses keisen itself to draw the table on the card, so the card shows the current output of the package.
+`_scripts/pre-render.sh` compiles the source to `og-image.png` on every full render.
+If the source does not compile, the render stops.
 
-The copy is gitignored.
-A render with no network keeps whichever copy is already cached, and warns; a render with neither reports that `og:image` will point at a missing file.
-The render that publishes refuses to go ahead without a card at all, because nothing downstream would notice: Quarto says nothing about a `website.image` that does not resolve.
+The PNG is ignored by Git.
+`_scripts/post-render.sh` keeps it between renders, because a preview that renders one page does not run the pre-render script.
 
-The endpoint answers for public repositories only, but it does not say so.
-For a repository that is private or does not exist it returns HTTP 200 with a generic Octocat placeholder, which is why the fetch checks the picture as well as the status code.
-The placeholder is 1200x630 where a real card is 1200x600, and pre-render reads that height straight out of the PNG header, so a placeholder is never cached and never published.
-That matters most for the alt text: it describes a real card, and a placeholder carries none of what it promises.
+The page of the source is 600x315pt.
+The compile uses 144 ppi, so the PNG is 1200x630 pixels, which is the size that link previews expect.
+The compile ignores system fonts, so the card is the same on every machine.
+Libertinus Serif and DejaVu Sans Mono are both included with Typst.
 
-The file is cached locally rather than linked as a remote URL on purpose.
-Quarto measures a project-relative image to fill `og:image:width` and `og:image:height`, and returns no size at all for an absolute one, so linking the endpoint directly would drop both tags and make every scraper lay the card out only after the image had downloaded.
+`image-alt` in `_quarto.yml` and in `index.qmd` describes the card.
+If you change what the card shows, change the alt text too, because a screen reader announces it for a link preview.
 
-To refresh it by hand:
+To compile the card by hand, from the repository root:
 
 ```bash
-curl -fsSL --max-time 20 "https://opengraph.githubassets.com/1/<owner>/<repo>" -o og-image.png
+quarto typst compile --root . --ppi 144 --ignore-system-fonts \
+  docs/assets/social/og-image.typ docs/assets/social/og-image.png
 ```
