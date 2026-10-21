@@ -1,0 +1,20 @@
+name: Update Typst dependencies
+
+# Moves the Typst compiler in typst.toml to its latest release through
+# mcanouil/typst-workflows. No packages input: nothing under src/ imports an
+# @preview package.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    uses: mcanouil/typst-workflows/.github/workflows/dependency-update.yml@v2
+    secrets: inherit
+    permissions:
+      contents: write
+      pull-requests: write
