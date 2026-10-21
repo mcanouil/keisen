@@ -9,8 +9,7 @@
 #let muted = rgb(palette.muted-light)
 #let rule-blue = rgb(palette.rule-blue)
 #let vermilion = rgb(palette.vermilion)
-// A wash of the brand ochre, which the palette does not carry.
-#let ochre-wash = rgb("#F3E9D6")
+#let ochre-wash = rgb(palette.ochre).lighten(80%)
 
 #set page(width: 600pt, height: 315pt, margin: 0pt, fill: paper)
 #set text(font: "Libertinus Serif", fill: ink)
@@ -19,13 +18,16 @@
   left + horizon,
   dx: 36pt,
   dy: -3.5pt,
-  block(width: 270pt)[
+  block(width: 300pt)[
     #grid(
       columns: 2,
       column-gutter: 10pt,
       align: horizon,
       image("/docs/assets/icons/icon.svg", width: 44pt),
-      text(size: 48pt, weight: "semibold")[Keisen],
+      [
+        #text(size: 48pt, weight: "semibold")[Keisen]
+        #text(size: 22pt, fill: muted, font: "Noto Serif JP", lang: "ja")[（罫線）]
+      ],
     )
     #v(10pt)
     #text(size: 17pt)[

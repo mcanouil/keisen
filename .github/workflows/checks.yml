@@ -9,14 +9,16 @@ name: Checks
 #
 # `**` is what crosses a directory separator; a bare `*` does not.
 #
-# Three things under docs are read by the suite, and they are named one by one
+# Four things under docs are read by the suite, and they are named one by one
 # rather than as a blanket `docs/**`:
 #
 #   - the pages, whose import lines tools/version-check.sh and
 #     tools/dry-release.sh compile, and whose `//| file:` blocks tools/check.sh
 #     resolves against the visual tests;
 #   - docs/_scripts, which the lint job runs shellcheck over;
-#   - docs/_filters, whose import filter tools/check.sh runs on a listing.
+#   - docs/_filters, whose import filter tools/check.sh runs on a listing;
+#   - the social card, which tools/check.sh compiles, with the brand palette,
+#     the seal and the font that it reads.
 
 on:
   push:
@@ -32,6 +34,9 @@ on:
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
       - "docs/assets/social/*.typ"
+      - "docs/assets/social/fonts/**"
+      - "docs/assets/icons/icon.svg"
+      - "docs/_brand.yml"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
       # tools/version-check.sh reads both, holding the one-line description in
@@ -56,6 +61,9 @@ on:
       - "docs/**.qmd"
       - "docs/_scripts/**.sh"
       - "docs/assets/social/*.typ"
+      - "docs/assets/social/fonts/**"
+      - "docs/assets/icons/icon.svg"
+      - "docs/_brand.yml"
       # tools/check.sh runs the filter that writes the package import on the site.
       - "docs/_filters/**"
       # tools/version-check.sh reads both, holding the one-line description in

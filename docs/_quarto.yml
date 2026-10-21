@@ -37,7 +37,7 @@ website:
   # _scripts/pre-render.sh compiles the file from assets/social/og-image.typ;
   # see assets/social/README.md.
   image: /assets/social/og-image.png
-  image-alt: "The Keisen seal and wordmark above the tagline “Display tables for Typst, built from data, not by hand”, beside a tilted regional sales table with rows grouped by continent, subtotal rows, and quarterly figures shaded from pale to deep blue."
+  image-alt: "The Keisen seal and wordmark, with the Japanese 罫線 in brackets, above the tagline “Display tables for Typst, built from data, not by hand”, beside a tilted regional sales table with rows grouped by continent, subtotal rows, and quarterly figures shaded from pale to deep blue."
   page-navigation: true
   # A section is a set of pages, so a reader reaching the end of one wants the
   # next rather than the sidebar they came from, and a reader at the foot of a

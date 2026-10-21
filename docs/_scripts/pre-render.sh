@@ -128,7 +128,8 @@ fi
 # then gets would read as no match.
 CARD_REL="assets/social/og-image.png"
 if grep -qF "${CARD_REL}" < <(sed 's/#.*//' "${DOCS_DIR}/_quarto.yml"); then
-	quarto typst compile --root "${ROOT_DIR}" --ppi 144 --ignore-system-fonts \
+	quarto typst compile --root "${ROOT_DIR}" --ppi 288 --ignore-system-fonts \
+		--font-path "${DOCS_DIR}/assets/social/fonts" \
 		"${DOCS_DIR}/${CARD_REL%.png}.typ" "${DOCS_DIR}/${CARD_REL}"
 	printf '[pre-render] %s -> %s\n' "${CARD_REL%.png}.typ" "${CARD_REL}"
 fi
