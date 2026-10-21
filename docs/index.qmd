@@ -9,7 +9,7 @@ authors:
 # The page's first image is the decorative seal, an SVG with no alt text, which
 # Quarto would otherwise take for the social card. This is the site's own card.
 image: /assets/social/og-image.png
-image-alt: "GitHub's repository card for mcanouil/keisen: the repository name and its one-line description beside the owner's avatar, over the contributor, issue, star, and fork counts."
+image-alt: "The Keisen seal and wordmark, with the Japanese 罫線 in brackets, above the tagline “Display tables for Typst, built from data, not by hand”, beside a tilted regional sales table with rows grouped by continent, subtotal rows, and quarterly figures shaded from pale to deep blue."
 toc: false
 title-block-style: none
 page-layout: full
