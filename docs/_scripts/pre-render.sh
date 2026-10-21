@@ -132,6 +132,8 @@ if grep -qF "${CARD_REL}" < <(sed 's/#.*//' "${DOCS_DIR}/_quarto.yml"); then
 		--font-path "${DOCS_DIR}/assets/social/fonts" \
 		"${DOCS_DIR}/${CARD_REL%.png}.typ" "${DOCS_DIR}/${CARD_REL}"
 	printf '[pre-render] %s -> %s\n' "${CARD_REL%.png}.typ" "${CARD_REL}"
+else
+	printf '[pre-render] _quarto.yml does not use %s; not compiling the social card\n' "${CARD_REL}"
 fi
 
 if [[ ! -f "${ROOT_DIR}/CHANGELOG.md" ]]; then

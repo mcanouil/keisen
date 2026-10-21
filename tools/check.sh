@@ -521,8 +521,20 @@ fi
 compile_glob "visual" "tests/visual/*.typ"
 compile_glob "examples" "examples/*.typ"
 # The social card draws a table through the package, so a package change can
-# break it. Caught here, before the docs render that publishes it.
-TYPST_FONT_PATHS=docs/assets/social/fonts compile_glob "card" "docs/assets/social/*.typ"
+# break it. Caught here, before the docs render that publishes it. Compiled as
+# docs/_scripts/pre-render.sh compiles it, with system fonts ignored and its own
+# font directory, and failed on an unknown font: Typst only warns about one and
+# draws a fallback, so a lost font would otherwise pass.
+compiles=$((compiles + 1))
+if card_log="$(typst compile docs/assets/social/og-image.typ "${OUT_DIR}/og-image.pdf" \
+  --root "${REPO_ROOT}" --ignore-system-fonts --font-path docs/assets/social/fonts 2>&1)" &&
+  ! grep -q 'unknown font family' <<<"${card_log}"; then
+  printf '%-9s %d/%d\n' "card:" 1 1
+else
+  documents_failed=$((documents_failed + 1))
+  printf '  FAIL  card  docs/assets/social/og-image.typ\n%s\n' "${card_log}"
+  fail_check "card"
+fi
 
 # The packaging script refuses a payload entry that would ship nothing. This
 # tree holds no such entry, and `package.sh archive` is reached by no script
