@@ -321,3 +321,26 @@
     }
   })
 }
+
+// The axes a column asks for, one `(top, bottom)` pair per column. The directive
+// is the one the column's track is sized from, and the domain and the content
+// width are the ones `apply-formats` hands the cells, so an axis lines up with
+// the plots under it. A column with no readings has no domain, hence no axis.
+#let column-axes(spec) = {
+  let inset = option(spec.options, "cell-inset")
+  spec.columns.map(name => {
+    let none-drawn = (top: none, bottom: none)
+    let directive = widest-nanoplot(nanoplot-directives(spec.formats, name))
+    if directive == none { return none-drawn }
+    let nanoplot = directive.nanoplot
+    if nanoplot.plot.axis == none { return none-drawn }
+    let domain = shared-domain(column(spec.data, name), nanoplot.plot.readings, given: nanoplot.domain)
+    if domain == none { return none-drawn }
+    if name in spec.widths { _check-fixed-width(spec.widths.at(name)) }
+    let width = content-width(directive, spec.widths.at(name, default: auto), inset)
+    (
+      top: (nanoplot.plot.axis)(domain: domain, width: width, side: "top"),
+      bottom: (nanoplot.plot.axis)(domain: domain, width: width, side: "bottom"),
+    )
+  })
+}

@@ -24,6 +24,8 @@ Doc-only: this file documents names already in the code, it does not change any.
 | spec | display-table specification | The dictionary directives fold into; the contract for generators. |
 | directive | one user call | A tagged dictionary such as `(kind: "format", ...)`; mutates nothing. |
 | row plan | array of row descriptors | `(part, level, source, stripe)`; every layout decision is a lookup into it. |
+| `axis-top` | row plan part | The axis row of nanoplot columns, level 2, right after the labels in the repeating header; present only when a renderer draws one. Not addressable by a location. |
+| `axis-bottom` | row plan part | The axis row right after the last body row, ahead of any summaries; present only when a renderer draws one. Not addressable by a location. |
 | location | a set of cell addresses | What `cells-*` expands to: `(part, row-id, column-id)`. |
 | slots | alignment dictionary | `(sign, prefix, integer, separator, fraction, exponent, suffix)` returned by built-in formatters. |
 | selector | column, row, or group filter | `auto`, a name, an array, or a one-argument predicate. |

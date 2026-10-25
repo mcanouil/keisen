@@ -56,3 +56,18 @@ A renderer that reads the salary draws it:
 )
 #format-nanoplot("pay", plot: by-salary)
 ```
+
+## Axis
+
+The `axis` key of a renderer is `none`, or a function that draws an axis.
+It receives `domain`, `width` and `side`, where `side` is `"top"` or `"bottom"`, and it returns content or `none`.
+The domain is the one the column's plots share, and the width is the width of the plot inside the cell.
+
+A renderer with an axis adds up to two rows to the table.
+The top row sits at the end of the repeating column header, right after the column labels.
+The bottom row sits right after the last body row, before any summary rows that follow it.
+Columns whose renderer draws no axis on that side get an empty cell in the row.
+A column with no readings has no domain and gets no axis.
+
+The axis rows are not body rows.
+Striping, summaries, `rows` selectors, locations and styles do not see them.

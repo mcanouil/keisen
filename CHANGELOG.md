@@ -9,6 +9,7 @@
 ### Other changes
 
 - feat: Nanoplot columns size themselves from the plot width and the cell inset, and `columns-width` sets the width including the inset.
+- feat: A nanoplot renderer can draw an axis above the first body row and below the last.
 
 ## 0.1.0 (2026-10-16)
 
