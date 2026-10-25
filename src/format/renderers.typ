@@ -212,3 +212,116 @@
   _check-gap(gap)
   _renderer(_bar.with(fill: fill, gap: gap))
 }
+
+// The bar track is measured from zero, like the bar renderer's bars, so a value
+// and its colour read against one range: the colour of a bar and its length
+// never disagree about how large the value is.
+#let _value-bar-range(domain) = {
+  let (low, high) = (float(domain.first()), float(domain.last()))
+  (calc.min(0.0, low), calc.max(0.0, high))
+}
+
+// Where the bar starts and ends along the track, as fractions of it. A bar runs
+// from zero to the value, so a negative one runs from its value up to zero.
+#let _value-bar-geometry(value, domain) = {
+  let (base, peak) = _value-bar-range(domain)
+  let span = peak - base
+  if span == 0 { return (start: 0, end: 0) }
+  let at(position) = (position - base) / span
+  (start: calc.min(at(value), at(0.0)), end: calc.max(at(value), at(0.0)))
+}
+
+// The position of a value in the zero-based range, which is where a gradient is
+// sampled.
+#let _value-bar-fraction(value, domain) = {
+  let (base, peak) = _value-bar-range(domain)
+  let span = peak - base
+  if span == 0 { 0 } else { calc.clamp((value - base) / span, 0, 1) }
+}
+
+#let _value-bar-label(label, value) = if label == auto { str(calc.round(value)) } else { label(value) }
+
+// The room reserved to the right of the track for the label of whichever end of
+// the domain is larger, so no label is wider than the room it is given.
+#let _value-bar-room(label, domain) = {
+  if label == none { return 0pt }
+  let (base, peak) = _value-bar-range(domain)
+  let widest = if calc.abs(base) > calc.abs(peak) { base } else { peak }
+  measure(_value-bar-label(label, widest)).width + 0.3em
+}
+
+#let _value-bar-paint(fill, value, domain) = {
+  if fill == auto { return _ink(auto) }
+  if type(fill) == function {
+    let paint = fill(value)
+    check(
+      type(paint) in (color, gradient),
+      "nanoplot-value-bar",
+      "fill must return a colour or a gradient",
+      value: paint,
+      hint: "Give a function that returns a colour such as rgb(\"#c33\") or a gradient.",
+    )
+    return paint
+  }
+  if type(fill) == gradient { return fill.sample(_value-bar-fraction(value, domain) * 100%) }
+  fill
+}
+
+#let _check-value-bar(fill, label) = {
+  if fill != auto and type(fill) not in (color, gradient, function) {
+    fail-type(
+      "nanoplot-value-bar",
+      "fill",
+      fill,
+      "a colour, a gradient, or a function",
+      hint: "Give a colour such as rgb(\"#c33\"), a gradient, or value => colour.",
+    )
+  }
+  if label != auto and label != none and type(label) != function {
+    fail-type(
+      "nanoplot-value-bar",
+      "label",
+      label,
+      "auto, none, or a function",
+      hint: "Give auto, none, or value => content.",
+    )
+  }
+}
+
+#let nanoplot-value-bar(fill: auto, label: auto, axis: false) = {
+  _check-value-bar(fill, label)
+  let draw(value, domain: none, width: 4em, height: 0.8em) = {
+    if domain == none or type(value) not in (int, float) { return box(width: width, height: height) }
+    let number = float(value)
+    context {
+      let track = width - _value-bar-room(label, domain)
+      let (start, end) = _value-bar-geometry(number, domain)
+      box(width: width, height: height, clip: true, {
+        place(top + left, dx: track * start, rect(
+          width: track * (end - start),
+          height: height,
+          fill: _value-bar-paint(fill, number, domain),
+          stroke: none,
+        ))
+        if label != none {
+          place(left + horizon, dx: track * end + 0.3em, _value-bar-label(label, number))
+        }
+      })
+    }
+  }
+  let draw-axis(domain: none, width: 4em, side: "bottom") = {
+    if domain == none { return none }
+    context {
+      let track = width - _value-bar-room(label, domain)
+      let (base, peak) = _value-bar-range(domain)
+      box(width: width, {
+        place(top + left, _value-bar-label(label, base))
+        place(top + left, dx: track, move(dx: -measure(_value-bar-label(label, peak)).width, _value-bar-label(label, peak)))
+      })
+    }
+  }
+  _renderer(draw) + (
+    readings: value => if type(value) in (int, float) { (float(value),) } else { () },
+    axis: if axis { draw-axis } else { none },
+  )
+}

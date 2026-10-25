@@ -2,7 +2,7 @@
 engine: markdown
 title: "Nanoplots"
 subtitle: "In-cell plots, drawn natively and scaled against one domain."
-description: "format-nanoplot and the three renderers Keisen ships: nanoplot-line, nanoplot-points, and nanoplot-bar."
+description: "format-nanoplot and the four renderers Keisen ships: nanoplot-line, nanoplot-points, nanoplot-bar, and nanoplot-value-bar."
 ---
 
 A nanoplot cell holds any value the renderer's `readings` function can read numbers from, and [`format-nanoplot`](formatters.qmd) draws it through the renderer given as `plot`.
@@ -14,13 +14,14 @@ The plot's `width` is a length in `em` or `pt`, not a percentage.
 A table with a nanoplot column needs `cell-inset` as a length or a dictionary of lengths, because the column width is computed from it.
 Where [`columns-width`](columns.qmd) names the column, it must be a fixed length in `em` or `pt`, wider than twice the cell inset: the plot gets what the inset leaves.
 
-Three renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
+Four renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
 
 | Function | Notable arguments |
 | --- | --- |
 | `nanoplot-line(..)` | `stroke: auto`, `thickness: 0.6pt`. A sparkline. |
 | `nanoplot-points(..)` | The same, plus `radius: 1pt`. A sparkline with its readings marked. |
 | `nanoplot-bar(..)` | `fill: auto`, `gap: 30%`. Bars, measured from zero. |
+| `nanoplot-value-bar(..)` | `fill: auto`, `label: auto`, `axis: false`. One bar per cell, labelled with its value. |
 
 : Nanoplot renderers {.striped .hover tbl-colwidths="[35,65]"}
 
@@ -82,4 +83,24 @@ The `plain` column beside it has no axis.
 //| file: ../../tests/visual/nanoplots-axis.typ
 //| echo: false
 //| alt: "A table of four regions in two groups, North and South, each closed by a bold Total row of units. The trend column has a small axis label reading 0.9 to 2.1 under its column label, and the same label again under the last body row, above the final Total row. Each body row holds a sparkline in the trend column and another in the plain column, which has no axis label."
+```
+
+## Value bar
+
+`nanoplot-value-bar` draws one number per cell as a bar from zero, with the number written after it.
+The bars of a column share its domain, so their lengths can be compared.
+`fill` is `auto` for the text colour, a colour, a gradient, or a function from the value to a colour.
+A gradient is sampled at the position of the value in the range from zero, so the colour and the length of a bar agree.
+`label` is `auto` for the rounded value, `none` for no label, or a function from the value to content.
+The label has room of its own on the right of the track, so it never overflows the cell.
+With `axis: true`, the top and bottom axis rows write the ends of the track, formatted like the label.
+
+```typst
+#format-nanoplot(
+  "units",
+  plot: nanoplot-value-bar(
+    fill: gradient.linear(rgb("#9ecae1"), rgb("#08306b")),
+    axis: true,
+  ),
+)
 ```
