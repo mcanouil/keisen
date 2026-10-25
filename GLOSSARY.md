@@ -27,6 +27,8 @@ Doc-only: this file documents names already in the code, it does not change any.
 | location | a set of cell addresses | What `cells-*` expands to: `(part, row-id, column-id)`. |
 | slots | alignment dictionary | `(sign, prefix, integer, separator, fraction, exponent, suffix)` returned by built-in formatters. |
 | selector | column, row, or group filter | `auto`, a name, an array, or a one-argument predicate. |
+| renderer | nanoplot renderer | A dictionary `(kind: "nanoplot-renderer", draw, readings, axis)`; `nanoplot-line()` and its siblings build one. |
+| readings | numbers in a cell value | What a renderer's `readings` function returns; the column's shared domain spans them. |
 | `_index` | reserved row key | Position in the input data, not the display position. |
 | `PARTS` | the addressable vocabulary | In `src/locations.typ`. Names a part for both the location DSL and the renderer, so a style can never be looked up for a part nothing can address. |
 

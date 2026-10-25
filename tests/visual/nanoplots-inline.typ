@@ -9,9 +9,9 @@
 
 #let series = (3.0, 3.4, 3.1, 4.2, 4.0, 4.9)
 
-Revenue rose through the year #nanoplot-line(series, width: 4em), reading
-#nanoplot-points(series, width: 4em) by quarter and
-#nanoplot-bar(series, width: 4em) by volume, all at #raw("0.8em").
+Revenue rose through the year #(nanoplot-line().draw)(series, width: 4em), reading
+#(nanoplot-points().draw)(series, width: 4em) by quarter and
+#(nanoplot-bar().draw)(series, width: 4em) by volume, all at #raw("0.8em").
 
 #set text(size: 16pt)
-At a larger text size the plots follow it: #nanoplot-line(series, width: 4em).
+At a larger text size the plots follow it: #(nanoplot-line().draw)(series, width: 4em).

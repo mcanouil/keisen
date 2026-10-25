@@ -19,7 +19,7 @@ Each takes `columns` as a required first positional argument and `rows` as a nam
 | `format-bytes(columns, ..)` | `base: 1024`, `decimals: auto` (one place), `group-separator: auto`, `decimal-separator: auto`, `rounding: auto`, `infinity: none`. |
 | `format-date(columns, ..)` | `pattern: "[year]-[month]-[day]"`. Takes a `datetime` or an ISO-8601 string. |
 | `format-markup(columns, ..)` | Evaluates a string of Typst markup. No arguments of its own. |
-| `format-nanoplot(columns, ..)` | `plot`, `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. See [Nanoplots](nanoplots.qmd). |
+| `format-nanoplot(columns, ..)` | `plot` (a renderer such as `nanoplot-line()`), `width: 4em`, `height: 0.8em`, `baseline: 15%`, `domain: auto`. See [Nanoplots](nanoplots.qmd). |
 | `substitute-missing(columns, ..)` | `replacement: [--]`. Applies to `none`, empty strings, and `float.nan`. |
 | `substitute-zero(columns, ..)` | `replacement: [--]`. Tests the raw value, before any formatter scales or rounds it. |
 

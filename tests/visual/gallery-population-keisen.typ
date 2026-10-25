@@ -62,7 +62,7 @@
   format-number("median-age", decimals: 1),
   format-nanoplot(
     "profile",
-    plot: nanoplot-bar,
+    plot: nanoplot-bar(),
     width: 5em,
     height: 1em,
     baseline: 25%,

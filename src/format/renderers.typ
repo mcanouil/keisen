@@ -11,10 +11,12 @@
 ///! That is what lets a sparkline sit at 0.8em, the height Tufte's guidance and
 ///! Typst's em semantics both point at.
 ///!
-///! `format-nanoplot` accepts any function of this shape, so a renderer written
-///! in a document works exactly as well as these three.
+///! A renderer is a dictionary `(kind: "nanoplot-renderer", draw, readings,
+///! axis)`. `format-nanoplot` accepts any dictionary of this shape, so a
+///! renderer written in a document works exactly as well as these three.
 
 #import "../utils/errors.typ": check, fail-type
+#import "nanoplot.typ": _values-of
 
 // The ink follows the surrounding text unless a colour is given, so a plot in a
 // styled cell is drawn in that cell's colour rather than in a fixed black.
@@ -70,7 +72,7 @@
 }
 
 // A sparkline: the shape of a series, without axes or labels.
-#let nanoplot-line(numbers, domain: none, width: 4em, height: 0.8em, stroke: auto, thickness: 0.6pt) = {
+#let _line(numbers, domain: none, width: 4em, height: 0.8em, stroke: auto, thickness: 0.6pt) = {
   _canvas(numbers, domain, width, height, (values, low, high) => {
     let fractions = _fractions(values, low, high)
     let paint = _ink(stroke)
@@ -92,7 +94,7 @@
 }
 
 // A trend with its readings marked, for series short enough to show both.
-#let nanoplot-points(
+#let _points(
   numbers,
   domain: none,
   width: 4em,
@@ -105,7 +107,7 @@
     let paint = _ink(stroke)
     // The line is drawn by the renderer above, in a box of the same size, so
     // the marks laid over it land on the same coordinates.
-    place(top + left, nanoplot-line(
+    place(top + left, _line(
       values,
       domain: (low, high),
       width: width,
@@ -123,41 +125,7 @@
 // 10 makes a small difference look like the whole quantity, which is the lie the
 // shared domain exists to prevent. The line renderers scale to the domain
 // instead, because a trend is about shape rather than magnitude.
-#let nanoplot-bar(numbers, domain: none, width: 4em, height: 0.8em, fill: auto, gap: 30%) = {
-  // Read before anything is drawn, and whether or not there is anything to
-  // draw: whether a gap leaves the bars some width does not depend on the data.
-  // A series with no readings answers with the empty box every renderer answers
-  // with, and that is the one case where a bad gap has no drawn plot to show
-  // itself in.
-  //
-  // The type is tested first, because the range test compares against a
-  // percentage and anything else fails that comparison rather than this check.
-  if type(gap) != ratio {
-    fail-type(
-      "nanoplot-bar",
-      "gap",
-      gap,
-      "a percentage of the bar pitch",
-      hint: "Give a percentage of the bar pitch below 100%.",
-    )
-  }
-  // Two ends of one range, said apart: a gap at or above the pitch leaves no bar
-  // to draw, and a gap below zero would draw each bar over its neighbours. One
-  // message covering both described neither.
-  check(
-    gap >= 0%,
-    "nanoplot-bar",
-    "gap cannot be negative",
-    value: gap,
-    hint: "A gap is the share of the bar pitch left empty between the bars.",
-  )
-  check(
-    gap < 100%,
-    "nanoplot-bar",
-    "gap must leave the bars some width",
-    value: gap,
-    hint: "Give a percentage of the bar pitch below 100%.",
-  )
+#let _bar(numbers, domain: none, width: 4em, height: 0.8em, fill: auto, gap: 30%) = {
   _canvas(numbers, domain, width, height, (values, low, high) => {
     let base = calc.min(0.0, low)
     let peak = calc.max(0.0, high)
@@ -188,4 +156,74 @@
         .join()
     }
   })
+}
+
+// Read when the renderer is built, and whether or not there is anything to
+// draw: whether a gap leaves the bars some width does not depend on the data.
+#let _check-gap(gap) = {
+  // The type is tested first, because the range test compares against a
+  // percentage and anything else fails that comparison rather than this check.
+  if type(gap) != ratio {
+    fail-type(
+      "nanoplot-bar",
+      "gap",
+      gap,
+      "a percentage of the bar pitch",
+      hint: "Give a percentage of the bar pitch below 100%.",
+    )
+  }
+  // Two ends of one range, said apart: a gap at or above the pitch leaves no bar
+  // to draw, and a gap below zero would draw each bar over its neighbours. One
+  // message covering both described neither.
+  check(
+    gap >= 0%,
+    "nanoplot-bar",
+    "gap cannot be negative",
+    value: gap,
+    hint: "A gap is the share of the bar pitch left empty between the bars.",
+  )
+  check(
+    gap < 100%,
+    "nanoplot-bar",
+    "gap must leave the bars some width",
+    value: gap,
+    hint: "Give a percentage of the bar pitch below 100%.",
+  )
+}
+
+#let _renderer(draw) = (kind: "nanoplot-renderer", draw: draw, readings: _values-of, axis: none)
+
+#let nanoplot-line(stroke: auto, thickness: 0.6pt) = _renderer(
+  (value, domain: none, width: 4em, height: 0.8em) => _line(
+    _values-of(value),
+    domain: domain,
+    width: width,
+    height: height,
+    stroke: stroke,
+    thickness: thickness,
+  ),
+)
+
+#let nanoplot-points(stroke: auto, thickness: 0.6pt, radius: 1pt) = _renderer(
+  (value, domain: none, width: 4em, height: 0.8em) => _points(
+    _values-of(value),
+    domain: domain,
+    width: width,
+    height: height,
+    stroke: stroke,
+    thickness: thickness,
+    radius: radius,
+  ),
+)
+
+#let nanoplot-bar(fill: auto, gap: 30%) = {
+  _check-gap(gap)
+  _renderer((value, domain: none, width: 4em, height: 0.8em) => _bar(
+    _values-of(value),
+    domain: domain,
+    width: width,
+    height: height,
+    fill: fill,
+    gap: gap,
+  ))
 }

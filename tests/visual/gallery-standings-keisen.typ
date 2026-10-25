@@ -53,7 +53,7 @@
   format-integer("difference", sign: true),
   format-nanoplot(
     "form",
-    plot: nanoplot-points,
+    plot: nanoplot-points(),
     width: 4em,
     height: 0.8em,
     domain: (0, 3),
