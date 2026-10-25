@@ -92,7 +92,8 @@ The bars of a column share its domain, so their lengths can be compared.
 `fill` is `auto` for the text colour, a colour, a gradient, or a function from the value to a colour.
 A gradient is sampled at the position of the value in the range from zero, so the colour and the length of a bar agree.
 `label` is `auto` for the rounded value, `none` for no label, or a function from the value to content.
-The label has room of its own on the right of the track, so it never overflows the cell.
+The label has room of its own on the right of the track, sized from the label of the larger end of the domain.
+A custom label that is wider for a value in the middle than for the ends may be cut by the cell.
 With `axis: true`, the top and bottom axis rows write the ends of the track, formatted like the label.
 
 ```typst

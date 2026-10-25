@@ -227,7 +227,7 @@
   let (base, peak) = _value-bar-range(domain)
   let span = peak - base
   if span == 0 { return (start: 0, end: 0) }
-  let at(position) = (position - base) / span
+  let at(position) = calc.clamp((position - base) / span, 0, 1)
   (start: calc.min(at(value), at(0.0)), end: calc.max(at(value), at(0.0)))
 }
 
@@ -247,7 +247,13 @@
   if label == none { return 0pt }
   let (base, peak) = _value-bar-range(domain)
   let widest = if calc.abs(base) > calc.abs(peak) { base } else { peak }
-  measure(_value-bar-label(label, widest)).width + 0.3em
+  measure(_value-bar-label(label, widest)).width + 0.3em.to-absolute()
+}
+
+// Where the label starts: right of the end of the bar, and for a negative value
+// right of zero, since the end of the bar is the larger of the value and zero.
+#let _value-bar-label-x(value, domain, label, width) = {
+  (width - _value-bar-room(label, domain)) * _value-bar-geometry(value, domain).end + 0.3em.to-absolute()
 }
 
 #let _value-bar-paint(fill, value, domain) = {
@@ -296,15 +302,17 @@
     context {
       let track = width - _value-bar-room(label, domain)
       let (start, end) = _value-bar-geometry(number, domain)
-      box(width: width, height: height, clip: true, {
-        place(top + left, dx: track * start, rect(
+      box(width: width, height: height, {
+        // Only the bar is clipped: a label may be taller than the cell, and its
+        // descenders must not be cut.
+        place(top + left, box(width: width, height: height, clip: true, place(top + left, dx: track * start, rect(
           width: track * (end - start),
           height: height,
           fill: _value-bar-paint(fill, number, domain),
           stroke: none,
-        ))
+        ))))
         if label != none {
-          place(left + horizon, dx: track * end + 0.3em, _value-bar-label(label, number))
+          place(left + horizon, dx: _value-bar-label-x(number, domain, label, width), _value-bar-label(label, number))
         }
       })
     }
@@ -314,9 +322,12 @@
     context {
       let track = width - _value-bar-room(label, domain)
       let (base, peak) = _value-bar-range(domain)
-      box(width: width, {
-        place(top + left, _value-bar-label(label, base))
-        place(top + left, dx: track, move(dx: -measure(_value-bar-label(label, peak)).width, _value-bar-label(label, peak)))
+      let format = if label == none { auto } else { label }
+      let (first, last) = (_value-bar-label(format, base), _value-bar-label(format, peak))
+      let (first-size, last-size) = (measure(first), measure(last))
+      box(width: width, height: calc.max(first-size.height, last-size.height), {
+        place(top + left, first)
+        place(top + left, dx: track - last-size.width, last)
       })
     }
   }
