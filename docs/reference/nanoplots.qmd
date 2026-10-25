@@ -88,13 +88,17 @@ The `plain` column beside it has no axis.
 ## Value bar
 
 `nanoplot-value-bar` draws one number per cell as a bar from zero, with the number written after it.
+The number can be an integer, a float, or a decimal.
 The bars of a column share its domain, so their lengths can be compared.
 `fill` is `auto` for the text colour, a colour, a gradient, or a function from the value to a colour.
 A gradient is sampled at the position of the value in the range from zero, so the colour and the length of a bar agree.
-`label` is `auto` for the rounded value, `none` for no label, or a function from the value to content.
+`label` is `auto` for the rounded value, `none` for no label, or a function from the value to content or to a number.
 The label has room of its own on the right of the track, sized from the label of the larger end of the domain.
 A custom label that is wider for a value in the middle than for the ends may be cut by the cell.
 With `axis: true`, the top and bottom axis rows write the ends of the track, formatted like the label.
+The low end starts at the track start, and the high end starts after the track end, in the room of the label.
+With `label: none`, the axis writes the rounded values, and the track keeps room for them.
+If the label of the low end is wider than the track, the column fails: make `width` larger.
 
 ```typst
 #format-nanoplot(

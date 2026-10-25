@@ -13,7 +13,7 @@
 ///!
 ///! A renderer is a dictionary `(kind: "nanoplot-renderer", draw, readings,
 ///! axis)`. `format-nanoplot` accepts any dictionary of this shape, so a
-///! renderer written in a document works exactly as well as these three.
+///! renderer written in a document works exactly as well as these four.
 
 #import "../utils/errors.typ": check, fail-type
 #import "nanoplot.typ": values-of
@@ -239,15 +239,46 @@
   if span == 0 { 0 } else { calc.clamp((value - base) / span, 0, 1) }
 }
 
-#let _value-bar-label(label, value) = if label == auto { str(calc.round(value)) } else { label(value) }
+// The number a cell holds, or none for a value that is not one.
+#let _value-bar-number(value) = if type(value) in (int, float, decimal) { float(value) } else { none }
+
+// A label function may return a number or a string, so its result is written
+// as content.
+#let _value-bar-label(label, value) = if label == auto { str(calc.round(value)) } else { [#label(value)] }
 
 // The room reserved to the right of the track for the label of whichever end of
-// the domain is larger, so no label is wider than the room it is given.
+// the domain is larger, so no label is wider than the room it is given. The
+// peak label is measured as well, since the axis writes it in this room even
+// when a custom label makes it the wider of the two.
 #let _value-bar-room(label, domain) = {
   if label == none { return 0pt }
   let (base, peak) = _value-bar-range(domain)
   let widest = if calc.abs(base) > calc.abs(peak) { base } else { peak }
-  measure(_value-bar-label(label, widest)).width + 0.3em.to-absolute()
+  let room = calc.max(measure(_value-bar-label(label, widest)).width, measure(_value-bar-label(label, peak)).width)
+  room + 0.3em.to-absolute()
+}
+
+// Where the axis writes the two ends of the track. The base label starts at the
+// track start, and the peak label starts at the track end, in the room kept for
+// it, as a cell label does. A base label wider than the track would run into
+// the peak label, so it is refused.
+#let _value-bar-axis-labels(label, domain, width) = {
+  let format = if label == none { auto } else { label }
+  let track = width.to-absolute() - _value-bar-room(format, domain)
+  let (base, peak) = _value-bar-range(domain)
+  let (first, last) = (_value-bar-label(format, base), _value-bar-label(format, peak))
+  let first-width = measure(first).width
+  check(
+    first-width <= track,
+    "nanoplot-value-bar",
+    "the axis label of the domain's low is wider than the track",
+    value: base,
+    hint: "Widen the plot with width, or shorten the label.",
+  )
+  (
+    base: (x: 0pt, width: first-width, content: first),
+    peak: (x: track + 0.3em.to-absolute(), width: measure(last).width, content: last),
+  )
 }
 
 // Where the label starts: right of the end of the bar, and for a negative value
@@ -296,11 +327,14 @@
 
 #let nanoplot-value-bar(fill: auto, label: auto, axis: false) = {
   _check-value-bar(fill, label)
+  // The axis writes its ends even with no cell label, so the track keeps room
+  // for them and the bars line up under the axis.
+  let room-label = if label == none and axis { auto } else { label }
   let draw(value, domain: none, width: 4em, height: 0.8em) = {
-    if domain == none or type(value) not in (int, float) { return box(width: width, height: height) }
-    let number = float(value)
+    let number = _value-bar-number(value)
+    if domain == none or number == none { return box(width: width, height: height) }
     context {
-      let track = width - _value-bar-room(label, domain)
+      let track = width - _value-bar-room(room-label, domain)
       let (start, end) = _value-bar-geometry(number, domain)
       box(width: width, height: height, {
         // Only the bar is clipped: a label may be taller than the cell, and its
@@ -312,7 +346,7 @@
           stroke: none,
         ))))
         if label != none {
-          place(left + horizon, dx: _value-bar-label-x(number, domain, label, width), _value-bar-label(label, number))
+          place(left + horizon, dx: _value-bar-label-x(number, domain, room-label, width), _value-bar-label(label, number))
         }
       })
     }
@@ -320,19 +354,15 @@
   let draw-axis(domain: none, width: 4em, side: "bottom") = {
     if domain == none { return none }
     context {
-      let track = width - _value-bar-room(label, domain)
-      let (base, peak) = _value-bar-range(domain)
-      let format = if label == none { auto } else { label }
-      let (first, last) = (_value-bar-label(format, base), _value-bar-label(format, peak))
-      let (first-size, last-size) = (measure(first), measure(last))
-      box(width: width, height: calc.max(first-size.height, last-size.height), {
-        place(top + left, first)
-        place(top + left, dx: track - last-size.width, last)
+      let (base, peak) = _value-bar-axis-labels(label, domain, width)
+      box(width: width, height: calc.max(measure(base.content).height, measure(peak.content).height), {
+        place(top + left, dx: base.x, base.content)
+        place(top + left, dx: peak.x, peak.content)
       })
     }
   }
   _renderer(draw) + (
-    readings: value => if type(value) in (int, float) { (float(value),) } else { () },
+    readings: value => if _value-bar-number(value) == none { () } else { (_value-bar-number(value),) },
     axis: if axis { draw-axis } else { none },
   )
 }

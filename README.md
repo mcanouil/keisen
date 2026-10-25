@@ -72,7 +72,7 @@ _Keisen_ imports no third-party Typst package, so installing it fetches _Keisen_
 See [`typst.toml`](typst.toml) for the authoritative Typst compiler version.
 
 Formatting is a protocol rather than a dependency, so packages such as [`zero`](https://typst.app/universe/package/zero/) plug in without _Keisen_ importing them.
-Nanoplots are drawn with native Typst primitives for the same reason, and `format-nanoplot` takes any renderer, so one written in a document works as well as the three that ship.
+Nanoplots are drawn with native Typst primitives for the same reason, and `format-nanoplot` takes any renderer, so one written in a document works as well as the four that ship.
 
 ## Contributing
 

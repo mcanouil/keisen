@@ -2,7 +2,7 @@
 ///!
 ///! The core owns the protocol, the domain, and the cell box. A nanoplot is
 ///! drawn by whichever renderer is passed as `plot`, and src/format/renderers.typ
-///! provides three drawn with native Typst primitives. A renderer is a dictionary
+///! provides four drawn with native Typst primitives. A renderer is a dictionary
 ///! of `draw`, `readings` and `axis`, and the core never looks inside a cell
 ///! value: `readings` is how a renderer says which numbers it contains.
 ///!
