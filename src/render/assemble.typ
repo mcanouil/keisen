@@ -7,7 +7,7 @@
 ///! alignment, and strokes are decided.
 
 #import "../format/align.typ": align-slots
-#import "../format/apply.typ": matches-column
+#import "../format/apply.typ": matches-column, nanoplot-directive, nanoplot-track
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, footer-notes, marks-for
 #import "../parts/summaries.typ": summary-values
@@ -371,7 +371,8 @@
   let sized = setting("table-width") != auto
   let track(name) = {
     let given = spec.widths.at(name, default: auto)
-    if given != auto { given } else if sized { 1fr } else { auto }
+    let plot = nanoplot-directive(spec.formats, name)
+    if given != auto { given } else if plot != none { nanoplot-track(plot, setting("cell-inset")) } else if sized { 1fr } else { auto }
   }
   let tracks = if has-stub { (track(spec.stub.rowname),) } else { () }
   for name in names { tracks.push(track(name)) }

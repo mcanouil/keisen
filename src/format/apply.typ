@@ -195,18 +195,61 @@
   ))
 }
 
-#let _formatter(directive, values, options) = {
-  if "nanoplot" not in directive { return formatter-for(directive, options) }
-  let nanoplot = directive.nanoplot
-  nanoplot-cell(nanoplot, shared-domain(values, nanoplot.plot.readings, given: nanoplot.domain), nanoplot.width)
+// The horizontal share of a cell inset: the length itself, or the first of `x`,
+// `left` and `rest` a dictionary gives.
+#let _horizontal-inset(inset) = {
+  if type(inset) != dictionary { return inset }
+  inset.at("x", default: inset.at("left", default: inset.at("rest", default: 0pt)))
 }
 
-#let apply-formats(rows, formats, name, substitutions: (), options: (:)) = {
+// The last nanoplot directive naming a column, as everywhere else the last
+// directive wins.
+#let nanoplot-directive(formats, name) = {
+  let named = formats.filter(directive => "nanoplot" in directive and matches-column(directive.columns, name))
+  if named.len() == 0 { none } else { named.last() }
+}
+
+// The column width when no `columns-width` names it: the plot plus the inset on
+// both sides, so the cell is as wide as the plot asked for.
+#let nanoplot-track(directive, inset) = directive.nanoplot.width + 2 * _horizontal-inset(inset)
+
+// What the plot may draw in, given the column's `columns-width` entry or `auto`.
+// A column width includes the inset, so a width that is not a fixed length, or
+// that leaves nothing inside the inset, cannot hold a plot.
+#let content-width(directive, given, inset) = {
+  let side = _horizontal-inset(inset)
+  if given == auto { return directive.nanoplot.width }
+  let hint = "Give it in em or pt, wider than twice the cell inset."
+  check(type(given) == length, "columns-width", "a nanoplot column needs a fixed width", value: given, hint: hint)
+  let content = given - 2 * side
+  check(
+    content.abs > 0pt or content.em > 0,
+    "columns-width",
+    "a nanoplot column is narrower than its cell inset",
+    value: given,
+    hint: hint,
+  )
+  content
+}
+
+#let _formatter(directive, values, options, width) = {
+  if "nanoplot" not in directive { return formatter-for(directive, options) }
+  let nanoplot = directive.nanoplot
+  nanoplot-cell(nanoplot, shared-domain(values, nanoplot.plot.readings, given: nanoplot.domain), width)
+}
+
+#let apply-formats(rows, formats, name, substitutions: (), options: (:), widths: (:)) = {
   let values = column(rows, name)
   // Which directives name this column does not vary by row, and a nanoplot's
   // domain does not vary by cell, so both are settled once for the column.
   let applicable = formats.filter(directive => matches-column(directive.columns, name))
-  let formatters = applicable.map(directive => _formatter(directive, values, options))
+  let inset = option(options, "cell-inset")
+  let formatters = applicable.map(directive => _formatter(
+    directive,
+    values,
+    options,
+    if "nanoplot" in directive { content-width(directive, widths.at(name, default: auto), inset) },
+  ))
 
   rows.map(row => {
     let value = row.at(name, default: none)

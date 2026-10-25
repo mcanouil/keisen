@@ -117,6 +117,7 @@
     name,
     substitutions: spec.substitutions,
     options: spec.options,
+    widths: spec.widths,
   )
 
   spec.columns.map(name => {
@@ -148,6 +149,7 @@
     spec.stub.rowname,
     substitutions: spec.substitutions,
     options: spec.options,
+    widths: spec.widths,
   ).map(slots-to-content)
 }
 
