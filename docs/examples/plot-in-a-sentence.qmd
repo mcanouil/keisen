@@ -2,7 +2,7 @@
 engine: markdown
 title: "Set a plot in a sentence"
 subtitle: "A sparkline among the words, at the height of the text."
-description: "The `draw` function of a nanoplot renderer returns ordinary content, so it runs inline in prose and follow the surrounding text size."
+description: "The `draw` function of a nanoplot renderer returns ordinary content, so it runs inline in prose and follows the surrounding text size."
 ---
 
 The renderers are not tied to a table.

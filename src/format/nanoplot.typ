@@ -65,6 +65,28 @@
       hint: "Call the renderer, as in nanoplot-line(), or pass a dictionary with kind: \"nanoplot-renderer\".",
     )
   }
+  // The keys are there, but a dictionary merged over a renderer can replace
+  // any of them with something that cannot be called.
+  for name in ("draw", "readings") {
+    if type(plot.at(name)) != function {
+      fail-type(
+        "format-nanoplot",
+        name,
+        plot.at(name),
+        "a function",
+        hint: "Give a function of the cell value, or call the renderer as it ships.",
+      )
+    }
+  }
+  if plot.axis != none and type(plot.axis) != function {
+    fail-type(
+      "format-nanoplot",
+      "axis",
+      plot.axis,
+      "none or a function",
+      hint: "Give none for no axis.",
+    )
+  }
   // A fractional width would have to be resolved inside the cell with layout(),
   // which forbids page breaking there; em and pt need no such thing.
   for (name, size) in (("width", width), ("height", height)) {

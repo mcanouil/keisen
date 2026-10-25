@@ -4,7 +4,7 @@ subtitle: "In-cell plots, drawn natively and scaled against one domain."
 description: "format-nanoplot and the three renderers Keisen ships: nanoplot-line, nanoplot-points, and nanoplot-bar."
 ---
 
-A nanoplot cell holds an array of readings, and [`format-nanoplot`](formatters.qmd) draws it through the renderer given as `plot`.
+A nanoplot cell holds any value the renderer's `readings` function can read numbers from, and [`format-nanoplot`](formatters.qmd) draws it through the renderer given as `plot`.
 The domain spans every reading in the column, taken from the column itself, so the cells can be compared; that is the whole point, since sparklines scaled per cell say nothing.
 `domain: (low, high)` overrides it for a column read against a scale that is not its own.
 
