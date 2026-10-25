@@ -8,6 +8,9 @@ A nanoplot cell holds any value the renderer's `readings` function can read numb
 The domain spans every reading in the column, taken from the column itself, so the cells can be compared; that is the whole point, since sparklines scaled per cell say nothing.
 `domain: (low, high)` overrides it for a column read against a scale that is not its own.
 
+A nanoplot column sizes itself to the plot's `width` plus the cell inset on both sides, and a set `table-width` does not stretch it.
+Where [`columns-width`](columns.qmd) names the column, it must be a fixed length in `em` or `pt`, wider than twice the cell inset: the plot gets what the inset leaves.
+
 Three renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
 
 | Function | Notable arguments |

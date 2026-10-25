@@ -8,7 +8,7 @@
 #import "../data.typ": column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
-#import "../utils/errors.typ": check, fail-type
+#import "../utils/errors.typ": check, fail, fail-type
 #import "nanoplot.typ": nanoplot-cell, shared-domain
 
 // One entry per field a selector addresses, so a directive is answered in the
@@ -195,33 +195,77 @@
   ))
 }
 
-// The horizontal share of a cell inset: the length itself, or the first of `x`,
-// `left` and `rest` a dictionary gives.
-#let _horizontal-inset(inset) = {
-  if type(inset) != dictionary { return inset }
-  inset.at("x", default: inset.at("left", default: inset.at("rest", default: 0pt)))
+// A cell inset side, held to a plain length: a ratio or a relative length has
+// nothing to be a share of here, and an array or a function is not an inset a
+// width can be taken from.
+#let _inset-length(inset, value) = {
+  check(
+    type(value) == length,
+    "cell-inset",
+    "a table with a nanoplot column needs an inset given as a length",
+    value: inset,
+    hint: "Give a length or a dictionary of lengths, such as (x: 0.5em).",
+  )
+  value
 }
 
-// The last nanoplot directive naming a column, as everywhere else the last
-// directive wins.
-#let nanoplot-directive(formats, name) = {
-  let named = formats.filter(directive => "nanoplot" in directive and matches-column(directive.columns, name))
-  if named.len() == 0 { none } else { named.last() }
+// The left and right shares of a cell inset, following Typst: a side wins over
+// `x`, which wins over `rest`, and a side nothing names is nil. Read only for a
+// nanoplot column, so a table without one keeps whatever inset it had.
+#let _horizontal-inset(inset) = {
+  if type(inset) != dictionary { return (left: _inset-length(inset, inset), right: _inset-length(inset, inset)) }
+  let side(name) = _inset-length(inset, inset.at(name, default: inset.at("x", default: inset.at("rest", default: 0pt))))
+  (left: side("left"), right: side("right"))
 }
+
+// Every nanoplot directive naming a column, in the order they were written.
+#let nanoplot-directives(formats, name) = formats.filter(directive => (
+  "nanoplot" in directive and matches-column(directive.columns, name)
+))
 
 // The column width when no `columns-width` names it: the plot plus the inset on
-// both sides, so the cell is as wide as the plot asked for.
-#let nanoplot-track(directive, inset) = directive.nanoplot.width + 2 * _horizontal-inset(inset)
+// both sides, so the cell is as wide as the plot asked for. Several directives
+// can name one column, and the column holds the widest plot. Widths in mixed
+// units cannot be ordered outside `context`, so one is wider only when it is no
+// narrower in either unit.
+#let nanoplot-track(directive, inset) = {
+  let (left, right) = _horizontal-inset(inset)
+  directive.nanoplot.width + left + right
+}
 
-// What the plot may draw in, given the column's `columns-width` entry or `auto`.
-// A column width includes the inset, so a width that is not a fixed length, or
-// that leaves nothing inside the inset, cannot hold a plot.
+#let widest-nanoplot(directives) = directives.fold(none, (widest, directive) => {
+  if widest == none { return directive }
+  let difference = directive.nanoplot.width - widest.nanoplot.width
+  if difference.abs >= 0pt and difference.em >= 0 { directive } else { widest }
+})
+
+// What the plot may draw in, given the column's `columns-width` entry, or
+// `auto` when it has none. A column width includes the inset, so a width that is
+// not a fixed length, or that leaves nothing inside the inset, cannot hold a
+// plot.
+#let _WIDTH-HINT = "Give it in em or pt, wider than twice the cell inset."
+
+// `auto` is how the grammar says "no value", so an entry of `auto` cannot be
+// handed over as the value to report; it is written into the problem clause
+// instead, which reads the same.
+#let _check-fixed-width(given) = {
+  if type(given) == length { return }
+  fail(
+    "columns-width",
+    "a nanoplot column needs a fixed width" + if given == auto { "; got auto" } else { "" },
+    value: given,
+    hint: _WIDTH-HINT,
+  )
+}
+
 #let content-width(directive, given, inset) = {
-  let side = _horizontal-inset(inset)
+  let (left, right) = _horizontal-inset(inset)
   if given == auto { return directive.nanoplot.width }
-  let hint = "Give it in em or pt, wider than twice the cell inset."
-  check(type(given) == length, "columns-width", "a nanoplot column needs a fixed width", value: given, hint: hint)
-  let content = given - 2 * side
+  let hint = _WIDTH-HINT
+  _check-fixed-width(given)
+  let content = given - left - right
+  // A width in em and the inset in pt (or the reverse) cannot be ordered outside
+  // `context`, so only a width that is no wider in either unit is refused.
   check(
     content.abs > 0pt or content.em > 0,
     "columns-width",
@@ -248,7 +292,12 @@
     directive,
     values,
     options,
-    if "nanoplot" in directive { content-width(directive, widths.at(name, default: auto), inset) },
+    if "nanoplot" in directive {
+      // An entry of `auto` names the column and gives it no width, which is not
+      // the same as naming nothing.
+      if name in widths { _check-fixed-width(widths.at(name)) }
+      content-width(directive, widths.at(name, default: auto), inset)
+    },
   ))
 
   rows.map(row => {
