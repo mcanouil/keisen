@@ -44,10 +44,21 @@
 // caller supplied, which is what lets the column decide the domain.
 #assert.eq(directive.nanoplot.plot, line)
 #assert.eq(directive.nanoplot.domain, auto)
+#assert("values" not in directive)
 
-// A renderer reads records as well as numbers.
+// A renderer reads records as well as numbers, so its draw and its readings
+// read the value the same way: readings alone would leave the cell blank.
 #let records = ((salary: 30000, pct: 10), (salary: 52000, pct: 70))
-#let by-salary = line + (readings: value => value.map(record => float(record.salary)))
+#let salaries(value) = value.map(record => float(record.salary))
+#let by-salary = line + (
+  readings: salaries,
+  draw: (value, domain: none, width: 4em, height: 0.8em) => (line.draw)(
+    salaries(value),
+    domain: domain,
+    width: width,
+    height: height,
+  ),
+)
 #assert.eq(shared-domain((records, ((salary: 41000, pct: 5),)), by-salary.readings), (30000.0, 52000.0))
 #let record-cells = apply-formats(
   ((cell: records), (cell: ())),
@@ -55,8 +66,8 @@
   "cell",
 )
 #assert.eq(type(record-cells.first()), content)
+#assert.ne(record-cells.first(), box(width: 4em, height: 0.8em, baseline: 15%, box(width: 4em, height: 0.8em)))
 #assert.eq(record-cells.last(), [])
-#assert("values" not in directive)
 
 // A nanoplot column formats from the column it names. Passing another column's
 // readings is not merely reported: there is nowhere left to pass them.

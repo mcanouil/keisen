@@ -26,28 +26,29 @@ A renderer is a dictionary with the keys `kind`, `draw`, `readings` and `axis`, 
 - `kind` is `"nanoplot-renderer"`.
 - `draw(value, domain: .., width: .., height: ..)` returns the content for one cell.
 - `readings(value)` returns the numbers in a cell value, and the column's domain is taken across them.
+  It receives every cell value, `none` included, and must return `()` for a value it cannot read.
 - `axis` is `none`.
 
 A renderer can read records rather than plain numbers, because the cell value reaches `draw` as it is.
-Start from a shipped renderer and replace the key that differs.
+The shipped `draw` reads numbers only, so `draw` and `readings` must read the value the same way.
+A renderer that changes `readings` alone draws a blank plot.
 
-Before, a renderer was a function of the numbers:
+Both calls below format the same column of records.
+
+Before, the shipped renderer found no numbers in a record and the cell was blank:
 
 ```typst
-#let by-salary(numbers, domain: none, width: 4em, height: 0.8em) = nanoplot-line(
-  numbers, domain: domain, width: width, height: height,
-)
-#format-nanoplot("pay", plot: by-salary)
+#format-nanoplot("pay", plot: nanoplot-line)
 ```
 
-After, a renderer is a dictionary, and it reads the records itself:
+After, a renderer that reads the salary draws it:
 
 ```typst
+#let salaries(records) = records.map(record => float(record.salary))
 #let by-salary = nanoplot-line() + (
-  readings: records => records.map(record => float(record.salary)),
+  readings: salaries,
   draw: (records, domain: none, width: 4em, height: 0.8em) => (nanoplot-line().draw)(
-    records.map(record => float(record.salary)),
-    domain: domain, width: width, height: height,
+    salaries(records), domain: domain, width: width, height: height,
   ),
 )
 #format-nanoplot("pay", plot: by-salary)

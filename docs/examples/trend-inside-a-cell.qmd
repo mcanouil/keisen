@@ -24,5 +24,6 @@ The two renderers differ on where they measure from.
 `nanoplot-bar()` measures from zero, since a bar drawn from 5 to 10 makes a small difference look like the whole quantity.
 `nanoplot-line()` scales to the domain, since a trend is about shape rather than magnitude.
 
-`format-nanoplot` takes any `(numbers, domain: none, width: .., height: ..) => content`, so a renderer written in the document works exactly as well as the three that ship.
+`format-nanoplot` takes any renderer dictionary with `draw`, `readings` and `axis`, so a renderer written in the document works exactly as well as the three that ship.
+[Nanoplots](../reference/nanoplots.qmd) describes the keys.
 A nanoplot column holds readings rather than quantities, so it cannot be summarised, and `columns: auto` leaves it out.
