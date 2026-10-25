@@ -4,6 +4,7 @@
 
 #import "../../lib.typ": display-table, format-nanoplot, nanoplot-line, table-options
 #import "../../src/format/apply.typ": content-width, nanoplot-track, widest-nanoplot
+#import "../../src/format/nanoplot.typ": nanoplot-cell
 
 #let directive = format-nanoplot("trend", plot: nanoplot-line(), width: 4em)
 #assert.eq(content-width(directive, auto, 0.5em), 4em)
@@ -44,4 +45,11 @@
     format-nanoplot("trend", plot: probe, width: 4em),
     table-options(table-width: 20em),
   ))
+}
+
+// A named column width boxes the cell at the content width, which is the width
+// the plot is drawn at, not at the plot's own `width`.
+#context {
+  let cell = nanoplot-cell(directive.nanoplot, (1, 3), content-width(directive, 6em, 0.5em))
+  assert.eq(measure(cell((1, 2, 3))).width, 5em.to-absolute())
 }

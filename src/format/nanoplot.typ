@@ -49,7 +49,7 @@
 #let nanoplot-cell(options, domain, width) = value => {
   if _readings-of(options.plot.readings, value).len() == 0 { return [] }
   box(
-    width: options.width,
+    width: width,
     height: options.height,
     baseline: options.baseline,
     (options.plot.draw)(value, domain: domain, width: width, height: options.height),

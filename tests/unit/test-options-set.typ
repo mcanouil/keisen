@@ -3,7 +3,7 @@
 // `test-options-read.typ` holds every declared key to being read by a renderer,
 // which is why an option nothing sets was never reported: it is read, in a
 // branch or a cell nothing had ever asked for. Thirty-one of the forty-six were
-// set by no test, and this list records the twenty-seven that still are.
+// set by no test, and this list records the twenty-six that still are.
 //
 // A key covered tomorrow comes off the list, and a key declared tomorrow is
 // covered or added here on purpose, so the list can only shrink.

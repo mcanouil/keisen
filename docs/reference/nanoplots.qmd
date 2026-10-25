@@ -30,7 +30,7 @@ A renderer is a dictionary with the keys `kind`, `draw`, `readings` and `axis`, 
 - `draw(value, domain: .., width: .., height: ..)` returns the content for one cell.
 - `readings(value)` returns the numbers in a cell value, and the column's domain is taken across them.
   It receives every cell value, `none` included, and must return `()` for a value it cannot read.
-- `axis` is `none`.
+- `axis` is `none` in the shipped line, points and bar renderers; see [Axis](#axis) for a renderer that draws one.
 
 A renderer can read records rather than plain numbers, because the cell value reaches `draw` as it is.
 The shipped `draw` reads numbers only, so `draw` and `readings` must read the value the same way.
