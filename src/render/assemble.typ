@@ -110,7 +110,7 @@
     styles.insert(key, merged)
     styles
   })
-  let alignments = column-alignments(spec)
+  let alignments = column-alignments(spec, cells: cells)
   let stub-align = stub-alignment(spec)
   let metrics = metrics(
     spec,

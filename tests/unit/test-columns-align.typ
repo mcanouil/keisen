@@ -38,3 +38,25 @@
 
 // A named column is unaffected: the option decides the fallback, not the answer.
 #assert.eq(aligned((columns-align(center, columns: "units"),), uninferred), (start, center, start))
+
+// --- a combined column that splits ---
+//
+// Its values line up on their separators like numbers do, so it takes the end
+// edge like a numeric column. A combined column that does not split stays at
+// the start edge, and a named column still takes what it was given.
+
+#import "../../src/parts/columns.typ": columns-combine
+#import "../../src/format/number.typ": format-number
+#import "../../src/render/layout.typ": column-cells
+
+#let bounds = (low: (1.5, 2.5), high: (3.5, 4.5))
+#let combined(directives, theme) = {
+  let spec = build-spec(bounds, (format-number(("low", "high"), decimals: 1), ..directives), theme)
+  column-alignments(spec, cells: column-cells(spec))
+}
+#let interval = columns-combine("interval", ("low", "high"), (low, high) => [#low, #high])
+
+#assert.eq(combined((interval,), (:)), (end,))
+#assert.eq(combined((interval, columns-align(start, columns: "interval")), (:)), (start,))
+#assert.eq(combined((interval,), uninferred), (start,))
+#assert.eq(combined((columns-combine("interval", ("low", "high"), (low, high) => [#box(strong(low)) #high]),), (:)), (start,))

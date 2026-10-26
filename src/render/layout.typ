@@ -45,12 +45,23 @@
   if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
 }
 
-#let column-alignments(spec) = {
+// A combined column has no data of its own to infer from. When `cells` is
+// given, one with a row that split lines up its values on their separators, so
+// it takes the end edge like a numeric column.
+#let column-alignments(spec, cells: none) = {
   let infer = option(spec.options, "infer-alignment")
-  spec.columns.map(name => spec.align.at(
-    name,
-    default: if infer { infer-alignment(spec.data, name) } else { start },
-  ))
+  spec.columns.enumerate().map(((position, name)) => {
+    let inferred = if not infer {
+      start
+    } else if cells != none and cells.at(position).any(cell => (
+      type(cell) == dictionary and cell.at("kind", default: none) == "compound"
+    )) {
+      end
+    } else {
+      infer-alignment(spec.data, name)
+    }
+    spec.align.at(name, default: inferred)
+  })
 }
 
 // The stub is not in the column list, so it is read by name rather than by
