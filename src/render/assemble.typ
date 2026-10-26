@@ -273,11 +273,12 @@
 
   // Axis rows are plain cells: they are not data, so no style, mark or stripe
   // reaches them. The columns without an axis on that side stay empty.
+  let axes = column-axes(spec)
   let axis-cells(side) = {
     let out = ()
     if has-stub { out.push(table.cell([])) }
-    for (position, axes) in column-axes(spec).enumerate() {
-      let drawn = axes.at(side)
+    for (position, pair) in axes.enumerate() {
+      let drawn = pair.at(side)
       out.push(table.cell(align: alignments.at(position), if drawn == none [] else { drawn }))
     }
     out

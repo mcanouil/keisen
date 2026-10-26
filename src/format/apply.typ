@@ -261,7 +261,6 @@
 #let content-width(directive, given, inset) = {
   let (left, right) = _horizontal-inset(inset)
   if given == auto { return directive.nanoplot.width }
-  let hint = _WIDTH-HINT
   _check-fixed-width(given)
   let content = given - left - right
   // A width in em and the inset in pt (or the reverse) cannot be ordered outside
@@ -271,9 +270,17 @@
     "columns-width",
     "a nanoplot column is narrower than its cell inset",
     value: given,
-    hint: hint,
+    hint: _WIDTH-HINT,
   )
   content
+}
+
+// The content width of a column, from its `columns-width` entry. An entry of
+// `auto` names the column and gives it no width, which is not the same as
+// naming nothing.
+#let _column-content-width(directive, widths, name, inset) = {
+  if name in widths { _check-fixed-width(widths.at(name)) }
+  content-width(directive, widths.at(name, default: auto), inset)
 }
 
 #let _formatter(directive, values, options, width) = {
@@ -292,12 +299,7 @@
     directive,
     values,
     options,
-    if "nanoplot" in directive {
-      // An entry of `auto` names the column and gives it no width, which is not
-      // the same as naming nothing.
-      if name in widths { _check-fixed-width(widths.at(name)) }
-      content-width(directive, widths.at(name, default: auto), inset)
-    },
+    if "nanoplot" in directive { _column-content-width(directive, widths, name, inset) },
   ))
 
   rows.map(row => {
@@ -336,8 +338,7 @@
     if nanoplot.plot.axis == none { return none-drawn }
     let domain = shared-domain(column(spec.data, name), nanoplot.plot.readings, given: nanoplot.domain)
     if domain == none { return none-drawn }
-    if name in spec.widths { _check-fixed-width(spec.widths.at(name)) }
-    let width = content-width(directive, spec.widths.at(name, default: auto), inset)
+    let width = _column-content-width(directive, spec.widths, name, inset)
     (
       top: (nanoplot.plot.axis)(domain: domain, width: width, side: "top"),
       bottom: (nanoplot.plot.axis)(domain: domain, width: width, side: "bottom"),
