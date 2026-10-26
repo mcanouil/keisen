@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-10-26)
+
 ### Breaking changes
 
 - feat!: Nanoplot renderers are now built by calling them, as in `nanoplot-line()`, and a custom renderer is a dictionary with `draw`, `readings` and `axis`. (#124)

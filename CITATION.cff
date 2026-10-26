@@ -9,5 +9,5 @@ authors:
 repository-code: "https://github.com/mcanouil/keisen"
 url: "https://m.canouil.dev/keisen/"
 license: "MIT"
-version: 0.1.0
-date-released: "2026-10-16"
+version: 0.2.0
+date-released: "2026-10-26"
