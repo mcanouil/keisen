@@ -361,7 +361,9 @@
       })
     }
   }
-  _renderer(draw) + (
+  (
+    kind: "nanoplot-renderer",
+    draw: draw,
     readings: value => if _value-bar-number(value) == none { () } else { (_value-bar-number(value),) },
     axis: if axis { draw-axis } else { none },
   )

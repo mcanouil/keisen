@@ -42,6 +42,8 @@
   let empty = (bar.draw)(50, domain: none, width: 4em)
   assert.eq(measure(empty).width, width)
   assert.eq((nanoplot-value-bar(axis: true).axis)(domain: none, width: 4em, side: "top"), none)
+  // The draw reads the cell value as it is: a number is a bar, not a blank box.
+  assert.ne((bar.draw)(50, domain: (0, 100), width: 4em), empty)
 
   // The bar end, the gap and the label fit in the cell at both ends of the domain.
   for domain in ((14, 81), (-40, 60), (-90, 10)) {
