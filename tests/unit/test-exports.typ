@@ -20,6 +20,7 @@
   "format-nanoplot", "format-number",
   "format-percent", "format-scientific",
   "grand-summary-rows", "nanoplot-bar", "nanoplot-line", "nanoplot-points",
+  "nanoplot-value-bar",
   "style", "substitute-missing", "substitute-zero", "summary-rows",
   "table-footnote", "table-header", "table-options", "table-row-group", "table-source-note",
   "table-spanner", "table-stub", "table-style",

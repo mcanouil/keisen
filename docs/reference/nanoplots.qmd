@@ -2,7 +2,7 @@
 engine: markdown
 title: "Nanoplots"
 subtitle: "In-cell plots, drawn natively and scaled against one domain."
-description: "format-nanoplot and the three renderers Keisen ships: nanoplot-line, nanoplot-points, and nanoplot-bar."
+description: "format-nanoplot and the four renderers Keisen ships: nanoplot-line, nanoplot-points, nanoplot-bar, and nanoplot-value-bar."
 ---
 
 A nanoplot cell holds any value the renderer's `readings` function can read numbers from, and [`format-nanoplot`](formatters.qmd) draws it through the renderer given as `plot`.
@@ -14,13 +14,14 @@ The plot's `width` is a length in `em` or `pt`, not a percentage.
 A table with a nanoplot column needs `cell-inset` as a length or a dictionary of lengths, because the column width is computed from it.
 Where [`columns-width`](columns.qmd) names the column, it must be a fixed length in `em` or `pt`, wider than twice the cell inset: the plot gets what the inset leaves.
 
-Three renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
+Four renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
 
 | Function | Notable arguments |
 | --- | --- |
 | `nanoplot-line(..)` | `stroke: auto`, `thickness: 0.6pt`. A sparkline. |
 | `nanoplot-points(..)` | The same, plus `radius: 1pt`. A sparkline with its readings marked. |
 | `nanoplot-bar(..)` | `fill: auto`, `gap: 30%`. Bars, measured from zero. |
+| `nanoplot-value-bar(..)` | `fill: auto`, `label: auto`, `axis: false`. One bar per cell, labelled with its value. |
 
 : Nanoplot renderers {.striped .hover tbl-colwidths="[35,65]"}
 
@@ -82,4 +83,28 @@ The `plain` column beside it has no axis.
 //| file: ../../tests/visual/nanoplots-axis.typ
 //| echo: false
 //| alt: "A table of four regions in two groups, North and South, each closed by a bold Total row of units. The trend column has a small axis label reading 0.9 to 2.1 under its column label, and the same label again under the last body row, above the final Total row. Each body row holds a sparkline in the trend column and another in the plain column, which has no axis label."
+```
+
+## Value bar
+
+`nanoplot-value-bar` draws one number per cell as a bar from zero, with the number written after it.
+The number can be an integer, a float, or a decimal.
+The bars of a column share its domain, so their lengths can be compared.
+`fill` is `auto` for the text colour, a colour, a gradient, or a function from the value to a colour.
+A gradient is sampled at the position of the value in the range from zero, so the colour and the length of a bar agree.
+`label` is `auto` for the value rounded to a whole number, `none` for no label, or a function from the value to content or to a number.
+For a column of fractions, give a label function, since `auto` writes 0.2 as 0.
+The label has room of its own on the right of the track, sized from the label of the larger end of the domain.
+A custom label that is wider for another value than for the ends can run past the cell, and the column then fails: make `width` larger or shorten the label.
+The track spans zero and both ends of the domain.
+With an explicit `domain`, a value outside the track fails while it has a label, because the room is kept for the ends of the track; with `label: none`, its bar stops at the track end.
+With `axis: true`, the top and bottom axis rows write the ends of the track, formatted like the label.
+The low end starts at the track start, and the high end starts after the track end, in the room of the label.
+With `label: none`, the axis writes the rounded values, and the track keeps room for them.
+If the label of the low end is wider than the track, the column fails: make `width` larger.
+
+```{typst}
+//| file: ../../tests/visual/nanoplot-value-bar.typ
+//| echo: true
+//| alt: "A table of five products with a units column drawn as bars from zero. Bolt 14, Nut 50, Washer 81 and Screw 33 have bars to the right, coloured from light blue for small values to dark blue for large ones, each with its value written after the bar. Rebate has a short light bar to the left of zero, labelled -20. An axis row above and below the bars writes -20 at the start of the track and 81 at its end."
 ```
