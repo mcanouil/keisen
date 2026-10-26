@@ -195,15 +195,15 @@
 
 // A compound cell laid out as a run of boxes, one per piece, each as wide as
 // its position is down the column. Values sit against the end of their box, as
-// a number does in its column, and glue is centred, so a delimiter that varies
-// between rows stays over the same point. The run is pinned left to right like
+// a number does in its column, and glue against the start of its box, so a
+// comma stays beside the value before it when a bold row widens the box. The run is pinned left to right like
 // a single number, which reads left to right in every script. Overhang is off:
 // it lets a value's last full stop hang past its box, where the glue that
 // follows covers it, and `n.e.` reads as `n.e`.
 #let align-compound(cell, metric) = text(dir: ltr, overhang: false, {
   for (position, body) in compound-pieces(cell, metric).enumerate() {
     let measures = metric.pieces.at(position)
-    let placement = if measures.kind == "glue" { center } else { right }
+    let placement = if measures.kind == "glue" { left } else { right }
     box(width: measures.width, align(placement, body))
   }
 })
