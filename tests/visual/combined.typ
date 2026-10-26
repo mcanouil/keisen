@@ -1,6 +1,8 @@
 // One column built from several. The pattern reads the formatted content of its
 // sources, which is why the estimate keeps two decimals and the error three:
 // each source was formatted by its own directive before the pattern saw it.
+// Each value lines up with the same value in the other rows, and so do the
+// bracket and the dash between them.
 //
 // The labels are centred with `column-labels-align`. The stubhead and the
 // column labels both follow it.
@@ -38,9 +40,6 @@
     label: [95% CI],
   ),
   columns-label(p: [_p_]),
-  // A combined column holds content, not numbers, so no alignment is inferred
-  // for it. This puts it against the end edge.
-  columns-align(end, columns: "effect"),
   table-options(column-labels-align: center),
   table-source-note([Source: association study.]),
   theme: theme-booktabs(),

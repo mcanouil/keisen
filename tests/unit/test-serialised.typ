@@ -4,7 +4,7 @@
 #import "../../lib.typ": display-table
 #import "../../src/format/apply.typ": formatter-for
 #import "../../src/spec.typ": build-spec
-#import "../../src/render/layout.typ": column-cells
+#import "../../src/render/layout.typ": column-cells, slots-to-content
 #import "../../src/parts/substitutions.typ": substitute-zero
 #import "../../src/spec/serialised.typ": OPTION-KINDS, resolve-predicate, resolve-serialised
 
@@ -341,5 +341,8 @@
 #assert.eq(combined.labels.effect, [Effect])
 
 #let cells = column-cells(combined)
-#assert(repr(cells.first().first()).contains("1.23"))
-#assert(repr(cells.first().first()).contains("0.021"))
+#assert(repr(slots-to-content(cells.first().first())).contains("1.23"))
+#assert(repr(slots-to-content(cells.first().first())).contains("0.021"))
+// A template splits like a closure: the values and the text between them.
+#assert.eq(cells.first().first().kind, "compound")
+#assert.eq(cells.first().first().pieces.map(piece => piece.kind), ("value", "glue", "value", "glue"))

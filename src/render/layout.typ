@@ -6,6 +6,7 @@
 
 #import "../data.typ": column
 #import "../format/align.typ": align-slots, column-metrics
+#import "../format/compound.typ": align-compound, compound-metrics, split-matches, split-pattern, value-marker
 #import "../format/apply.typ": apply-formats, formatter-for, matches-column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
@@ -44,12 +45,23 @@
   if values.all(value => type(value) in (int, float, decimal)) { end } else { start }
 }
 
-#let column-alignments(spec) = {
+// A combined column has no data of its own to infer from. When `cells` is
+// given, one with a row that split lines up its values on their separators, so
+// it takes the end edge like a numeric column.
+#let column-alignments(spec, cells: none) = {
   let infer = option(spec.options, "infer-alignment")
-  spec.columns.map(name => spec.align.at(
-    name,
-    default: if infer { infer-alignment(spec.data, name) } else { start },
-  ))
+  spec.columns.enumerate().map(((position, name)) => {
+    let inferred = if not infer {
+      start
+    } else if cells != none and cells.at(position).any(cell => (
+      type(cell) == dictionary and cell.at("kind", default: none) == "compound"
+    )) {
+      end
+    } else {
+      infer-alignment(spec.data, name)
+    }
+    spec.align.at(name, default: inferred)
+  })
 }
 
 // The stub is not in the column list, so it is read by name rather than by
@@ -86,6 +98,7 @@
 #let slots-to-content(value) = {
   if value == none { return [] }
   if type(value) == content { return value }
+  if type(value) == dictionary and value.at("kind", default: none) == "compound" { return value.real }
   if type(value) == dictionary and value.at("kind", default: none) == "number" {
     let digits = value.integer + value.separator + value.fraction
     // Only the slots that carry something are joined, so a plain number stays
@@ -108,8 +121,15 @@
 //
 // A combined column has no data of its own: its cells are built by handing the
 // pattern the formatted content of its sources. That is why combine sits after
-// format in the pipeline, and why a combined column is opaque afterwards: the
-// pattern returns content, so there are no slots left to line up on.
+// format in the pipeline.
+//
+// The pattern returns content, which cannot be lined up, so it is also called
+// once with a marker in place of each source and its output split into values
+// and glue. With decimal alignment off it is not, so a pattern that cannot
+// take a marker still has a way to run. The markers are the same in every row, so one call serves the whole
+// column. A row keeps the split, as a compound cell, only when putting its own
+// values back gives what the pattern returned for them; a pattern that branches
+// on its values keeps its real output in the rows the split does not describe.
 #let column-cells(spec) = {
   let formatted(name) = apply-formats(
     spec.data,
@@ -127,9 +147,23 @@
     // The last directive wins, as everywhere else.
     let directive = combine.last()
     let sources = directive.from.map(formatted)
-    range(spec.data.len()).map(position => (directive.pattern)(
-      ..sources.map(cells => slots-to-content(cells.at(position))),
-    ))
+    let aligned = option(spec.options, "decimal-align")
+    let marked = if aligned { (directive.pattern)(..range(sources.len()).map(value-marker)) } else { none }
+    let pieces = if aligned { split-pattern(marked, sources.len()) } else { none }
+    range(spec.data.len()).map(position => {
+      let values = sources.map(cells => cells.at(position))
+      let contents = values.map(slots-to-content)
+      let real = (directive.pattern)(..contents)
+      // A cell of words has no separator to line up on, and padding each word
+      // to the widest in the column would only open gaps between them.
+      let numeric = values.any(value => type(value) == dictionary and value.at("kind", default: none) == "number")
+      if pieces == none or not numeric or not split-matches(marked, real, contents) { return real }
+      (
+        kind: "compound",
+        pieces: pieces.map(piece => if piece.kind == "value" { piece + (value: values.at(piece.index)) } else { piece }),
+        real: real,
+      )
+    })
   })
 }
 
@@ -235,9 +269,20 @@
       let summary = addressed
         .map(item => (slots: summary-slots(spec, item.entry, name), style: text-style(item.part, item.row, name)))
         .filter(item => item.slots != none)
-      column-metrics(
-        body + summary.map(item => item.slots),
-        styles: range(body.len()).map(row => text-style("body", row, name)) + summary.map(item => item.style),
-      )
+      let styles = range(body.len()).map(row => text-style("body", row, name))
+      let compound = compound-metrics(body, styles)
+      if compound != none { return compound }
+      column-metrics(body + summary.map(item => item.slots), styles: styles + summary.map(item => item.style))
     })
+}
+
+// One body cell as it renders: a compound cell as its run of boxes, a number
+// padded to its column's separator, anything else as it is.
+#let align-cell(value, metric) = {
+  let compound = type(value) == dictionary and value.at("kind", default: none) == "compound"
+  if compound and metric != none and metric.at("kind", default: none) == "compound" {
+    return align-compound(value, metric)
+  }
+  if metric != none and metric.at("kind", default: none) == "compound" { return slots-to-content(value) }
+  slots-to-content(align-slots(value, metric))
 }
