@@ -340,9 +340,17 @@
     let domain = shared-domain(column(spec.data, name), nanoplot.plot.readings, given: nanoplot.domain)
     if domain == none { return none-drawn }
     let width = _column-content-width(directive, spec.widths, name, inset)
-    (
-      top: (nanoplot.plot.axis)(domain: domain, width: width, side: "top"),
-      bottom: (nanoplot.plot.axis)(domain: domain, width: width, side: "bottom"),
-    )
+    let draw(side) = {
+      let drawn = (nanoplot.plot.axis)(domain: domain, width: width, side: side)
+      check(
+        type(drawn) in (content, str, type(none)),
+        "format-nanoplot",
+        "axis must return content or none",
+        value: drawn,
+        hint: "Return none for no axis on that side.",
+      )
+      drawn
+    }
+    (top: draw("top"), bottom: draw("bottom"))
   })
 }

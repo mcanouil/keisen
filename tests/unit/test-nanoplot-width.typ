@@ -42,12 +42,12 @@
   assert.eq(measure(table).width, 5em.to-absolute() + 0pt)
 }
 
-// A set table width does not stretch a nanoplot column: the cell is laid out in
-// its own track, and a stretched track would be wider than the plot.
+// A set table width does not stretch a nanoplot column. The cells are boxed at
+// the plot width whatever the track, so the probe is the axis, which sits in the
+// cell unboxed and is laid out at what the track leaves inside the inset.
 #let probe = nanoplot-line() + (
-  draw: (value, domain: none, width: 4em, height: 0.8em) => layout(size => {
-    assert(size.width <= 5em.to-absolute() + 0.1pt, message: "nanoplot track stretched to " + repr(size.width))
-    box(width: width, height: height)
+  axis: (domain: none, width: none, side: none) => layout(size => {
+    assert(size.width <= 4em.to-absolute() + 0.1pt, message: "nanoplot track stretched to " + repr(size.width))
   }),
 )
 #context {

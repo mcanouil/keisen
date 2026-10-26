@@ -1,4 +1,5 @@
 ---
+engine: markdown
 title: "Nanoplots"
 subtitle: "In-cell plots, drawn natively and scaled against one domain."
 description: "format-nanoplot and the three renderers Keisen ships: nanoplot-line, nanoplot-points, and nanoplot-bar."
@@ -10,6 +11,7 @@ The domain spans every reading in the column, taken from the column itself, so t
 
 A nanoplot column sizes itself to the plot's `width` plus the cell inset on both sides, and a set `table-width` does not stretch it.
 The plot's `width` is a length in `em` or `pt`, not a percentage.
+A table with a nanoplot column needs `cell-inset` as a length or a dictionary of lengths, because the column width is computed from it.
 Where [`columns-width`](columns.qmd) names the column, it must be a fixed length in `em` or `pt`, wider than twice the cell inset: the plot gets what the inset leaves.
 
 Three renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.
@@ -61,7 +63,7 @@ A renderer that reads the salary draws it:
 ## Axis
 
 The `axis` key of a renderer is `none`, or a function that draws an axis.
-It receives `domain`, `width` and `side`, where `side` is `"top"` or `"bottom"`, and it returns content or `none`.
+`axis(domain: .., width: .., side: ..)` takes named arguments only, where `side` is `"top"` or `"bottom"`, and it returns content or `none`.
 The domain is the one the column's plots share, and the width is the width of the plot inside the cell.
 
 A renderer with an axis adds up to two rows to the table.
@@ -72,3 +74,12 @@ A column with no readings has no domain and gets no axis.
 
 The axis rows are not body rows.
 Striping, summaries, `rows` selectors, locations and styles do not see them.
+
+The table below draws an axis that writes the domain of the `trend` column.
+The `plain` column beside it has no axis.
+
+```{typst}
+//| file: ../../tests/visual/nanoplots-axis.typ
+//| echo: false
+//| alt: "A table of four regions in two groups, North and South, each closed by a bold Total row of units. The trend column has a small axis label reading 0.9 to 2.1 under its column label, and the same label again under the last body row, above the final Total row. Each body row holds a sparkline in the trend column and another in the plain column, which has no axis label."
+```
