@@ -56,3 +56,34 @@
 #assert.eq(split-pattern(call((low, high) => [text]), 2), none)
 // A wrapper holding more than the value.
 #assert.eq(split-pattern(call((low, high) => [#strong[#low x] #high]), 2), none)
+
+// --- a split is checked against the real call ---
+//
+// The marker call cannot see a pattern that branches on its values, so the
+// split is only kept when putting the real values back where the markers were
+// gives exactly what the pattern returns for them.
+
+#import "../../src/format/compound.typ": split-matches
+
+#let agrees(pattern, ..values) = {
+  let values = values.pos()
+  split-matches(pattern(..range(values.len()).map(value-marker)), pattern(..values), values)
+}
+
+#assert(agrees((low, high) => [#low, #high], [0.07], [0.29]))
+// `+` flattens a value built of several pieces, markup nests it.
+#let currency = ([−], [€], [5.00]).join()
+#assert(agrees((low, high) => low + [, ] + high, currency, [1]))
+#assert(agrees((low, high) => [#low, #high], currency, [1]))
+#assert(agrees((low, high) => [#low, #high], [], [1]))
+#assert(agrees((low, high) => [#strong(low) -- #high], currency, [1]))
+#assert(agrees((low, high) => [#text(fill: red, low) #high], [0.07], [1]))
+
+// A pattern that drops the error when it is missing.
+#let drops = (estimate, error) => if error == [—] [#estimate] else [#estimate (#error)]
+#assert(agrees(drops, [1.2], [0.3]))
+#assert(not agrees(drops, [1.2], [—]))
+
+// A pattern that picks its glue from a value.
+#let picks = (low, high) => if low == [0] [#low to #high] else [#low, #high]
+#assert(not agrees(picks, [0], [1]))

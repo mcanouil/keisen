@@ -85,3 +85,48 @@
   if seen.sorted() != range(count) { return none }
   pieces
 }
+
+// Whether the split of `marker-output` describes `real-output`, the pattern's
+// output for `values`. The marker call cannot see a pattern that branches on
+// its values, such as one that drops a missing error, so the split is kept
+// only when putting each value back where its marker was gives exactly the
+// real output. Both sides are compared flattened, since `+` and markup nest
+// the same value differently.
+//
+// A wrapper is compared field by field around its value. Its `styles`, which
+// is what `text(..)` with settings carries, is left out: two `styles` never
+// compare equal, even when built from the same settings.
+#let split-matches(marker-output, real-output, values) = {
+  let real = flatten(real-output)
+  let at = 0
+  for child in flatten(marker-output) {
+    let index = _marker-index(child)
+    if index != none {
+      let expected = flatten(values.at(index))
+      if real.slice(at, calc.min(at + expected.len(), real.len())) != expected { return false }
+      at += expected.len()
+      continue
+    }
+    if at >= real.len() { return false }
+    let found = real.at(at)
+    at += 1
+    let wrapped = if type(child) == content { _wrapped-index(child) } else { none }
+    if wrapped == none {
+      if found != child { return false }
+      continue
+    }
+    if type(found) != content or found.func() != child.func() { return false }
+    let mine = child.fields()
+    let theirs = found.fields()
+    if mine.keys().sorted() != theirs.keys().sorted() { return false }
+    for (name, field) in mine {
+      if name == "styles" { continue }
+      if name in ("body", "child") {
+        if flatten(theirs.at(name)) != flatten(values.at(wrapped)) { return false }
+      } else if theirs.at(name) != field {
+        return false
+      }
+    }
+  }
+  at == real.len()
+}
