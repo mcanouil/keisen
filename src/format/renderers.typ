@@ -221,16 +221,6 @@
   (calc.min(0.0, low), calc.max(0.0, high))
 }
 
-// Where the bar starts and ends along the track, as fractions of it. A bar runs
-// from zero to the value, so a negative one runs from its value up to zero.
-#let _value-bar-geometry(value, domain) = {
-  let (base, peak) = _value-bar-range(domain)
-  let span = peak - base
-  if span == 0 { return (start: 0, end: 0) }
-  let at(position) = calc.clamp((position - base) / span, 0, 1)
-  (start: calc.min(at(value), at(0.0)), end: calc.max(at(value), at(0.0)))
-}
-
 // The position of a value in the zero-based range, which is where a gradient is
 // sampled.
 #let _value-bar-fraction(value, domain) = {
@@ -238,6 +228,16 @@
   let span = peak - base
   if span == 0 { 0 } else { calc.clamp((value - base) / span, 0, 1) }
 }
+
+// Where the bar starts and ends along the track, as fractions of it. A bar runs
+// from zero to the value, so a negative one runs from its value up to zero.
+#let _value-bar-geometry(value, domain) = {
+  let (at-value, at-zero) = (_value-bar-fraction(value, domain), _value-bar-fraction(0.0, domain))
+  (start: calc.min(at-value, at-zero), end: calc.max(at-value, at-zero))
+}
+
+// The space between the end of the track and a label.
+#let _VALUE-BAR-GAP = 0.3em
 
 // The number a cell holds, or none for a value that is not one.
 #let _value-bar-number(value) = if type(value) in (int, float, decimal) { float(value) } else { none }
@@ -255,7 +255,7 @@
   let (base, peak) = _value-bar-range(domain)
   let widest = if calc.abs(base) > calc.abs(peak) { base } else { peak }
   let room = calc.max(measure(_value-bar-label(label, widest)).width, measure(_value-bar-label(label, peak)).width)
-  room + 0.3em.to-absolute()
+  room + _VALUE-BAR-GAP.to-absolute()
 }
 
 // Where the axis writes the two ends of the track. The base label starts at the
@@ -277,14 +277,14 @@
   )
   (
     base: (x: 0pt, width: first-width, content: first),
-    peak: (x: track + 0.3em.to-absolute(), width: measure(last).width, content: last),
+    peak: (x: track + _VALUE-BAR-GAP.to-absolute(), width: measure(last).width, content: last),
   )
 }
 
 // Where the label starts: right of the end of the bar, and for a negative value
 // right of zero, since the end of the bar is the larger of the value and zero.
 #let _value-bar-label-x(value, domain, label, width) = {
-  (width - _value-bar-room(label, domain)) * _value-bar-geometry(value, domain).end + 0.3em.to-absolute()
+  (width - _value-bar-room(label, domain)) * _value-bar-geometry(value, domain).end + _VALUE-BAR-GAP.to-absolute()
 }
 
 #let _value-bar-paint(fill, value, domain) = {
@@ -364,7 +364,10 @@
   (
     kind: "nanoplot-renderer",
     draw: draw,
-    readings: value => if _value-bar-number(value) == none { () } else { (_value-bar-number(value),) },
+    readings: value => {
+      let number = _value-bar-number(value)
+      if number == none { () } else { (number,) }
+    },
     axis: if axis { draw-axis } else { none },
   )
 }
