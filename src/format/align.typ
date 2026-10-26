@@ -10,15 +10,21 @@
 ///! left-aligned fraction box, every box being the column's widest.
 
 // The widest rendering of each slot in a column, measured with the text
-// settings in force where the table sits.
-#let column-metrics(slots) = {
-  let numbers = slots.filter(value => (
+// settings in force where the table sits. `styles`, when given, holds one
+// `text` argument dictionary or `none` per cell: a bold row renders its digits
+// wider, and a box measured at regular weight would wrap them.
+#let column-metrics(slots, styles: none) = {
+  let styles = if styles == none { (none,) * slots.len() } else { styles }
+  let numbers = slots.zip(styles).filter(((value, style)) => (
     type(value) == dictionary and value.at("kind", default: none) == "number"
   ))
   if numbers.len() == 0 { return none }
 
   let widest(render) = {
-    let widths = numbers.map(value => measure(render(value)).width)
+    let widths = numbers.map(((value, style)) => {
+      let body = render(value)
+      measure(if style == none { body } else { text(..style, body) }).width
+    })
     if widths.len() == 0 { 0pt } else { calc.max(..widths) }
   }
 
