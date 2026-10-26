@@ -7,7 +7,7 @@
   aggregate-sum, columns-combine, columns-hide, columns-label, columns-move, format-number,
   grand-summary-rows, table-stub,
 )
-#import "../../src/render/layout.typ": column-cells
+#import "../../src/render/layout.typ": column-cells, slots-to-content
 #import "../../src/spec.typ": build-spec
 
 #let data = (
@@ -39,7 +39,7 @@
 // Compared by what the cell holds rather than by how the pattern's pieces
 // happen to nest: the same words in the same order are the same cell.
 #let holds(cell, ..parts) = {
-  let text = repr(cell)
+  let text = repr(slots-to-content(cell))
   let at = 0
   for part in parts.pos() {
     let found = text.position(part)
@@ -54,9 +54,44 @@
 #holds(cells.at(1).first(), "1.23", "0.021")
 #holds(cells.at(1).last(), "\u{2212}0.57", "0.043")
 
-// A combined cell is content, so it carries no slots to line up on: a combined
-// column is opaque, which is the price of the pattern being free-form.
-#assert.eq(type(cells.at(1).first()), content)
+// A combined cell is split into its values and the glue between them, so each
+// value can line up down the column. It keeps what the pattern returned, which
+// is what it renders as when nothing is lined up.
+#let first = cells.at(1).first()
+#assert.eq(first.kind, "compound")
+#assert.eq(first.pieces.map(piece => piece.kind), ("value", "glue", "value", "glue"))
+#assert.eq(first.pieces.first().value, column-cells(build-spec(data, (format-number("estimate", decimals: 2),), (:))).at(1).first())
+#assert.eq(first.real, [#slots-to-content(first.pieces.first().value) (#slots-to-content(first.pieces.at(2).value))])
+#assert.eq(slots-to-content(first), first.real)
+
+// A pattern that branches on its values keeps, for the rows the split does not
+// describe, exactly what it returned.
+#let branching = build-spec(
+  data,
+  (
+    format-number("estimate", decimals: 2),
+    format-number("error", decimals: 3),
+    columns-combine(
+      "effect",
+      ("estimate", "error"),
+      (value, margin) => if repr(margin).contains("043") [#value] else [#value (#margin)],
+    ),
+  ),
+  (:),
+)
+#let branched = column-cells(branching).at(1)
+#assert.eq(branched.first().kind, "compound")
+#assert.eq(type(branched.last()), content)
+#holds(branched.last(), "0.57")
+#assert(not repr(branched.last()).contains("043"))
+
+// With decimal alignment off, a combined cell is the pattern's content.
+#let unaligned = column-cells(build-spec(
+  data,
+  (columns-combine("effect", ("estimate", "error"), (value, margin) => [#value (#margin)]),),
+  (decimal-align: false),
+))
+#assert.eq(type(unaligned.at(1).first()), content)
 
 // The label defaults to the name the column was given, and columns-label names
 // it like any other.

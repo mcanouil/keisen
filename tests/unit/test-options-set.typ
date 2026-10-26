@@ -192,7 +192,6 @@
   "table-font-size",
   "table-align",
   "breakable",
-  "decimal-align",
   "header-title-size",
   "header-title-weight",
   "header-subtitle-size",

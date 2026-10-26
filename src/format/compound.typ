@@ -20,16 +20,15 @@
 }
 
 // The children of a content tree, with nested sequences expanded in place and
-// empty sequences dropped. `+` flattens a sequence it joins and markup nests
-// it, so two calls that build the same text can differ only in nesting; this
-// is the form they are compared in.
+// empty sequences and empty text dropped. `+` flattens a sequence it joins and
+// markup nests it, so two calls that build the same text can differ only in
+// nesting; this is the form they are compared in. A serialised template
+// writes an empty text node before a leading value, which is no glue.
 #let flatten(body) = {
   if type(body) != content { return (body,) }
-  if body.func() == [].func() {
-    body.children.map(flatten).join(default: ())
-  } else {
-    (body,)
-  }
+  if body.func() == [].func() { return body.children.map(flatten).join(default: ()) }
+  if body.func() == text and body.text == "" { return () }
+  (body,)
 }
 
 // The marker an element wraps, when the marker is its only content: `strong`,

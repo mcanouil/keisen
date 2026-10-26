@@ -14,6 +14,8 @@
 #assert.eq(flatten([] + [a]), ([a],))
 #assert.eq(flatten([#([a] + [b]) c]), flatten([a] + [b] + [ c]))
 #assert.eq(flatten([]), ())
+// An empty text node, which a template writes before a leading value, is no glue.
+#assert.eq(flatten([#""] + [a]), ([a],))
 
 // --- patterns that split ---
 
