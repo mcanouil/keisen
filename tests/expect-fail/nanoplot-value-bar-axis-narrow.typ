@@ -1,6 +1,6 @@
 // The base label of the axis starts at the track start and must end before the
 // peak label begins, so a track narrower than it is refused.
-// expect: nanoplot-value-bar: the axis label of the domain's low is wider than the track
+// expect: nanoplot-value-bar: the axis label of the track's low is wider than the track
 // expect: got -200.0.
 // expect: Widen the plot with width, or shorten the label.
 #import "../../lib.typ": *

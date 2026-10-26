@@ -271,7 +271,7 @@
   check(
     first-width <= track,
     "nanoplot-value-bar",
-    "the axis label of the domain's low is wider than the track",
+    "the axis label of the track's low is wider than the track",
     value: base,
     hint: "Widen the plot with width, or shorten the label.",
   )

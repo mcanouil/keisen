@@ -42,8 +42,11 @@
 #assert.eq(_value-bar-label(auto, -19.6), "\u{2212}20")
 
 // An explicit domain is a window: with no label, a value outside it draws a bar
-// that stops at the track end.
-#assert.eq(type((nanoplot-value-bar(label: none).draw)(1000, domain: (0, 10), width: 4em)), content)
+// that stops at the track end. Measuring lays the cell out, which runs its checks.
+#context {
+  let cell = (nanoplot-value-bar(label: none).draw)(1000, domain: (0, 10), width: 4em)
+  assert.eq(measure(cell).width, 4em.to-absolute())
+}
 
 #context {
   let width = 4em.to-absolute()
@@ -70,7 +73,7 @@
   // A negative reading is labelled right of zero, inside the cell.
   let domain = (-40, 60)
   let offset = _value-bar-label-x(-20, domain, width - _value-bar-room(auto, domain))
-  let label = measure("-20").width
+  let label = measure(_value-bar-label(auto, -20)).width
   assert(offset >= (width - _value-bar-room(auto, domain)) * 0.4 + gap - 0.01pt)
   assert(offset + label <= width + 0.01pt)
 
