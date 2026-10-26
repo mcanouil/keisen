@@ -7,7 +7,7 @@
 ///! alignment, and strokes are decided.
 
 #import "../format/align.typ": align-slots
-#import "../format/apply.typ": matches-column
+#import "../format/apply.typ": column-axes, matches-column, nanoplot-directives, nanoplot-track, widest-nanoplot
 #import "../parts/colour.typ": colour-styles
 #import "../parts/marks.typ": assign-marks, footer-notes, marks-for
 #import "../parts/summaries.typ": summary-values
@@ -60,9 +60,10 @@
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
+  let axes = column-axes(spec)
   // The plan carries the spanner rows it counted, so the header the renderer
   // emits and the header the plan described cannot come from different calls.
-  let (rows: plan, spanners: levels) = build-plan(spec)
+  let (rows: plan, spanners: levels) = build-plan(spec, axes: axes)
   let indices = range(names.len())
   let cells = column-cells(spec)
   let footnotes = assign-marks(spec)
@@ -271,6 +272,20 @@
     ))
   }
 
+  // Axis rows are plain cells: they are not data, so no style, mark or stripe
+  // reaches them. The columns without an axis on that side stay empty.
+  let axis-cells(side) = {
+    let out = ()
+    if has-stub { out.push(table.cell([])) }
+    for (position, pair) in axes.enumerate() {
+      let drawn = pair.at(side)
+      out.push(table.cell(align: alignments.at(position), if drawn == none [] else { drawn }))
+    }
+    out
+  }
+  let has-top-axis = plan.any(entry => entry.part == "axis-top")
+  if has-top-axis { labels += axis-cells("top") }
+
   // Group labels are their own headers, so the body is assembled entry by entry
   // rather than as one block of rows.
   let rows = ()
@@ -304,6 +319,8 @@
         repeat: false,
         ..summary-row(summaries.grand.at(entry.source), PARTS.grand-summary, entry.source),
       ))
+    } else if entry.part == "axis-bottom" {
+      rows += axis-cells("bottom")
     } else if entry.part == "body" {
       if has-stub {
         let body = stub-body(spec, stub-content.at(entry.source), depths.at(entry.source))
@@ -371,7 +388,16 @@
   let sized = setting("table-width") != auto
   let track(name) = {
     let given = spec.widths.at(name, default: auto)
-    if given != auto { given } else if sized { 1fr } else { auto }
+    let plot = widest-nanoplot(nanoplot-directives(spec.formats, name))
+    if given != auto {
+      given
+    } else if plot != none {
+      nanoplot-track(plot, setting("cell-inset"))
+    } else if sized {
+      1fr
+    } else {
+      auto
+    }
   }
   let tracks = if has-stub { (track(spec.stub.rowname),) } else { () }
   for name in names { tracks.push(track(name)) }
@@ -392,13 +418,14 @@
   // Rows the table will hold, so its own rules land on the first and the last
   // whatever the parts turn out to be. A table with no notes used to lose its
   // closing rule entirely, because the footer drew it.
-  let body-rows = plan.filter(entry => entry.part in ("group", "body", "summary", "grand-summary"))
-  let row-count = head.len() + levels.len() + 1 + body-rows.len() + notes.len()
+  let body-rows = plan.filter(entry => entry.part in ("group", "body", "axis-bottom", "summary", "grand-summary"))
+  let header-rows = levels.len() + 1 + int(has-top-axis)
+  let row-count = head.len() + header-rows + body-rows.len() + notes.len()
 
   // Where the body opens and closes: the title block and the header are counted
   // from what was built above them, so the body opens under them and closes
   // wherever the footer begins.
-  let body-opens = head.len() + levels.len() + 1
+  let body-opens = head.len() + header-rows
   let body-closes = body-opens + body-rows.len() - 1
 
   wrap(table(

@@ -5,6 +5,7 @@
 ///! came from, and whether it takes a stripe. Nothing downstream does row
 ///! arithmetic of its own.
 
+#import "../format/apply.typ": column-axes
 #import "../parts/spanners.typ": spanner-rows
 #import "../parts/summaries.typ": directives-for, summary-count
 
@@ -18,7 +19,8 @@
 // The plan and the spanner rows it counted, returned together: the renderer
 // needs both, and computing the rows twice left the count and the list free to
 // disagree with nothing to notice.
-#let build-plan(spec) = {
+// `axes` takes the column axes when the caller has drawn them already.
+#let build-plan(spec, axes: auto) = {
   let plan = ()
   let spanners = spanner-rows(spec)
 
@@ -33,6 +35,11 @@
     plan.push(entry("spanner", level: 2, source: index))
   }
   plan.push(entry("labels", level: 2))
+
+  // A renderer may draw an axis above the first body row and below the last.
+  // The rows exist only when some column has one, and neither takes a stripe.
+  let axes = if axes == auto { column-axes(spec) } else { axes }
+  if axes.any(pair => pair.top != none) { plan.push(entry("axis-top", level: 2)) }
 
   // Striping is computed from the body row position here rather than from a
   // show rule at render time, so its phase survives a page break. It counts
@@ -70,6 +77,12 @@
         plan.push(entry("summary", source: (group: index, row: row)))
       }
     }
+  }
+
+  // Right after the last body row, ahead of any summaries that follow it.
+  if axes.any(pair => pair.bottom != none) {
+    let last = plan.rev().position(entry => entry.part == "body")
+    if last != none { plan.insert(plan.len() - last, entry("axis-bottom")) }
   }
 
   for row in range(summary-count(spec.grand-summaries)) {

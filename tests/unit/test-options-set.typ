@@ -3,7 +3,7 @@
 // `test-options-read.typ` holds every declared key to being read by a renderer,
 // which is why an option nothing sets was never reported: it is read, in a
 // branch or a cell nothing had ever asked for. Thirty-one of the forty-six were
-// set by no test, and this list records the twenty-seven that still are.
+// set by no test, and this list records the twenty-six that still are.
 //
 // A key covered tomorrow comes off the list, and a key declared tomorrow is
 // covered or added here on purpose, so the list can only shrink.
@@ -122,6 +122,8 @@
   source("../expect-fail/move-anchor-stub.typ"),
   source("../expect-fail/move-duplicate-column.typ"),
   source("../expect-fail/move-unknown-column.typ"),
+  source("../expect-fail/nanoplot-cell-inset-array.typ"),
+  source("../expect-fail/nanoplot-cell-inset-function.typ"),
   source("../expect-fail/options-positional.typ"),
   source("../expect-fail/options-unknown-option.typ"),
   source("../expect-fail/theme-not-a-dictionary.typ"),
@@ -146,6 +148,8 @@
   source("test-marks-order.typ"),
   source("test-marks.typ"),
   source("test-nanoplot.typ"),
+  source("test-nanoplot-width.typ"),
+  source("test-nanoplot-axis.typ"),
   source("test-options.typ"),
   source("test-row-groups.typ"),
   source("test-row-plan.typ"),
@@ -174,6 +178,7 @@
   source("../visual/gallery-regression-keisen.typ"),
   source("../visual/grouped.typ"),
   source("../visual/nanoplots.typ"),
+  source("../visual/nanoplots-axis.typ"),
   source("../visual/row-groups.typ"),
   source("../visual/rules.typ"),
   source("../visual/summaries.typ"),
@@ -184,7 +189,6 @@
   "table-font",
   "table-font-size",
   "table-align",
-  "table-width",
   "breakable",
   "decimal-align",
   "header-title-size",

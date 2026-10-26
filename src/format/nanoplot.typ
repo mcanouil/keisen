@@ -49,7 +49,7 @@
 #let nanoplot-cell(options, domain, width) = value => {
   if _readings-of(options.plot.readings, value).len() == 0 { return [] }
   box(
-    width: options.width,
+    width: width,
     height: options.height,
     baseline: options.baseline,
     (options.plot.draw)(value, domain: domain, width: width, height: options.height),
@@ -111,6 +111,11 @@
       value: size,
       hint: "Give it in em or pt: resolving a fraction inside a cell forbids page breaking there.",
     )
+  }
+  // The column is sized from the plot width, so it is a fixed length: a
+  // percentage has no column width to be a share of until the column has one.
+  if type(width) != length {
+    fail-type("format-nanoplot", "width", width, "a length", hint: "Give it in em or pt.")
   }
 
   (
