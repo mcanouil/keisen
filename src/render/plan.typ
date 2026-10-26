@@ -19,7 +19,8 @@
 // The plan and the spanner rows it counted, returned together: the renderer
 // needs both, and computing the rows twice left the count and the list free to
 // disagree with nothing to notice.
-#let build-plan(spec) = {
+// `axes` takes the column axes when the caller has drawn them already.
+#let build-plan(spec, axes: auto) = {
   let plan = ()
   let spanners = spanner-rows(spec)
 
@@ -37,7 +38,7 @@
 
   // A renderer may draw an axis above the first body row and below the last.
   // The rows exist only when some column has one, and neither takes a stripe.
-  let axes = column-axes(spec)
+  let axes = if axes == auto { column-axes(spec) } else { axes }
   if axes.any(pair => pair.top != none) { plan.push(entry("axis-top", level: 2)) }
 
   // Striping is computed from the body row position here rather than from a

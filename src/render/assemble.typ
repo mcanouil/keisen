@@ -60,9 +60,10 @@
   let names = spec.columns
   let has-stub = spec.stub.rowname != none
   let width = calc.max(names.len() + int(has-stub), 1)
+  let axes = column-axes(spec)
   // The plan carries the spanner rows it counted, so the header the renderer
   // emits and the header the plan described cannot come from different calls.
-  let (rows: plan, spanners: levels) = build-plan(spec)
+  let (rows: plan, spanners: levels) = build-plan(spec, axes: axes)
   let indices = range(names.len())
   let cells = column-cells(spec)
   let footnotes = assign-marks(spec)
@@ -273,7 +274,6 @@
 
   // Axis rows are plain cells: they are not data, so no style, mark or stripe
   // reaches them. The columns without an axis on that side stay empty.
-  let axes = column-axes(spec)
   let axis-cells(side) = {
     let out = ()
     if has-stub { out.push(table.cell([])) }

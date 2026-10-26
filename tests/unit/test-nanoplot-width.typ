@@ -14,7 +14,18 @@
 #assert.eq(content-width(directive, 6em, (x: 0.5em, y: 2pt)), 5em)
 #assert.eq(nanoplot-track(directive, (x: 0.5em, y: 2pt)), 5em)
 #assert.eq(nanoplot-track(directive, (left: 1em, rest: 2pt)), 4em + 1em + 2pt)
-#assert.eq(nanoplot-track(directive, (top: 1em)), 4em)
+// A side the dictionary does not name keeps Typst's table inset of 5pt, since
+// the same dictionary is handed to the table.
+#assert.eq(nanoplot-track(directive, (top: 1em)), 4em + 5pt + 5pt)
+#assert.eq(nanoplot-track(directive, (left: 1em)), 4em + 1em + 5pt)
+#context {
+  let table = display-table(
+    (trend: ((1, 2, 3), (3, 2, 1))),
+    format-nanoplot("trend", plot: nanoplot-line(), width: 4em),
+    table-options(cell-inset: (y: 0.4em)),
+  )
+  assert.eq(measure(table).width, 4em.to-absolute() + 10pt)
+}
 // A side wins over `x`, and each side is read on its own.
 #assert.eq(content-width(directive, 8em, (left: 0.5em, right: 2em)), 5.5em)
 #assert.eq(nanoplot-track(directive, (left: 0.5em, right: 2em)), 6.5em)

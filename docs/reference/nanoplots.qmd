@@ -9,6 +9,7 @@ The domain spans every reading in the column, taken from the column itself, so t
 `domain: (low, high)` overrides it for a column read against a scale that is not its own.
 
 A nanoplot column sizes itself to the plot's `width` plus the cell inset on both sides, and a set `table-width` does not stretch it.
+The plot's `width` is a length in `em` or `pt`, not a percentage.
 Where [`columns-width`](columns.qmd) names the column, it must be a fixed length in `em` or `pt`, wider than twice the cell inset: the plot gets what the inset leaves.
 
 Three renderers ship, each drawn with native Typst primitives and each built by calling it, as in `plot: nanoplot-line()`.

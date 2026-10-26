@@ -210,11 +210,12 @@
 }
 
 // The left and right shares of a cell inset, following Typst: a side wins over
-// `x`, which wins over `rest`, and a side nothing names is nil. Read only for a
-// nanoplot column, so a table without one keeps whatever inset it had.
+// `x`, which wins over `rest`, and a side nothing names keeps the table's own
+// 5pt, as the table it is handed to does. Read only for a nanoplot column, so a
+// table without one keeps whatever inset it had.
 #let _horizontal-inset(inset) = {
   if type(inset) != dictionary { return (left: _inset-length(inset, inset), right: _inset-length(inset, inset)) }
-  let side(name) = _inset-length(inset, inset.at(name, default: inset.at("x", default: inset.at("rest", default: 0pt))))
+  let side(name) = _inset-length(inset, inset.at(name, default: inset.at("x", default: inset.at("rest", default: 5pt))))
   (left: side("left"), right: side("right"))
 }
 
