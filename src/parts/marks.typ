@@ -13,7 +13,9 @@
 // data happened to arrive in. Grouping reorders rows, and marks must follow.
 #let _display-order(spec) = {
   let order = (:)
-  for (position, entry) in build-plan(spec).rows.enumerate() {
+  // Positions only order the rows, and an axis row holds no source, so the
+  // axes are not drawn for this.
+  for (position, entry) in build-plan(spec, axes: ()).rows.enumerate() {
     if entry.source == none { continue }
     // Keyed by `repr` rather than `str`, because a summary row is identified by
     // the pair `(group, row)` and would otherwise have no place in the order.
