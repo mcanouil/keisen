@@ -191,39 +191,27 @@
   )
 }
 
-#let _renderer(draw) = (kind: "nanoplot-renderer", draw: draw, readings: _values-of, axis: none)
-
-#let nanoplot-line(stroke: auto, thickness: 0.6pt) = _renderer(
-  (value, domain: none, width: 4em, height: 0.8em) => _line(
+// The three draw a series of numbers, so each reads the cell value with the
+// same function it gives as its readings.
+#let _renderer(plot) = (
+  kind: "nanoplot-renderer",
+  draw: (value, domain: none, width: 4em, height: 0.8em) => plot(
     _values-of(value),
     domain: domain,
     width: width,
     height: height,
-    stroke: stroke,
-    thickness: thickness,
   ),
+  readings: _values-of,
+  axis: none,
 )
 
+#let nanoplot-line(stroke: auto, thickness: 0.6pt) = _renderer(_line.with(stroke: stroke, thickness: thickness))
+
 #let nanoplot-points(stroke: auto, thickness: 0.6pt, radius: 1pt) = _renderer(
-  (value, domain: none, width: 4em, height: 0.8em) => _points(
-    _values-of(value),
-    domain: domain,
-    width: width,
-    height: height,
-    stroke: stroke,
-    thickness: thickness,
-    radius: radius,
-  ),
+  _points.with(stroke: stroke, thickness: thickness, radius: radius),
 )
 
 #let nanoplot-bar(fill: auto, gap: 30%) = {
   _check-gap(gap)
-  _renderer((value, domain: none, width: 4em, height: 0.8em) => _bar(
-    _values-of(value),
-    domain: domain,
-    width: width,
-    height: height,
-    fill: fill,
-    gap: gap,
-  ))
+  _renderer(_bar.with(fill: fill, gap: gap))
 }
