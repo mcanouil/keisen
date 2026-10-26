@@ -9,16 +9,20 @@
 
 #import "align.typ": align-slots, column-metrics
 
-#let _KEY = "keisen-value"
+// A private-use character fences each marker, so no text a pattern writes is
+// mistaken for one.
+#let _FENCE = "\u{F8FF}"
+#let _marker-text(index) = _FENCE + str(index) + _FENCE
 
-// A marker for the source at `index`, counted from 0 in `from` order.
-#let value-marker(index) = metadata((keisen-value: index))
+// A marker for the source at `index`, counted from 0 in `from` order. It is
+// text, like the formatted content a pattern otherwise receives, so a pattern
+// that reads `.text` from its values runs on it too.
+#let value-marker(index) = text(_marker-text(index))
 
 #let _marker-index(body) = {
-  if type(body) != content or body.func() != metadata { return none }
-  let value = body.value
-  if type(value) != dictionary or value.keys() != (_KEY,) { return none }
-  value.at(_KEY)
+  if type(body) != content or body.func() != text { return none }
+  let found = body.text.match(regex("^" + _FENCE + "(\\d+)" + _FENCE + "$"))
+  if found == none { none } else { int(found.captures.first()) }
 }
 
 // The children of a content tree, with nested sequences expanded in place and
@@ -34,20 +38,20 @@
 }
 
 // The marker an element wraps, when the marker is its only content: `strong`,
-// `emph` and `highlight` hold it as `body`, and a `text(..)` call with
-// settings returns a styled element that holds it as `child`.
+// `emph` and `highlight` hold it as `body`. A `text(..)` call with settings
+// returns a styled element instead, whose settings cannot be compared with
+// another row's, so a pattern that picks them from its values would go
+// unnoticed; it is not a wrapper, and the cell does not split.
 #let _wrapped-index(element) = {
   let fields = element.fields()
-  for name in ("body", "child") {
-    if name in fields { return _marker-index(fields.at(name)) }
-  }
-  none
+  if "body" in fields { _marker-index(fields.body) } else { none }
 }
 
-// Whether a marker sits anywhere inside an element, however deep.
+// Whether a marker sits anywhere inside an element, however deep, including
+// inside a longer string a pattern built from one.
 #let _holds-marker(element) = {
-  if _marker-index(element) != none { return true }
   if type(element) != content { return false }
+  if element.func() == text { return element.text.contains(_FENCE) }
   if element.func() == [].func() { return element.children.any(_holds-marker) }
   element.fields().values().any(field => (
     (type(field) == content and _holds-marker(field))
@@ -72,7 +76,8 @@
       if index != none { wrapper = child }
     }
     if index == none {
-      if _holds-marker(child) { return none }
+      // A run of boxes is one line, so glue that breaks it does not split.
+      if _holds-marker(child) or child.func() in (linebreak, parbreak) { return none }
       glue.push(child)
       continue
     }
@@ -94,9 +99,7 @@
 // real output. Both sides are compared flattened, since `+` and markup nest
 // the same value differently.
 //
-// A wrapper is compared field by field around its value. Its `styles`, which
-// is what `text(..)` with settings carries, is left out: two `styles` never
-// compare equal, even when built from the same settings.
+// A wrapper is compared field by field around its value.
 #let split-matches(marker-output, real-output, values) = {
   let real = flatten(real-output)
   let at = 0
@@ -121,8 +124,7 @@
     let theirs = found.fields()
     if mine.keys().sorted() != theirs.keys().sorted() { return false }
     for (name, field) in mine {
-      if name == "styles" { continue }
-      if name in ("body", "child") {
+      if name == "body" {
         if flatten(theirs.at(name)) != flatten(values.at(wrapped)) { return false }
       } else if theirs.at(name) != field {
         return false
@@ -132,13 +134,12 @@
   at == real.len()
 }
 
-// A value's content inside the element the pattern wrapped it in. The wrapper
-// cannot be rebuilt around new content, since a `text(..)` call returns a
-// styled element whose settings cannot be read back, so the marker it holds is
-// replaced by a show rule instead.
+// A value's content inside the element the pattern wrapped it in. The marker
+// the wrapper holds is replaced by a show rule, which keeps every setting the
+// wrapper carries without rebuilding it.
 #let _dressed(body, piece) = {
   if piece.wrapper == none { return body }
-  show metadata.where(value: (keisen-value: piece.index)): _ => body
+  show _marker-text(piece.index): _ => body
   piece.wrapper
 }
 
@@ -200,10 +201,16 @@
 // a single number, which reads left to right in every script. Overhang is off:
 // it lets a value's last full stop hang past its box, where the glue that
 // follows covers it, and `n.e.` reads as `n.e`.
-#let align-compound(cell, metric) = text(dir: ltr, overhang: false, {
-  for (position, body) in compound-pieces(cell, metric).enumerate() {
-    let measures = metric.pieces.at(position)
-    let placement = if measures.kind == "glue" { left } else { right }
-    box(width: measures.width, align(placement, body))
-  }
+//
+// A run of boxes cannot wrap, so in a column narrower than the run the cell
+// falls back to the pattern's own content, which can.
+#let align-compound(cell, metric) = layout(size => {
+  if metric.pieces.map(piece => piece.width).sum() > size.width { return cell.real }
+  text(dir: ltr, overhang: false, {
+    for (position, body) in compound-pieces(cell, metric).enumerate() {
+      let measures = metric.pieces.at(position)
+      let placement = if measures.kind == "glue" { left } else { right }
+      box(width: measures.width, align(placement, body))
+    }
+  })
 })

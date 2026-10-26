@@ -85,6 +85,31 @@
 #holds(branched.last(), "0.57")
 #assert(not repr(branched.last()).contains("043"))
 
+// A combine of words has no number to line up, so it stays the pattern's
+// content rather than a run of padded boxes.
+#let names = column-cells(build-spec(
+  (first: ("Ada", "Grace"), last: ("Lovelace", "Hopper")),
+  (columns-combine("name", ("first", "last"), (first, last) => [#first #last]),),
+  (:),
+))
+#assert(names.first().all(cell => type(cell) == content))
+#holds(names.first().first(), "Ada", "Lovelace")
+
+// A pattern that reads a field its marker does not have cannot be split, and
+// with decimal alignment off it is never called with markers at all.
+#let fields = (estimate, margin) => [#estimate.text (#margin.text)]
+#assert.eq(type(column-cells(build-spec(
+  data,
+  (format-number("estimate", decimals: 2), format-number("error", decimals: 3), columns-combine("effect", ("estimate", "error"), fields)),
+  (:),
+)).at(1).first()), dictionary)
+#let picky = (estimate, margin) => [#estimate (#float(margin.text))]
+#assert.eq(type(column-cells(build-spec(
+  data,
+  (format-number("estimate", decimals: 2), format-number("error", decimals: 3), columns-combine("effect", ("estimate", "error"), picky)),
+  (decimal-align: false),
+)).at(1).first()), content)
+
 // With decimal alignment off, a combined cell is the pattern's content.
 #let unaligned = column-cells(build-spec(
   data,

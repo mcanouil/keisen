@@ -28,7 +28,7 @@ Doc-only: this file documents names already in the code, it does not change any.
 | `axis-bottom` | row plan part | The axis row right after the last body row, ahead of any summaries; present only when a renderer draws one. Not addressable by a location. |
 | location | a set of cell addresses | What `cells-*` expands to: `(part, row-id, column-id)`. |
 | slots | alignment dictionary | `(sign, prefix, integer, separator, fraction, exponent, suffix)` returned by built-in formatters. |
-| value marker | stand-in for a combine source | `metadata((keisen-value: index))`; a combine pattern is called with one per source so its output can be split. |
+| value marker | stand-in for a combine source | Text holding the index between two U+F8FF characters; a combine pattern is called with one per source so its output can be split. |
 | glue | text between combined values | The pattern content between two values; lines up with the glue at the same place in other rows. |
 | compound cell | a split combined cell | `(kind: "compound", pieces, real)`: value and glue pieces, plus the pattern's own output to fall back on. |
 | selector | column, row, or group filter | `auto`, a name, an array, or a one-argument predicate. |

@@ -31,20 +31,26 @@ The glue lines up with the glue at the same place in the other rows.
 
 Keisen finds the values with a second call to the pattern.
 In this call, each source is a marker instead of formatted content.
+A marker is text, so a pattern that reads `.text` from a value also runs on a marker.
 The markers in the result show where each value goes, and the content between the markers is the glue.
 For `(low, high) => [#low, #high]`, the cell is the value `low`, then a comma and a space as glue, then the value `high`.
 
-A value can have one element around it, for example `strong(low)` or `text(fill: red, low)`.
+A value can have one element around it, for example `strong(low)` or `emph(low)`.
 That element stays on the value, and the width of the value is measured with it.
+A `text(..)` call with settings does not count as such an element, because keisen cannot compare its settings between rows.
 
 Keisen then calls the pattern with the real values of each row, as it always does.
 If the split does not give the same content as this call, that cell is not lined up.
 The cell then shows the content of the pattern, at the edge of the column.
 This occurs when:
 
-- a value is inside more than one element, for example `box(strong(low))`;
+- no value in the cell is a number, for example a combine of a first name and a last name;
+- a value is inside more than one element, for example `box(strong(low))`, or inside a `text(..)` call with settings;
+- the glue holds a line break or a paragraph break;
 - the pattern writes a value twice, or does not write one of its values;
 - the pattern gives a different result for some values, for example `if error == [--] [#estimate] else [#estimate (#error)]`.
+
+A cell also shows the content of the pattern when its column is narrower than the lined-up cell, so that the content can wrap.
 
 A value that is not a number, such as a substituted gap, sits at the end of its box.
 The box is wide enough for the widest such value, so the glue after it does not move.
@@ -52,6 +58,8 @@ The box is wide enough for the widest such value, so the glue after it does not 
 A combined column with one or more lined-up cells sits against the end edge, as a numeric column does.
 `columns-align` changes this edge, in either spelling.
 With the theme option `decimal-align: false`, keisen does not line up a combined column, and the column sits at the start edge.
+Keisen then does not call the pattern with markers.
+Use this option for a pattern that cannot take a marker, for example one that converts a value with `float(value.text)`.
 A combined column cannot be summarised, because content has no total.
 
 ## What `columns-align` reaches

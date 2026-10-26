@@ -39,9 +39,20 @@
 #assert.eq(kinds(strong-value), (0, "glue", 1))
 #assert.eq(strong-value.first().wrapper.func(), strong)
 
-#let styled-value = split-pattern(call((low, high) => [#text(fill: red, low) #high]), 2)
-#assert.eq(kinds(styled-value), (0, "glue", 1))
-#assert.eq(repr(styled-value.first().wrapper.func()), "styled")
+// A `text(..)` call with settings returns a styled element whose settings
+// cannot be compared, so a pattern that picks them from its values could not be
+// told apart from one that does not. It does not split.
+#assert.eq(split-pattern(call((low, high) => [#text(fill: red, low) #high]), 2), none)
+
+// A line break or a paragraph break in the glue does not split: a run of boxes
+// is one line.
+#assert.eq(split-pattern(call((low, high) => [#low \ (#high)]), 2), none)
+#assert.eq(split-pattern(call((low, high) => [#low #parbreak() #high]), 2), none)
+
+// A marker is text, so a pattern that reads `.text` from its values still runs.
+#assert.eq(kinds(split-pattern(call((low, high) => [#low.text to #high.text]), 2)), (0, "glue", 1))
+// A marker joined into a longer string is not a value on its own.
+#assert.eq(split-pattern(call((low, high) => [#(low.text + "x") #high]), 2), none)
 
 // The order the pattern writes its values in is the order of the pieces.
 #assert.eq(kinds(split-pattern(call((low, high) => [#high, #low]), 2)), (1, "glue", 0))
@@ -79,7 +90,6 @@
 #assert(agrees((low, high) => [#low, #high], currency, [1]))
 #assert(agrees((low, high) => [#low, #high], [], [1]))
 #assert(agrees((low, high) => [#strong(low) -- #high], currency, [1]))
-#assert(agrees((low, high) => [#text(fill: red, low) #high], [0.07], [1]))
 
 // A pattern that drops the error when it is missing.
 #let drops = (estimate, error) => if error == [—] [#estimate] else [#estimate (#error)]

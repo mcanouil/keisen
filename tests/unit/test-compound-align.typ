@@ -37,7 +37,7 @@
       // pattern's wrapper, against the box it sits in.
       if piece.kind == "value" and type(piece.value) == dictionary {
         let dressed(body) = if piece.wrapper == none { body } else {
-          show metadata.where(value: (keisen-value: piece.index)): _ => body
+          show "\u{F8FF}" + str(piece.index) + "\u{F8FF}": _ => body
           piece.wrapper
         }
         for slot in ("integer", "fraction") {
@@ -93,4 +93,13 @@
   let metric = metrics(spec, (cells,), summary-values(spec)).first()
   let glue = compound-pieces(cells.first(), metric).at(1)
   assert(measure(box(glue)).width > measure([(]).width, message: "the space before the bracket is kept")
+}
+
+// A column narrower than the run of boxes gets the pattern's own content, which
+// can wrap, rather than a run that spills over its neighbours.
+#context {
+  let cells = column-cells(bounds).first()
+  let metric = metrics(bounds, (cells,), summary-values(bounds)).first()
+  let narrow(body) = measure(block(width: 0.6cm, body))
+  assert.eq(narrow(align-cell(cells.first(), metric)), narrow(cells.first().real))
 }

@@ -60,3 +60,11 @@
 #assert.eq(combined((interval, columns-align(start, columns: "interval")), (:)), (start,))
 #assert.eq(combined((interval,), uninferred), (start,))
 #assert.eq(combined((columns-combine("interval", ("low", "high"), (low, high) => [#box(strong(low)) #high]),), (:)), (start,))
+
+// A combine of words does not split, so it keeps the start edge.
+#let words = build-spec(
+  (first: ("Ada",), last: ("Lovelace",)),
+  (columns-combine("name", ("first", "last"), (first, last) => [#first #last]),),
+  (:),
+)
+#assert.eq(column-alignments(words, cells: column-cells(words)), (start,))

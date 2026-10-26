@@ -125,7 +125,8 @@
 //
 // The pattern returns content, which cannot be lined up, so it is also called
 // once with a marker in place of each source and its output split into values
-// and glue. The markers are the same in every row, so one call serves the whole
+// and glue. With decimal alignment off it is not, so a pattern that cannot
+// take a marker still has a way to run. The markers are the same in every row, so one call serves the whole
 // column. A row keeps the split, as a compound cell, only when putting its own
 // values back gives what the pattern returned for them; a pattern that branches
 // on its values keeps its real output in the rows the split does not describe.
@@ -146,13 +147,17 @@
     // The last directive wins, as everywhere else.
     let directive = combine.last()
     let sources = directive.from.map(formatted)
-    let marked = (directive.pattern)(..range(sources.len()).map(value-marker))
-    let pieces = if option(spec.options, "decimal-align") { split-pattern(marked, sources.len()) } else { none }
+    let aligned = option(spec.options, "decimal-align")
+    let marked = if aligned { (directive.pattern)(..range(sources.len()).map(value-marker)) } else { none }
+    let pieces = if aligned { split-pattern(marked, sources.len()) } else { none }
     range(spec.data.len()).map(position => {
       let values = sources.map(cells => cells.at(position))
       let contents = values.map(slots-to-content)
       let real = (directive.pattern)(..contents)
-      if pieces == none or not split-matches(marked, real, contents) { return real }
+      // A cell of words has no separator to line up on, and padding each word
+      // to the widest in the column would only open gaps between them.
+      let numeric = values.any(value => type(value) == dictionary and value.at("kind", default: none) == "number")
+      if pieces == none or not numeric or not split-matches(marked, real, contents) { return real }
       (
         kind: "compound",
         pieces: pieces.map(piece => if piece.kind == "value" { piece + (value: values.at(piece.index)) } else { piece }),
