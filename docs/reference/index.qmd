@@ -27,4 +27,4 @@ Everything a document needs comes out of that one file, the nanoplot renderers i
 
 - Summary rows require groups, from `table-stub(group: ..)` or from `table-row-group`; use `grand-summary-rows` for a table without them. Rows outside every declared group are summarised by the grand summary alone.
 - Neither a nanoplot column nor a combined column can be summarised: a series of readings has nothing to aggregate, and a combined column holds content rather than quantities. Naming either in `summary-rows` is an error rather than a blank cell.
-- A combined column is opaque, so it is not decimal-aligned and infers start alignment.
+- A combined cell lines up only when its pattern splits into values and glue; see [How a combined column lines up](columns.qmd#how-a-combined-column-lines-up).

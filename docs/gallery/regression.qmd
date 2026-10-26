@@ -56,6 +56,7 @@ Both tables below start from the same data dictionary.
 - Writes a p-value below 0.001 as `< 0.001` through one directive for each column, chosen by a predicate on the rows.
 - Sets the significant adjusted results in bold from one predicate on the data, so no cell is wrapped by hand.
 - Puts one spanner over the three columns of each model.
+- Lines up the two bounds of each interval on their decimal points, with the commas between them in one column.
 
 ## The source
 
