@@ -304,7 +304,7 @@
   fill
 }
 
-#let _check-value-bar(fill, label) = {
+#let _check-value-bar(fill, label, axis) = {
   if fill != auto and type(fill) not in (color, gradient, function) {
     fail-type(
       "nanoplot-value-bar",
@@ -313,6 +313,9 @@
       "a colour, a gradient, or a function",
       hint: "Give a colour such as rgb(\"#c33\"), a gradient, or value => colour.",
     )
+  }
+  if type(axis) != bool {
+    fail-type("nanoplot-value-bar", "axis", axis, "a boolean", hint: "Give true to draw the axis rows, or false.")
   }
   if label != auto and label != none and type(label) != function {
     fail-type(
@@ -326,7 +329,7 @@
 }
 
 #let nanoplot-value-bar(fill: auto, label: auto, axis: false) = {
-  _check-value-bar(fill, label)
+  _check-value-bar(fill, label, axis)
   // The axis writes its ends even with no cell label, so the track keeps room
   // for them and the bars line up under the axis.
   let room-label = if label == none and axis { auto } else { label }
@@ -353,6 +356,14 @@
           stroke: none,
         ))))
         if label != none {
+          let (base, peak) = _value-bar-range(domain)
+          check(
+            base <= number and number <= peak,
+            "nanoplot-value-bar",
+            "the value is outside the domain, so its label has no room",
+            value: number,
+            hint: "Give a domain that holds every value, or label: none to draw the bars alone.",
+          )
           let content = _value-bar-label(label, number)
           let x = _value-bar-label-x(number, domain, track)
           // The room is sized from the labels of the ends of the domain, so a

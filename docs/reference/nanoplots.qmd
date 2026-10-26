@@ -95,6 +95,7 @@ A gradient is sampled at the position of the value in the range from zero, so th
 `label` is `auto` for the rounded value, `none` for no label, or a function from the value to content or to a number.
 The label has room of its own on the right of the track, sized from the label of the larger end of the domain.
 A custom label that is wider for another value than for the ends can run past the cell, and the column then fails: make `width` larger or shorten the label.
+With an explicit `domain`, a value outside it fails while it has a label, because the room is kept for the ends of the domain; with `label: none`, its bar stops at the track end.
 With `axis: true`, the top and bottom axis rows write the ends of the track, formatted like the label.
 The low end starts at the track start, and the high end starts after the track end, in the room of the label.
 With `label: none`, the axis writes the rounded values, and the track keeps room for them.

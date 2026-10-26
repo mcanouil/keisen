@@ -36,6 +36,15 @@
 #assert.eq(_value-bar-geometry(150, (0, 100)), (start: 0, end: 1))
 #assert.eq(_value-bar-geometry(-150, (-100, 100)), (start: 0, end: 0.5))
 
+// The default label is the rounded value, written with no trailing ".0" and with
+// Typst's minus sign.
+#assert.eq(_value-bar-label(auto, 14.0), "14")
+#assert.eq(_value-bar-label(auto, -19.6), "\u{2212}20")
+
+// An explicit domain is a window: with no label, a value outside it draws a bar
+// that stops at the track end.
+#assert.eq(type((nanoplot-value-bar(label: none).draw)(1000, domain: (0, 10), width: 4em)), content)
+
 #context {
   let width = 4em.to-absolute()
   let gap = 0.3em.to-absolute()
