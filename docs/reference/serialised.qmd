@@ -65,7 +65,7 @@ A combine pattern arrives the same way, as a template rather than a closure: `"{
 A location is written with `part`, `columns`, `rows`, `groups`, `spanners`, `notes` and `parts`, and a style and a footnote address cells the same way.
 
 The nameable formatters are `format-number`, `format-integer`, `format-percent`, `format-currency`, `format-scientific`, `format-bytes`, `format-date` and `format-markup`.
-The formatters that cannot be named are `format`, `format-cell` and `format-nanoplot`: each is given a function, and JSON has no way to write one, so they are absent by nature rather than by omission.
+The formatters that cannot be named are `format`, `format-cell` and `format-nanoplot`: each is given a function or a renderer that holds functions, and JSON has no way to write one, so they are absent by nature rather than by omission.
 
 The nameable aggregations are `aggregate-sum`, `aggregate-mean`, `aggregate-median`, `aggregate-min`, `aggregate-max`, `aggregate-count` and `aggregate-standard-deviation`.
 Not every aggregation can be named: `aggregate-quantile` takes a probability and returns the aggregation, so naming it would mean calling it.

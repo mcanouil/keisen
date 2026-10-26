@@ -49,7 +49,7 @@
 // A renderer reads records as well as numbers, so its draw and its readings
 // read the value the same way: readings alone would leave the cell blank.
 #let records = ((salary: 30000, pct: 10), (salary: 52000, pct: 70))
-#let salaries(value) = value.map(record => float(record.salary))
+#let salaries(value) = if type(value) == array { value.map(record => float(record.salary)) } else { () }
 #let by-salary = line + (
   readings: salaries,
   draw: (value, domain: none, width: 4em, height: 0.8em) => (line.draw)(
@@ -61,13 +61,13 @@
 )
 #assert.eq(shared-domain((records, ((salary: 41000, pct: 5),)), by-salary.readings), (30000.0, 52000.0))
 #let record-cells = apply-formats(
-  ((cell: records), (cell: ())),
+  ((cell: records), (cell: none), (cell: ())),
   (format-nanoplot("cell", plot: by-salary),),
   "cell",
 )
 #assert.eq(type(record-cells.first()), content)
 #assert.ne(record-cells.first(), box(width: 4em, height: 0.8em, baseline: 15%, box(width: 4em, height: 0.8em)))
-#assert.eq(record-cells.last(), [])
+#assert.eq(record-cells.slice(1), ([], []))
 
 // A nanoplot column formats from the column it names. Passing another column's
 // readings is not merely reported: there is nowhere left to pass them.

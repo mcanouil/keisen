@@ -26,7 +26,7 @@
 #let _readings-of(readings, value) = {
   let numbers = readings(value)
   check(
-    type(numbers) == array,
+    type(numbers) == array and numbers.all(entry => type(entry) in (int, float, decimal)),
     "format-nanoplot",
     "readings must return an array of numbers",
     value: numbers,

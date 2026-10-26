@@ -44,7 +44,7 @@ The shipped renderer finds no numbers in a record, so the cell is blank:
 A renderer that reads the salary draws it:
 
 ```typst
-#let salaries(records) = records.map(record => float(record.salary))
+#let salaries(value) = if type(value) == array { value.map(record => float(record.salary)) } else { () }
 #let by-salary = nanoplot-line() + (
   readings: salaries,
   draw: (records, domain: none, width: 4em, height: 0.8em) => (nanoplot-line().draw)(
