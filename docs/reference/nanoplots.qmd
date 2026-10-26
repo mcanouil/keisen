@@ -35,13 +35,13 @@ A renderer that changes `readings` alone draws a blank plot.
 
 Both calls below format the same column of records.
 
-Before, the shipped renderer found no numbers in a record and the cell was blank:
+The shipped renderer finds no numbers in a record, so the cell is blank:
 
 ```typst
-#format-nanoplot("pay", plot: nanoplot-line)
+#format-nanoplot("pay", plot: nanoplot-line())
 ```
 
-After, a renderer that reads the salary draws it:
+A renderer that reads the salary draws it:
 
 ```typst
 #let salaries(records) = records.map(record => float(record.salary))

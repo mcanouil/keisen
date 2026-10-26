@@ -21,11 +21,25 @@
     .map(entry => float(entry))
 }
 
+// A renderer's readings of one cell value. The renderer may be written in a
+// document, so what it returns is checked before the core counts or spans it.
+#let _readings-of(readings, value) = {
+  let numbers = readings(value)
+  check(
+    type(numbers) == array,
+    "format-nanoplot",
+    "readings must return an array of numbers",
+    value: numbers,
+    hint: "Return () for a value the renderer cannot read.",
+  )
+  numbers
+}
+
 // The domain across every row of the column, so each cell draws on the same
 // scale. An explicit domain overrides it.
 #let shared-domain(values, readings, given: auto) = {
   if given != auto { return given }
-  let numbers = values.map(readings).flatten()
+  let numbers = values.map(value => _readings-of(readings, value)).flatten()
   if numbers.len() == 0 { return none }
   (calc.min(..numbers), calc.max(..numbers))
 }
@@ -33,7 +47,7 @@
 // The cell formatter, built once the column's domain is known. `apply-formats`
 // is what knows it, since it is what holds the column.
 #let nanoplot-cell(options, domain, width) = value => {
-  if (options.plot.readings)(value).len() == 0 { return [] }
+  if _readings-of(options.plot.readings, value).len() == 0 { return [] }
   box(
     width: options.width,
     height: options.height,
