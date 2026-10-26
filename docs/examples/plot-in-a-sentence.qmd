@@ -2,11 +2,12 @@
 engine: markdown
 title: "Set a plot in a sentence"
 subtitle: "A sparkline among the words, at the height of the text."
-description: "The nanoplot renderers are ordinary Typst functions, so they run inline in prose and follow the surrounding text size."
+description: "The `draw` function of a nanoplot renderer returns ordinary content, so it runs inline in prose and follows the surrounding text size."
 ---
 
 The renderers are not tied to a table.
-Each is an ordinary function returning content, so one sits in a line of prose as readily as in a cell.
+The `draw` function of each renderer returns content, so one sits in a line of prose as readily as in a cell.
+Call it as `(nanoplot-line().draw)(series, width: 4em)`.
 
 ```{typst}
 //| file: ../../tests/visual/nanoplots-inline.typ

@@ -1,8 +1,10 @@
 ///! Nanoplot protocol and shared domains.
 ///!
 ///! The core owns the protocol, the domain, and the cell box. A nanoplot is
-///! drawn by whichever function is passed as `plot`, and src/format/renderers.typ
-///! provides three drawn with native Typst primitives.
+///! drawn by whichever renderer is passed as `plot`, and src/format/renderers.typ
+///! provides three drawn with native Typst primitives. A renderer is a dictionary
+///! of `draw`, `readings` and `axis`, and the core never looks inside a cell
+///! value: `readings` is how a renderer says which numbers it contains.
 ///!
 ///! The domain spans every row in the column, because comparability down the
 ///! column is the whole point of a nanoplot: sparklines scaled per cell say
@@ -12,32 +14,45 @@
 
 #import "../utils/errors.typ": check, fail, fail-type
 
-#let _values-of(value) = {
+#let values-of(value) = {
   if type(value) != array { return () }
   value
     .filter(entry => type(entry) in (int, float, decimal))
     .map(entry => float(entry))
 }
 
+// A renderer's readings of one cell value. The renderer may be written in a
+// document, so what it returns is checked before the core counts or spans it.
+#let _readings-of(readings, value) = {
+  let numbers = readings(value)
+  check(
+    type(numbers) == array and numbers.all(entry => type(entry) in (int, float, decimal)),
+    "format-nanoplot",
+    "readings must return an array of numbers",
+    value: numbers,
+    hint: "Return () for a value the renderer cannot read.",
+  )
+  numbers
+}
+
 // The domain across every row of the column, so each cell draws on the same
 // scale. An explicit domain overrides it.
-#let shared-domain(values, given: auto) = {
+#let shared-domain(values, readings, given: auto) = {
   if given != auto { return given }
-  let numbers = values.map(_values-of).flatten()
+  let numbers = values.map(value => _readings-of(readings, value)).flatten()
   if numbers.len() == 0 { return none }
   (calc.min(..numbers), calc.max(..numbers))
 }
 
 // The cell formatter, built once the column's domain is known. `apply-formats`
 // is what knows it, since it is what holds the column.
-#let nanoplot-cell(options, domain) = value => {
-  let numbers = _values-of(value)
-  if numbers.len() == 0 { return [] }
+#let nanoplot-cell(options, domain, width) = value => {
+  if _readings-of(options.plot.readings, value).len() == 0 { return [] }
   box(
     width: options.width,
     height: options.height,
     baseline: options.baseline,
-    (options.plot)(numbers, domain: domain, width: options.width, height: options.height),
+    (options.plot.draw)(value, domain: domain, width: width, height: options.height),
   )
 }
 
@@ -50,13 +65,40 @@
   baseline: 15%,
   domain: auto,
 ) = {
-  if type(plot) != function {
+  let is-renderer = (
+    type(plot) == dictionary
+      and plot.at("kind", default: none) == "nanoplot-renderer"
+      and ("draw", "readings", "axis").all(key => key in plot)
+  )
+  if not is-renderer {
     fail-type(
       "format-nanoplot",
       "plot",
       plot,
-      "a renderer function",
-      hint: "Pass nanoplot-line, nanoplot-bar, nanoplot-points, or a renderer of the same shape.",
+      "a nanoplot renderer",
+      hint: "Call the renderer, as in nanoplot-line(), or pass a dictionary with kind: \"nanoplot-renderer\".",
+    )
+  }
+  // The keys are there, but a dictionary merged over a renderer can replace
+  // any of them with something that cannot be called.
+  for name in ("draw", "readings") {
+    if type(plot.at(name)) != function {
+      fail-type(
+        "format-nanoplot",
+        name,
+        plot.at(name),
+        "a function",
+        hint: "Give a function of the cell value, or call the renderer as it ships.",
+      )
+    }
+  }
+  if plot.axis != none and type(plot.axis) != function {
+    fail-type(
+      "format-nanoplot",
+      "axis",
+      plot.axis,
+      "none or a function",
+      hint: "Give none for no axis.",
     )
   }
   // A fractional width would have to be resolved inside the cell with layout(),

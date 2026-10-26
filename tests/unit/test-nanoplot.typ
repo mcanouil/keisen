@@ -17,29 +17,57 @@
   (1.5, 1.5, 1.6, 1.5, 1.7, 1.6),
 )
 
+#let line = nanoplot-line()
+
 // The domain spans every reading in the column, not each cell's own range.
-#assert.eq(shared-domain(trends), (0.9, 2.1))
-#assert.eq(shared-domain(trends, given: (0, 3)), (0, 3))
-#assert.eq(shared-domain(()), none)
-#assert.eq(shared-domain(((),)), none)
+#assert.eq(line.kind, "nanoplot-renderer")
+#assert.eq(line.axis, none)
+#assert.eq((line.readings)((1, none, 2.5)), (1.0, 2.5))
+#assert.eq(shared-domain(trends, line.readings), (0.9, 2.1))
+#assert.eq(shared-domain(trends, line.readings, given: (0, 3)), (0, 3))
+#assert.eq(shared-domain((), line.readings), none)
+#assert.eq(shared-domain(((),), line.readings), none)
 
 // Decimals and integers are readings like any other.
-#assert.eq(shared-domain(((1, decimal("2.5")),)), (1.0, 2.5))
+#assert.eq(shared-domain(((1, decimal("2.5")),), line.readings), (1.0, 2.5))
 
 // Values that are not readings are skipped rather than refused: a gap in a
 // series is a gap, and substitute-missing has already had its chance.
-#assert.eq(shared-domain(((1.0, none, 3.0),)), (1.0, 3.0))
+#assert.eq(shared-domain(((1.0, none, 3.0),), line.readings), (1.0, 3.0))
 
-#let directive = format-nanoplot("trend", plot: nanoplot-line)
+#let directive = format-nanoplot("trend", plot: line)
 #assert.eq(directive.kind, "format")
 #assert.eq(directive.columns, "trend")
 #assert.eq(directive.rows, auto)
 
 // The directive carries its options rather than a closure built over values the
 // caller supplied, which is what lets the column decide the domain.
-#assert.eq(directive.nanoplot.plot, nanoplot-line)
+#assert.eq(directive.nanoplot.plot, line)
 #assert.eq(directive.nanoplot.domain, auto)
 #assert("values" not in directive)
+
+// A renderer reads records as well as numbers, so its draw and its readings
+// read the value the same way: readings alone would leave the cell blank.
+#let records = ((salary: 30000, pct: 10), (salary: 52000, pct: 70))
+#let salaries(value) = if type(value) == array { value.map(record => float(record.salary)) } else { () }
+#let by-salary = line + (
+  readings: salaries,
+  draw: (value, domain: none, width: 4em, height: 0.8em) => (line.draw)(
+    salaries(value),
+    domain: domain,
+    width: width,
+    height: height,
+  ),
+)
+#assert.eq(shared-domain((records, ((salary: 41000, pct: 5),)), by-salary.readings), (30000.0, 52000.0))
+#let record-cells = apply-formats(
+  ((cell: records), (cell: none), (cell: ())),
+  (format-nanoplot("cell", plot: by-salary),),
+  "cell",
+)
+#assert.eq(type(record-cells.first()), content)
+#assert.ne(record-cells.first(), box(width: 4em, height: 0.8em, baseline: 15%, box(width: 4em, height: 0.8em)))
+#assert.eq(record-cells.slice(1), ([], []))
 
 // A nanoplot column formats from the column it names. Passing another column's
 // readings is not merely reported: there is nowhere left to pass them.
@@ -50,12 +78,12 @@
 
 // An explicit domain still wins, since a column is sometimes read against a
 // scale that is not its own.
-#let fixed = format-nanoplot("trend", plot: nanoplot-line, domain: (0, 10))
+#let fixed = format-nanoplot("trend", plot: line, domain: (0, 10))
 #assert.eq(fixed.nanoplot.domain, (0, 10))
 
 // A cell holding no readings draws nothing rather than an empty box of ink.
-#assert.eq(nanoplot-cell(directive.nanoplot, (0.9, 2.1))(()), [])
-#assert.eq(nanoplot-cell(directive.nanoplot, (0.9, 2.1))(none), [])
+#assert.eq(nanoplot-cell(directive.nanoplot, (0.9, 2.1), 4em)(()), [])
+#assert.eq(nanoplot-cell(directive.nanoplot, (0.9, 2.1), 4em)(none), [])
 
 #assert.eq(nanoplot-columns((directive,), ("trend", "other")), ("trend",))
 #assert.eq(nanoplot-columns((), ("trend",)), ())
@@ -68,7 +96,7 @@
   (asset: ("Equities", "Bonds"), trend: trends.slice(0, 2), weight: (0.62, 0.31)),
   (
     table-stub(rowname: "asset"),
-    format-nanoplot("trend", plot: nanoplot-line),
+    format-nanoplot("trend", plot: line),
     grand-summary-rows(functions: (Total: aggregate-count)),
   ),
   (:),
@@ -78,7 +106,8 @@
 
 // Every renderer draws at the sparkline height the design asks for, which the
 // gribouille versions could not: they refused a canvas below half a centimetre.
-#for plot in (nanoplot-line, nanoplot-bar, nanoplot-points) {
+#for renderer in (nanoplot-line(), nanoplot-bar(), nanoplot-points()) {
+  let plot = renderer.draw
   assert.eq(type(plot((1.0, 2.0, 1.5), domain: (1.0, 2.0), width: 4em, height: 0.8em)), content)
   // A flat series has no span to divide by, and a single reading no line to
   // draw; both draw something rather than failing.
@@ -93,4 +122,4 @@
 // empty series draws the same empty box as any other empty series.
 // tests/expect-fail/ holds the refusals, one per series: whether a gap is usable
 // does not depend on the data.
-#assert.eq(nanoplot-bar((), gap: 30%, width: 4em, height: 0.8em), box(width: 4em, height: 0.8em))
+#assert.eq((nanoplot-bar(gap: 30%).draw)((), width: 4em, height: 0.8em), box(width: 4em, height: 0.8em))

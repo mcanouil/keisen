@@ -12,6 +12,6 @@
   grand-summary-rows(
     functions: (Total: aggregate-sum),
     columns: "units",
-    format: format-nanoplot("units", plot: nanoplot-line),
+    format: format-nanoplot("units", plot: nanoplot-line()),
   ),
 )

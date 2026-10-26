@@ -7,5 +7,5 @@
 #set page(width: auto, height: auto, margin: 0.5cm)
 #display-table(
   (trend: ((1.0, 2.0, 1.5),)),
-  format-nanoplot("trend", plot: nanoplot-line, width: 1fr),
+  format-nanoplot("trend", plot: nanoplot-line(), width: 1fr),
 )

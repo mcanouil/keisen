@@ -9,4 +9,4 @@
 
 #set page(width: auto, height: auto, margin: 0.5cm)
 
-#nanoplot-bar((1.0, 2.0, 1.5), gap: -10%)
+#nanoplot-bar(gap: -10%)

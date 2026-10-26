@@ -197,7 +197,8 @@
 
 #let _formatter(directive, values, options) = {
   if "nanoplot" not in directive { return formatter-for(directive, options) }
-  nanoplot-cell(directive.nanoplot, shared-domain(values, given: directive.nanoplot.domain))
+  let nanoplot = directive.nanoplot
+  nanoplot-cell(nanoplot, shared-domain(values, nanoplot.plot.readings, given: nanoplot.domain), nanoplot.width)
 }
 
 #let apply-formats(rows, formats, name, substitutions: (), options: (:)) = {

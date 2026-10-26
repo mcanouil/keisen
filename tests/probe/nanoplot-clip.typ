@@ -18,6 +18,6 @@
 #let wild = (0, 5, 10, -5, 12)
 #let window = (4, 6)
 
-#nanoplot-line(wild, domain: window, width: 4em, height: 0.8em)
-#nanoplot-bar(wild, domain: window, width: 4em, height: 0.8em)
-#nanoplot-points(wild, domain: window, width: 4em, height: 0.8em)
+#(nanoplot-line().draw)(wild, domain: window, width: 4em, height: 0.8em)
+#(nanoplot-bar().draw)(wild, domain: window, width: 4em, height: 0.8em)
+#(nanoplot-points().draw)(wild, domain: window, width: 4em, height: 0.8em)

@@ -15,6 +15,6 @@
     trend: ((1.0, 1.2, 1.4), (2.0, 1.8, 1.6)),
   ),
   table-stub(rowname: "product", group: "region"),
-  format-nanoplot("trend", plot: nanoplot-line),
+  format-nanoplot("trend", plot: nanoplot-line()),
   summary-rows(functions: (Total: aggregate-sum), columns: "trend"),
 )
