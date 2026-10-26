@@ -212,12 +212,32 @@
 //
 // Measuring needs context, which the table body has, and the metrics are taken
 // once per column rather than once per cell.
-#let metrics(spec, cells, summaries) = {
+//
+// `text-style` answers a cell's `text` style, or `none`, by the address
+// `assemble` styles it under: a bold row renders wider digits, so it is
+// measured bold. Body cells are addressed by data row, group summaries by
+// `(group, row)`, grand summaries by their index.
+#let metrics(spec, cells, summaries, text-style: (part, row, name) => none) = {
   if not option(spec.options, "decimal-align") { return spec.columns.map(name => none) }
-  let entries = summaries.groups.flatten() + summaries.grand
+  let addressed = ()
+  for (group, entries) in summaries.groups.enumerate() {
+    for (row, entry) in entries.enumerate() {
+      addressed.push((entry: entry, part: "summary", row: (group: group, row: row)))
+    }
+  }
+  for (row, entry) in summaries.grand.enumerate() {
+    addressed.push((entry: entry, part: "grand-summary", row: row))
+  }
   spec.columns
     .enumerate()
-    .map(((position, name)) => column-metrics(
-      cells.at(position) + entries.map(entry => summary-slots(spec, entry, name)).filter(slots => slots != none),
-    ))
+    .map(((position, name)) => {
+      let body = cells.at(position)
+      let summary = addressed
+        .map(item => (slots: summary-slots(spec, item.entry, name), style: text-style(item.part, item.row, name)))
+        .filter(item => item.slots != none)
+      column-metrics(
+        body + summary.map(item => item.slots),
+        styles: range(body.len()).map(row => text-style("body", row, name)) + summary.map(item => item.style),
+      )
+    })
 }

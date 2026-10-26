@@ -112,7 +112,12 @@
   })
   let alignments = column-alignments(spec)
   let stub-align = stub-alignment(spec)
-  let metrics = metrics(spec, cells, summaries)
+  let metrics = metrics(
+    spec,
+    cells,
+    summaries,
+    text-style: (part, row, name) => style-for(index, part, row, name).at("text", default: none),
+  )
 
   // A rule dictionary carrying only the edges that have a rule. `(top: none)`
   // overrides the table's own stroke on that edge, so a part that names an edge
@@ -169,12 +174,7 @@
         continue
       }
       let properties = style-for(index, part, row-key, name)
-      // The padding boxes are measured in the surrounding text style, so a cell
-      // whose style changes the text keeps the column alignment instead: a box
-      // measured for another size is too narrow, and the number wraps inside it.
-      // Body cells have always done this; a summary cell could not be styled at
-      // all until cells-summary existed, which is what exposed the difference.
-      let metric = if "text" in properties { none } else { metrics.at(position) }
+      let metric = metrics.at(position)
       cells.push(_cell(
         properties,
         marked(summarised(spec, entry, name, metric), name),
@@ -334,9 +334,7 @@
       for position in indices {
         let name = names.at(position)
         let properties = style-for(index, PARTS.body, entry.source, name)
-        // Padding measured in the surrounding text style would be wrong under a
-        // style that changes the text, and a too-narrow box wraps the number.
-        let metric = if "text" in properties { none } else { metrics.at(position) }
+        let metric = metrics.at(position)
         rows.push(_cell(
           properties,
           _marked(
