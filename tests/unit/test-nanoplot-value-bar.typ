@@ -60,7 +60,7 @@
 
   // A negative reading is labelled right of zero, inside the cell.
   let domain = (-40, 60)
-  let offset = _value-bar-label-x(-20, domain, auto, width)
+  let offset = _value-bar-label-x(-20, domain, width - _value-bar-room(auto, domain))
   let label = measure("-20").width
   assert(offset >= (width - _value-bar-room(auto, domain)) * 0.4 + gap - 0.01pt)
   assert(offset + label <= width + 0.01pt)

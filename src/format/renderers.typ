@@ -283,8 +283,8 @@
 
 // Where the label starts: right of the end of the bar, and for a negative value
 // right of zero, since the end of the bar is the larger of the value and zero.
-#let _value-bar-label-x(value, domain, label, width) = {
-  (width - _value-bar-room(label, domain)) * _value-bar-geometry(value, domain).end + _VALUE-BAR-GAP.to-absolute()
+#let _value-bar-label-x(value, domain, track) = {
+  track * _value-bar-geometry(value, domain).end + _VALUE-BAR-GAP.to-absolute()
 }
 
 #let _value-bar-paint(fill, value, domain) = {
@@ -334,7 +334,14 @@
     let number = _value-bar-number(value)
     if domain == none or number == none { return box(width: width, height: height) }
     context {
-      let track = width - _value-bar-room(room-label, domain)
+      let track = width.to-absolute() - _value-bar-room(room-label, domain)
+      check(
+        track > 0pt,
+        "nanoplot-value-bar",
+        "the label room leaves no track for the bars",
+        value: width,
+        hint: "Widen the plot with width, or shorten the label.",
+      )
       let (start, end) = _value-bar-geometry(number, domain)
       box(width: width, height: height, {
         // Only the bar is clipped: a label may be taller than the cell, and its
@@ -346,7 +353,18 @@
           stroke: none,
         ))))
         if label != none {
-          place(left + horizon, dx: _value-bar-label-x(number, domain, room-label, width), _value-bar-label(label, number))
+          let content = _value-bar-label(label, number)
+          let x = _value-bar-label-x(number, domain, track)
+          // The room is sized from the labels of the ends of the domain, so a
+          // custom label wider for another value can still run past the cell.
+          check(
+            x + measure(content).width <= width.to-absolute() + 0.01pt,
+            "nanoplot-value-bar",
+            "the label runs past the cell",
+            value: number,
+            hint: "Widen the plot with width, or shorten the label.",
+          )
+          place(left + horizon, dx: x, content)
         }
       })
     }
