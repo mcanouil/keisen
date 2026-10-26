@@ -7,6 +7,8 @@
 ///! glue. Each value then lines up down the column on its own separator, and
 ///! each piece of glue lines up with the glue at the same place in other rows.
 
+#import "align.typ": align-slots, column-metrics
+
 #let _KEY = "keisen-value"
 
 // A marker for the source at `index`, counted from 0 in `from` order.
@@ -129,3 +131,79 @@
   }
   at == real.len()
 }
+
+// A value's content inside the element the pattern wrapped it in. The wrapper
+// cannot be rebuilt around new content, since a `text(..)` call returns a
+// styled element whose settings cannot be read back, so the marker it holds is
+// replaced by a show rule instead.
+#let _dressed(body, piece) = {
+  if piece.wrapper == none { return body }
+  show metadata.where(value: (keisen-value: piece.index)): _ => body
+  piece.wrapper
+}
+
+// Glue as it renders in its box. A space at the edge of a box is dropped, so
+// each space becomes a non-breaking one, which is kept and measures the same.
+#let _glue(body) = flatten(body).map(child => if child.func() == [ ].func() { [#sym.space.nobreak] } else { child }).join(default: [])
+
+#let _is-number(value) = type(value) == dictionary and value.at("kind", default: none) == "number"
+#let _is-compound(value) = type(value) == dictionary and value.at("kind", default: none) == "compound"
+#let _opaque(value) = if type(value) == content { value } else { [#value] }
+
+// The widest rendering of each piece of a combined column, measured in each
+// cell's text style. A value position holds the decimal metrics of the numbers
+// in it, and a width that also covers the widest value that is not a number,
+// such as a substituted gap. Returns `none` when no cell in the column split.
+#let compound-metrics(cells, styles) = {
+  let rows = cells.zip(styles).filter(((cell, style)) => _is-compound(cell))
+  if rows.len() == 0 { return none }
+  let in-style(body, style) = measure(if style == none { body } else { text(..style, body) }).width
+  let widest(widths) = calc.max(0pt, ..widths)
+
+  let pieces = rows.first().first().pieces.enumerate().map(((position, piece)) => {
+    let entries = rows.map(((cell, style)) => (piece: cell.pieces.at(position), style: style))
+    if piece.kind == "glue" {
+      return (kind: "glue", width: widest(entries.map(entry => in-style(_glue(entry.piece.body), entry.style))))
+    }
+    let number = column-metrics(
+      entries.map(entry => entry.piece.value),
+      styles: entries.map(entry => entry.style),
+      dress: body => _dressed(body, piece),
+    )
+    let numbers = if number == none { 0pt } else { number.values().sum() }
+    let opaque = entries
+      .filter(entry => not _is-number(entry.piece.value))
+      .map(entry => in-style(_dressed(_opaque(entry.piece.value), entry.piece), entry.style))
+    (kind: "value", number: number, width: calc.max(numbers, widest(opaque)))
+  })
+  (kind: "compound", pieces: pieces)
+}
+
+// Each piece of a compound cell as it renders inside its box: a number padded
+// to its position's decimal metrics, anything else as it is, both inside the
+// pattern's wrapper.
+#let compound-pieces(cell, metric) = cell.pieces.enumerate().map(((position, piece)) => {
+  if piece.kind == "glue" { return _glue(piece.body) }
+  let measures = metric.pieces.at(position)
+  let body = if _is-number(piece.value) and measures.number != none {
+    align-slots(piece.value, measures.number)
+  } else {
+    _opaque(piece.value)
+  }
+  _dressed(body, piece)
+})
+
+// A compound cell laid out as a run of boxes, one per piece, each as wide as
+// its position is down the column. Values sit against the end of their box, as
+// a number does in its column, and glue is centred, so a delimiter that varies
+// between rows stays over the same point. The run is pinned left to right like
+// a single number, which reads left to right in every script. Overhang is off:
+// it lets a value's last full stop hang past its box, where the glue that
+// follows covers it, and `n.e.` reads as `n.e`.
+#let align-compound(cell, metric) = text(dir: ltr, overhang: false, {
+  for (position, body) in compound-pieces(cell, metric).enumerate() {
+    let measures = metric.pieces.at(position)
+    let placement = if measures.kind == "glue" { center } else { right }
+    box(width: measures.width, align(placement, body))
+  }
+})

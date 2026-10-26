@@ -6,7 +6,7 @@
 
 #import "../data.typ": column
 #import "../format/align.typ": align-slots, column-metrics
-#import "../format/compound.typ": split-matches, split-pattern, value-marker
+#import "../format/compound.typ": align-compound, compound-metrics, split-matches, split-pattern, value-marker
 #import "../format/apply.typ": apply-formats, formatter-for, matches-column
 #import "../parts/substitutions.typ": is-missing, is-zero
 #import "../theme/options.typ": option
@@ -253,9 +253,20 @@
       let summary = addressed
         .map(item => (slots: summary-slots(spec, item.entry, name), style: text-style(item.part, item.row, name)))
         .filter(item => item.slots != none)
-      column-metrics(
-        body + summary.map(item => item.slots),
-        styles: range(body.len()).map(row => text-style("body", row, name)) + summary.map(item => item.style),
-      )
+      let styles = range(body.len()).map(row => text-style("body", row, name))
+      let compound = compound-metrics(body, styles)
+      if compound != none { return compound }
+      column-metrics(body + summary.map(item => item.slots), styles: styles + summary.map(item => item.style))
     })
+}
+
+// One body cell as it renders: a compound cell as its run of boxes, a number
+// padded to its column's separator, anything else as it is.
+#let align-cell(value, metric) = {
+  let compound = type(value) == dictionary and value.at("kind", default: none) == "compound"
+  if compound and metric != none and metric.at("kind", default: none) == "compound" {
+    return align-compound(value, metric)
+  }
+  if metric != none and metric.at("kind", default: none) == "compound" { return slots-to-content(value) }
+  slots-to-content(align-slots(value, metric))
 }

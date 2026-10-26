@@ -15,7 +15,7 @@
 #import "../style.typ": build-index, style-for
 #import "../theme/options.typ": option
 #import "layout.typ": (
-  column-alignments, column-cells, label-alignment, metrics, slots-to-content,
+  align-cell, column-alignments, column-cells, label-alignment, metrics, slots-to-content,
   stub-alignment, stub-body, stub-cells, stub-depths, summarised, summary-label-alignment,
 )
 #import "plan.typ": build-plan
@@ -338,7 +338,7 @@
         rows.push(_cell(
           properties,
           _marked(
-            slots-to-content(align-slots(cells.at(position).at(entry.source), metric)),
+            align-cell(cells.at(position).at(entry.source), metric),
             marks-for(footnotes, PARTS.body, entry.source, name),
           ),
           align: alignments.at(position),
