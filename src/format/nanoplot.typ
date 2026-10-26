@@ -14,7 +14,7 @@
 
 #import "../utils/errors.typ": check, fail, fail-type
 
-#let _values-of(value) = {
+#let values-of(value) = {
   if type(value) != array { return () }
   value
     .filter(entry => type(entry) in (int, float, decimal))

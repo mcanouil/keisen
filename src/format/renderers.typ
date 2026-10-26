@@ -16,13 +16,11 @@
 ///! renderer written in a document works exactly as well as these three.
 
 #import "../utils/errors.typ": check, fail-type
-#import "nanoplot.typ": _values-of
+#import "nanoplot.typ": values-of
 
 // The ink follows the surrounding text unless a colour is given, so a plot in a
 // styled cell is drawn in that cell's colour rather than in a fixed black.
 #let _ink(given) = if given == auto { text.fill } else { given }
-
-#let _numbers(values) = values.map(float)
 
 // Falls back to the series' own range, so a renderer called by hand outside
 // `format-nanoplot` still draws. Inside it, the domain always spans the column.
@@ -56,9 +54,8 @@
 // resolves `text.fill` there as it would written out here.
 #let _canvas(numbers, domain, width, height, draw) = {
   if numbers.len() == 0 { return box(width: width, height: height) }
-  let values = _numbers(numbers)
   context {
-    let (low, high) = _range(values, domain)
+    let (low, high) = _range(numbers, domain)
     box(
       width: width,
       height: height,
@@ -66,7 +63,7 @@
       // across whatever sits beside it. An explicit domain is a choice to look
       // at one window of the data, so what falls outside it is not drawn.
       clip: true,
-      draw(values, low, high),
+      draw(numbers, low, high),
     )
   }
 }
@@ -196,12 +193,12 @@
 #let _renderer(plot) = (
   kind: "nanoplot-renderer",
   draw: (value, domain: none, width: 4em, height: 0.8em) => plot(
-    _values-of(value),
+    values-of(value),
     domain: domain,
     width: width,
     height: height,
   ),
-  readings: _values-of,
+  readings: values-of,
   axis: none,
 )
 
