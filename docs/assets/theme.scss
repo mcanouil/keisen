@@ -181,3 +181,23 @@ img[src*="assets/typst-render/"]:not(.thumbnail-image) {
 .keisen-highlight {
   background-color: rgba(var(--bs-primary-rgb), 0.12);
 }
+
+// The table of contents card floats 14px below the header, because Quarto pads
+// the top of the margin column. The sidebar card is the sidebar element itself,
+// which Quarto sticks flush to the header with an inline `top` and `max-height`,
+// so the same gap is set above it, and below it by the margin and the
+// `max-height`. The 122px is the height of the header with its section row; a
+// stylesheet cannot read the offset Quarto computes, so the inline values are
+// replaced. The bottom margin and padding keep the gap where each column stops
+// against the footer.
+@include media-breakpoint-up(lg) {
+  body.floating #quarto-sidebar.sidebar-navigation {
+    top: calc(122px + 14px) !important;
+    margin-bottom: 14px;
+    max-height: calc(100vh - 122px - 28px) !important;
+  }
+
+  #quarto-margin-sidebar {
+    padding-bottom: 14px;
+  }
+}
