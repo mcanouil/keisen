@@ -68,7 +68,7 @@ color:
 
 typography:
   base:
-    size: 1rem
+    size: 1em
     line-height: 1.6
     weight: 400
   headings:
