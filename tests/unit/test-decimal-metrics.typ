@@ -113,7 +113,7 @@
 }
 
 #context {
-  let column = (number("", "$", "5", "00"), number("−", "$", "1000", "00"))
+  let column = (number("", "US$", "5", "00"), number("−", none, "1000", "00"))
   let metrics = column-metrics(column)
   let widest = calc.max(..column.map(value => measure(whole(value)).width))
   for value in column {
