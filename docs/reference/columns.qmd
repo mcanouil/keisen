@@ -11,7 +11,7 @@ description: "Keisen's column directives: columns-label, columns-align, columns-
 | `columns-width(widths)` | A dictionary of column name to length, fraction, or `auto`. |
 | `columns-hide(..columns)` | Removes columns from the table; they stay readable by predicates and formatters. |
 | `columns-move(..columns, before: none, after: none)` | Reorders columns relative to another column. The anchor names one column. |
-| `columns-combine(into, from, pattern, label: auto, hide-sources: true)` | Builds one column from several. `pattern` takes one argument per source, in `from` order. |
+| `columns-combine(into, from, pattern, label: auto, hide-sources: true, align: true)` | Builds one column from several. `pattern` takes one argument per source, in `from` order. `align: false` keeps the content of the pattern in every row. |
 
 : Column directives {.striped .hover tbl-colwidths="[45,55]"}
 
@@ -58,8 +58,10 @@ The box is wide enough for the widest such value, so the glue after it does not 
 A combined column with one or more lined-up cells sits against the end edge, as a numeric column does.
 `columns-align` changes this edge, in either spelling.
 With the theme option `decimal-align: false`, keisen does not line up a combined column, and the column sits at the start edge.
-Keisen then does not call the pattern with markers.
-Use this option for a pattern that cannot take a marker, for example one that converts a value with `float(value.text)`.
+With `align: false` on one `columns-combine`, keisen does not line up that column, and the other columns stay aligned.
+With either option, keisen does not call the pattern with markers.
+Use `align: false` for a pattern that cannot take a marker, for example one that converts a value with `float(value.text)`.
+
 A combined column cannot be summarised, because content has no total.
 
 ## What `columns-align` reaches

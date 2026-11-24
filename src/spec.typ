@@ -174,6 +174,13 @@
       value: directive.pattern,
       hint: "Write (estimate, error) => [#estimate (#error)], one parameter per source.",
     )
+    check(
+      type(directive.align) == bool,
+      "columns-combine",
+      "align must be true or false",
+      value: directive.align,
+      hint: "Write align: false to keep the pattern's own content in every row.",
+    )
     for name in directive.from { check-column(spec.data-columns, "columns-combine", name) }
     check(
       directive.into in directive.from or directive.into not in spec.data-columns,

@@ -202,3 +202,38 @@
   (:),
 )
 #assert.eq(summarised.grand-summaries.len(), 1)
+
+// --- align: false keeps the pattern's own content ---
+//
+// A pattern that converts its values, such as `float(value.text)`, cannot run
+// on the markers that split a cell. `align: false` turns the split off for that
+// column alone, so the pattern only ever sees formatted values while the other
+// columns stay decimal-aligned.
+
+#let converting = build-spec(
+  data,
+  (
+    format-number("estimate", decimals: 2),
+    format-number("error", decimals: 3),
+    columns-combine(
+      "effect",
+      ("estimate", "error"),
+      (value, margin) => [#calc.round(float(value.text) / float(margin.text), digits: 1)],
+      align: false,
+    ),
+  ),
+  (:),
+)
+
+#{
+  let cells = column-cells(converting)
+  let effect = cells.at(converting.columns.position(name => name == "effect"))
+  assert.eq(effect, ([58.6], [−13.3]))
+}
+
+// The default still splits the cell.
+#{
+  let cells = column-cells(spec)
+  let effect = cells.at(spec.columns.position(name => name == "effect"))
+  assert(effect.all(cell => type(cell) == dictionary and cell.kind == "compound"))
+}

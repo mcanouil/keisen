@@ -677,6 +677,9 @@
       pattern: _template(descriptor.pattern),
       label: _content(descriptor.at("label", default: auto)),
       hide-sources: descriptor.at("hide-sources", default: true),
+      // A template pattern always takes a marker, so it never needs the split
+      // turned off, and `align` has no serialised form.
+      align: true,
     ))
   }
 
