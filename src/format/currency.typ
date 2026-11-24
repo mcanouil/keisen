@@ -1,8 +1,10 @@
 ///! Currency formatting.
 ///!
-///! The symbol fills the prefix or the suffix slot the alignment stage already
-///! reserves, so a column of prices lines up on its separator with the symbols
-///! under one another.
+///! The symbol fills the prefix or the suffix slot of the formatted value. A
+///! leading symbol sits with the sign against the integer digits, so a column of
+///! prices lines up on its separator and each symbol stays beside its number;
+///! leading symbols do not line up with one another when the integers differ in
+///! width.
 
 #import "../utils/errors.typ": fail-enum
 #import "number.typ": format-number, forward-decimals
