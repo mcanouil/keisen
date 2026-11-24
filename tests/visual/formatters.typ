@@ -1,7 +1,8 @@
 // Currency, scientific notation, and byte sizes, each filling a slot the
-// alignment stage reserves. The columns are the point: prices line up under
-// their symbols, exponents under one another, and units under units, none of
-// which happens unless every slot is padded to the column's widest.
+// alignment stage reserves. The columns are the point: prices line up on their
+// separator with each symbol beside its number, exponents under one another,
+// and units under units, none of which happens unless every slot is padded to
+// the column's widest.
 
 #import "/lib.typ": *
 

@@ -6,12 +6,12 @@ description: "Format a column as currency, scientific notation, byte sizes, date
 ---
 
 A price is not a number with a symbol stuck on it, and neither is a payload size.
-Each formatter writes the value the way its notation is read, and the first three fill a slot the alignment stage reserves, so the columns line up on what matters: prices under their symbols, exponents under their multiplication signs, units under units.
+Each formatter writes the value the way its notation is read, and the first three fill a slot the alignment stage reserves, so the columns line up on what matters: prices on their decimal separator with each symbol beside its number, exponents under their multiplication signs, units under units.
 
 ```{typst}
 //| file: ../../tests/visual/formatters.typ
 //| echo: true
-//| alt: "A bill of materials with prices carrying a euro sign at the left of the column and their decimals aligned, charges in scientific notation with the multiplication signs in a vertical line, and firmware sizes in bytes, kibibytes, mebibytes and gibibytes with the units aligned. Below it the same table with the yen symbol trailing each price, exponents written in e notation, and sizes in decimal prefixes."
+//| alt: "A bill of materials with prices with their decimals aligned and a euro sign against the digits of each price, charges in scientific notation with the multiplication signs in a vertical line, and firmware sizes in bytes, kibibytes, mebibytes and gibibytes with the units aligned. Below it the same table with the yen symbol trailing each price, exponents written in e notation, and sizes in decimal prefixes."
 ```
 
 The second table is the same figures said differently: `position: end` for the currencies written that way, `exponent: "e"` for output rather than typesetting, and `base: 1000` for the people who sell disks.

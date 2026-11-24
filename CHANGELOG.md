@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: A sign or a leading currency symbol stays beside its digits, so a signed number no longer opens a gap in a column of wider integers. (#135)
+
 ## 0.2.0 (2026-10-26)
 
 ### Breaking changes
