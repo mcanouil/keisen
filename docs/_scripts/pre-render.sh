@@ -45,6 +45,10 @@
 # The "Unreleased" section is omitted, so the page describes released versions
 # only.
 #
+# Atelier turns off gitlink link rewriting for the whole site. The changelog
+# page turns it on again in its own front matter, so the "(#N)" references in
+# its entries link to the repository, and no other page is affected.
+#
 
 set -euo pipefail
 
