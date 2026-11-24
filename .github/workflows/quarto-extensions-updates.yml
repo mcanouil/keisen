@@ -1,7 +1,7 @@
 name: Quarto Extensions Updates
 
-# Keeps the documentation website's own dependencies current: atelier, iconify,
-# and gitlink under docs/_extensions/.
+# Keeps the documentation website's own dependencies current: atelier and
+# typst-render under docs/_extensions/.
 on:
   workflow_dispatch:
   schedule:
