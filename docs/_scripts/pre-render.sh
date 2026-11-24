@@ -45,6 +45,10 @@
 # The "Unreleased" section is omitted, so the page describes released versions
 # only.
 #
+# Atelier turns off gitlink link rewriting for the whole site. The changelog
+# page turns it on again in its own front matter, so the "(#N)" references in
+# its entries link to the repository, and no other page is affected.
+#
 
 set -euo pipefail
 
@@ -157,7 +161,8 @@ BEGIN {
   cur_minor     = -1
   prev_blank    = 1
   printf "---\ntitle: \"Changelog\"\nsubtitle: \"What changed, and when.\"\n"
-  printf "description: \"Every released version of %s, and what each one changed.\"\n---\n\n", name
+  printf "description: \"Every released version of %s, and what each one changed.\"\n", name
+  printf "extensions:\n  gitlink:\n    enabled: true\n---\n\n"
 }
 
 # Emit a line, collapsing consecutive blank lines and suppressing leading ones.
