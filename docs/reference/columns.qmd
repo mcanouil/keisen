@@ -58,13 +58,10 @@ The box is wide enough for the widest such value, so the glue after it does not 
 A combined column with one or more lined-up cells sits against the end edge, as a numeric column does.
 `columns-align` changes this edge, in either spelling.
 With the theme option `decimal-align: false`, keisen does not line up a combined column, and the column sits at the start edge.
-
 With `align: false` on one `columns-combine`, keisen does not line up that column, and the other columns stay aligned.
-Keisen then does not call the pattern with markers.
-A pattern that converts its values, for example with `float(value.text)`, cannot read a marker and stops the compilation.
-Such a pattern needs `align: false`.
-Keisen then does not call the pattern with markers.
-Use this option for a pattern that cannot take a marker, for example one that converts a value with `float(value.text)`.
+With either option, keisen does not call the pattern with markers.
+Use `align: false` for a pattern that cannot take a marker, for example one that converts a value with `float(value.text)`.
+
 A combined column cannot be summarised, because content has no total.
 
 ## What `columns-align` reaches
