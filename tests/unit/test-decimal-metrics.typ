@@ -72,3 +72,51 @@
   assert(grand.integer > body.integer, message: "a styled grand summary must widen the column")
   assert(plain.integer < body.integer)
 }
+
+// --- the sign and prefix sit against the digits ---
+//
+// A sign belongs to its number, so it moves with the integer rather than
+// keeping a slot of its own: in a column of −0.42 and 120.50 the sign sits
+// beside the 0, and the column is no wider than its widest number.
+
+#import "../../src/format/align.typ": align-slots
+
+#let number(sign, prefix, integer, fraction) = (
+  kind: "number",
+  sign: sign,
+  prefix: prefix,
+  integer: integer,
+  separator: ".",
+  fraction: fraction,
+  exponent: none,
+  suffix: none,
+)
+
+// Kerning across a box edge is lost, so the boxed run can differ from the
+// same text set in one piece by a fraction of a point.
+#let close(got, expected) = assert(
+  calc.abs((got - expected).pt()) < 0.1,
+  message: "aligned width " + repr(got) + ", widest number " + repr(expected),
+)
+
+#let whole(value) = (
+  [#(value.sign)] + (if value.prefix == none { [] } else { value.prefix }) + [#(value.integer)#(value.separator)#(value.fraction)]
+)
+
+#context {
+  let column = (number("−", none, "0", "42"), number("", none, "120", "50"))
+  let metrics = column-metrics(column)
+  let widest = calc.max(..column.map(value => measure(whole(value)).width))
+  for value in column {
+    close(measure(align-slots(value, metrics)).width, widest)
+  }
+}
+
+#context {
+  let column = (number("", "$", "5", "00"), number("−", "$", "1000", "00"))
+  let metrics = column-metrics(column)
+  let widest = calc.max(..column.map(value => measure(whole(value)).width))
+  for value in column {
+    close(measure(align-slots(value, metrics)).width, widest)
+  }
+}

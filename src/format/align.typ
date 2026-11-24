@@ -7,7 +7,15 @@
 ///! ends up with, while a run of digits is unbreakable and measures exactly.
 ///!
 ///! Each numeric cell becomes a right-aligned integer box, the separator, and a
-///! left-aligned fraction box, every box being the column's widest.
+///! left-aligned fraction box, every box being the column's widest. The sign and
+///! a leading prefix sit in the integer box, against the digits: a slot of their
+///! own would open a gap between `−` and `0.42` whenever a wider integer sits in
+///! the same column.
+
+// The part before the separator: sign, prefix and integer digits, as one run.
+#let _leading(value) = (
+  [#(value.sign)] + (if value.prefix == none { [] } else { value.prefix }) + [#(value.integer)]
+)
 
 // The widest rendering of each slot in a column, measured with the text
 // settings in force where the table sits. `styles`, when given, holds one
@@ -31,8 +39,7 @@
   }
 
   (
-    lead: widest(value => [#(value.sign)] + if value.prefix == none { [] } else { value.prefix }),
-    integer: widest(value => [#(value.integer)]),
+    integer: widest(_leading),
     separator: widest(value => [#(value.separator)]),
     fraction: widest(value => [#(value.fraction)]),
     exponent: widest(value => if value.exponent == none { [] } else { value.exponent }),
@@ -47,7 +54,6 @@
   if metrics == none { return value }
   if type(value) != dictionary or value.at("kind", default: none) != "number" { return value }
 
-  let lead = [#(value.sign)] + if value.prefix == none { [] } else { value.prefix }
   let exponent = if value.exponent == none { [] } else { value.exponent }
   let trail = if value.suffix == none { [] } else { value.suffix }
 
@@ -59,8 +65,7 @@
   // Written as a sequence rather than a `+` chain: a leading `+` on a new line
   // parses as a unary operator on content.
   text(dir: ltr, {
-    box(width: metrics.lead, align(right, lead))
-    box(width: metrics.integer, align(right, [#(value.integer)]))
+    box(width: metrics.integer, align(right, _leading(value)))
     box(width: metrics.separator, align(center, [#(value.separator)]))
     box(width: metrics.fraction, align(left, [#(value.fraction)]))
     box(width: metrics.exponent, align(left, exponent))
