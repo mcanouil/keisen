@@ -677,6 +677,7 @@
       pattern: _template(descriptor.pattern),
       label: _content(descriptor.at("label", default: auto)),
       hide-sources: descriptor.at("hide-sources", default: true),
+      align: true,
     ))
   }
 

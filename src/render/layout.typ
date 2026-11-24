@@ -125,8 +125,9 @@
 //
 // The pattern returns content, which cannot be lined up, so it is also called
 // once with a marker in place of each source and its output split into values
-// and glue. With decimal alignment off it is not, so a pattern that cannot
-// take a marker still has a way to run. The markers are the same in every row, so one call serves the whole
+// and glue. With decimal alignment off, for the table or for this combine with
+// `align: false`, it is not, so a pattern that cannot take a marker still has a
+// way to run. The markers are the same in every row, so one call serves the whole
 // column. A row keeps the split, as a compound cell, only when putting its own
 // values back gives what the pattern returned for them; a pattern that branches
 // on its values keeps its real output in the rows the split does not describe.
@@ -147,7 +148,7 @@
     // The last directive wins, as everywhere else.
     let directive = combine.last()
     let sources = directive.from.map(formatted)
-    let aligned = option(spec.options, "decimal-align")
+    let aligned = option(spec.options, "decimal-align") and directive.align
     let marked = if aligned { (directive.pattern)(..range(sources.len()).map(value-marker)) } else { none }
     let pieces = if aligned { split-pattern(marked, sources.len()) } else { none }
     range(spec.data.len()).map(position => {
