@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: A sign or a leading currency symbol stays beside its digits, so a signed number no longer opens a gap in a column of wider integers. (#135)
+- feat: `columns-combine` takes `align: false`, so a pattern that converts its values, such as `float(value.text)`, runs while the other columns stay aligned. (#136)
 
 ## 0.2.0 (2026-10-26)
 
