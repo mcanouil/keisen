@@ -66,6 +66,8 @@ A renderer that reads the salary draws it:
 The `axis` key of a renderer is `none`, or a function that draws an axis.
 `axis(domain: .., width: .., side: ..)` takes named arguments only, where `side` is `"top"` or `"bottom"`, and it returns content or `none`.
 The domain is the one the column's plots share, and the width is the width of the plot inside the cell.
+Keep the axis inside this width.
+Keisen does not reserve space for content that goes past it, so that content goes into the cell inset, or into the next cell.
 
 A renderer with an axis adds up to two rows to the table.
 The top row sits at the end of the repeating column header, right after the column labels.
